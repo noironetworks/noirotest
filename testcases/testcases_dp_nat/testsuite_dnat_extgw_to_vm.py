@@ -74,6 +74,7 @@ class DNAT_ExtGw_to_VMs(object):
                   if test() == 1:
                      break
                   self._log.warning("Repeat Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
+                  #PauseToDebug() #JISHNU: Uncomment on debug
                   repeat_test += 1
                 if repeat_test == 4:
                     test_results[string.upper(test.__name__.lstrip('self.'))] = 'FAIL'
@@ -197,10 +198,14 @@ class DNAT_ExtGw_to_VMs(object):
         self._log.info(
             "\nTestcase_DNAT_EXTGWRTR_TO_TENANT_VMs: REMOVING CONTRACT and VERIFY TRAFFIC")
         for ext_pol in [self.external_pol_1, self.external_pol_2]:
-            if self.gbp_crud.update_gbp_external_policy(ext_pol, property_type='uuid') == 0:
+            if self.gbp_crud.update_gbp_external_policy(ext_pol, property_type='uuid',
+                                                        provided_policy_rulesets = None,
+                                                        consumed_policy_rulesets = None) == 0:
                 return 0
         for ptg in [self.websrvr_ptg, self.webclnt_ptg, self.appsrvr_ptg]:
-            if self.gbp_crud.update_gbp_policy_target_group(ptg, property_type='uuid') == 0:
+            if self.gbp_crud.update_gbp_policy_target_group(ptg, property_type='uuid',
+                                                            provided_policy_rulesets = None,
+                                                            consumed_policy_rulesets = None) == 0:
                 return 0
         run_traffic = traff_from_extgwrtr(self.extgwrtr, self.dest_vm_fips)
         if isinstance(run_traffic, dict):

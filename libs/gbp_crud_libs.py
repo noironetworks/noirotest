@@ -482,42 +482,29 @@ class GBPCrud(object):
                 for ruleset in provided_policy_rulesets:
                         provided_dict[ruleset] = "scope"
           body = {"policy_target_group" : {"shared" : shared}}
-          while True:
-               if consumed_policy_rulesets != '' and consumed_policy_rulesets is not None:
+          if consumed_policy_rulesets != '' and consumed_policy_rulesets is not None:
                   if provided_policy_rulesets!= '' and provided_policy_rulesets is not None:
                      body = {"policy_target_group" : {
                              "provided_policy_rule_sets" : provided_dict,
                              "consumed_policy_rule_sets" : consumed_dict
                                                     }
                          }
-                     if network_service_policy != '' and network_service_policy is not None:
-                        body["policy_target_group"]["network_service_policy_id"]=network_service_policy
-                        break
-                     else:
-                        break
-               elif consumed_policy_rulesets != '' and consumed_policy_rulesets is not None:
-                    if provided_policy_rulesets == '':
+                  if provided_policy_rulesets == '':
                        body = {"policy_target_group" : {
                                "consumed_policy_rule_sets" : consumed_dict
                                                   }
                               }
-                       if network_service_policy != '' and network_service_policy is not None:
-                          body["policy_target_group"]["network_service_policy_id"]=network_service_policy
-                          break
-                       else:
-                          break
-               elif provided_policy_rulesets != '' and provided_policy_rulesets is not None:
+                  if network_service_policy != '' and network_service_policy is not None:
+                       body["policy_target_group"]["network_service_policy_id"]=network_service_policy
+          elif provided_policy_rulesets != '' and provided_policy_rulesets is not None:
                     if consumed_policy_rulesets == '':
                        body = {"policy_target_group" : {
                                "provided_policy_rule_sets" : provided_dict
                                                   }
                               }
-                       if network_service_policy != '' and network_service_policy is not None:
+                    if network_service_policy != '' and network_service_policy is not None:
                           body["policy_target_group"]["network_service_policy_id"]=network_service_policy
-                          break
-                       else:
-                          break
-               elif provided_policy_rulesets is None and consumed_policy_rulesets is None:
+          elif provided_policy_rulesets is None and consumed_policy_rulesets is None:
                     body = {"policy_target_group" : {
                             "provided_policy_rule_sets" : {},
                             "consumed_policy_rule_sets" : {}
@@ -525,19 +512,14 @@ class GBPCrud(object):
                          }
                     if network_service_policy != '' and network_service_policy is not None:
                           body["policy_target_group"]["network_service_policy_id"]=network_service_policy
-                          break
-               elif provided_policy_rulesets == '' and consumed_policy_rulesets == '':
+          elif provided_policy_rulesets == '' and consumed_policy_rulesets == '':
                     if network_service_policy is None:
                        body["policy_target_group"]["network_service_policy_id"]=None
-                       break
-                    if network_service_policy == '':
-                       break
                     if network_service_policy != '' and network_service_policy is not None:
                        body["policy_target_group"]["network_service_policy_id"]=network_service_policy
-                       break
-               else:
+          else:
                    print 'Do nothing'
-                   break
+                   return 1
           self.client.update_policy_target_group(group_id, body)
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
@@ -1075,6 +1057,8 @@ class GBPCrud(object):
                      body["external_policy"]["external_segments"] = external_segments
                   break
                elif provided_policy_rulesets is None and consumed_policy_rulesets is None:
+                  body["external_policy"]["provided_policy_rule_sets"] = None
+                  body["external_policy"]["consumed_policy_rule_sets"] = None
                   if external_segments != []:
                      body["external_policy"]["external_segments"] = external_segments
                   break

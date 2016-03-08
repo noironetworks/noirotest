@@ -2,6 +2,7 @@
 import pexpect
 import sys
 import re
+from time import sleep
 
 class Gbp_pexp_traff(object):
    
@@ -44,10 +45,19 @@ class Gbp_pexp_traff(object):
       if noicmp==0 :
          print "Cannot run any traffic test since Source VM is Unreachable"
          return {}
-      child.sendline('ip netns exec %s ssh noiro@%s' %(self.netns,self.src_ep))
-      child.expect('password:')
-      child.sendline('noir0123')
-      child.expect('\$')
+      login_retry = 1
+      while login_retry < 4: 
+        try:
+           child.sendline('ip netns exec %s ssh noiro@%s' %(self.netns,self.src_ep))
+           child.expect('password:')
+           child.sendline('noir0123')
+           child.expect('\$')
+           break
+        except Exception as e:
+           print "Failing to Login into the VM from the Namespace\n"
+           print "\nException Error: %s\n" %(e)
+           sleep(10)
+           login_retry +=1
       child.sendline('sudo -s')
       child.expect('noiro:')
       child.sendline('noir0123')
