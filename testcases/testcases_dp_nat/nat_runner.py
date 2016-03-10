@@ -4,6 +4,7 @@ import sys
 import optparse
 import platform
 from commands import *
+getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
 from time import sleep
 from libs.gbp_verify_libs import Gbp_Verify
 from natdptestsetup import nat_dp_main_config

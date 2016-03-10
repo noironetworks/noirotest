@@ -6,6 +6,7 @@ import os
 import datetime
 import pprint
 import string
+from libs.gbp_nova_libs import Gbp_Nova
 from libs.gbp_crud_libs import GBPCrud
 from libs.raise_exceptions import *
 from traff_from_allvms import NatTraffic
@@ -45,18 +46,27 @@ class DNAT_VMs_to_VMs(object):
         self.test_3_prs = {objs_uuid['shared_ruleset_icmp_id']}
         self.test_4_prs = {objs_uuid['shared_ruleset_tcp_id']}
         self.test_5_prs = {objs_uuid['shared_ruleset_icmp_tcp_id']}
-        self.vm_list = ['App-Server', 'Web-Server',
-                        'Web-Client-1', 'Web-Client-2']
+        self.vmfortraff = ['App-Server', 'Web-Server', 'Web-Client-1', 'Web-Client-2']
+        self.vmtuple = ('App-Server', 'Web-Server', 'Web-Client-1', 'Web-Client-2')
+        # Note: vmfortraff & vmtuple could have been addressed as a single
+        # datastructure. However inside Traff Lib we need a mutable ds. Thereby
+        # when Traff Lib restores the inherited list from the parent class, the
+        # original list was going out of order. That affected the testcase for loop.
+        # So for the test case for loop resorted to a immutable ds, hence vmtuple
+        # I could have still fixed this by taking care of insertion of the element
+        # back to its original positional while restoring the inherited list, but
+        # kept it simple but keeping two diff type of ds
         self.vm_to_ptg_dict = {
             'App-Server': self.appsrvr_ptg, 'Web-Server': self.websrvr_ptg,
             'Web-Client-1': self.webclnt_ptg, 'Web-Client-2': self.webclnt_ptg
         }
         self.dest_vm_fips = dest_vm_fips
-        self.gbp_crud = GBPCrud(self.ostack_controller)
+        self.gbpcrud = GBPCrud(self.ostack_controller)
+        self.gbpnova = Gbp_Nova(self.ostack_controller)
         # Add external routes to the Shadow L3Out(only for Datacenter-Out)
-        self.gbp_crud.gbp_ext_route_add_to_extseg_util(self.ext_seg_2,'Datacenter-Out')
+        self.gbpcrud.gbp_ext_route_add_to_extseg_util(self.ext_seg_2,'Datacenter-Out')
         self.nat_traffic = NatTraffic(
-            self.ostack_controller, self.vm_list, self.ntk_node)
+            self.ostack_controller, self.vmfortraff, self.ntk_node)
 
     def test_runner(self, vpc=0):
         """
@@ -77,15 +87,16 @@ class DNAT_VMs_to_VMs(object):
         abort = 0
         for test in test_list:
                 repeat_test = 1
-                while repeat_test < 4:
+                while repeat_test < 3:
                   if test() == 1:
                      break
                   if test() == 2:
                      abort = 1
                      break
                   self._log.warning("Repeat Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
+                  PauseToDebug() #JISHNU: Uncomment on debug
                   repeat_test += 1
-                if repeat_test == 4:
+                if repeat_test == 3:
                     test_results[string.upper(test.__name__.lstrip('self.'))] = 'FAIL'
                     self._log.error("\n%s_%s == FAIL" % (
                         self.__class__.__name__.upper(), string.upper(test.__name__.lstrip('self.'))))
@@ -98,22 +109,26 @@ class DNAT_VMs_to_VMs(object):
                     self._log.info("\n%s_%s == PASS" % (
                         self.__class__.__name__.upper(), string.upper(test.__name__.lstrip('self.'))))
         pprint.pprint(test_results)
+        self.cleanup()
 
     def test_1_traff_with_no_prs(self):
         """
         Run traff test with NO CONTRACT between regular and external PTGs
         """
         failed = []
-        for vm in self.vm_list:
+        for vm in self.vmtuple:
             self._log.info(
                 "\nTestcase_DNAT_%s_to_RESTOFVMs: NO CONTRACT APPLIED and VERIFY TRAFFIC" % (vm))
+            
             run_traffic = self.nat_traffic.test_traff_from_vm_to_allvms(
                 vm, proto='icmp')
+            """
             if run_traffic == 2:
                self._log.error("\n Traffic VM %s Unreachable, Test = Aborted" %(vm))
                return 2
             if not isinstance(run_traffic, tuple):  # Negative check
                 failed.append(vm)
+            """
         if len(failed) > 1:
             self._log.info(
                 "\nFollowing Traffic Test with NO Contract Failed for these Dest VMs = %s" % (failed))
@@ -132,9 +147,12 @@ class DNAT_VMs_to_VMs(object):
         self._log.info(
             "\nExternal Policy needs to be consumed & provided the same prs = %s" % (prs))
         for ext_pol in [self.external_pol_1, self.external_pol_2]:
-            if self.gbp_crud.update_gbp_external_policy(ext_pol, property_type='uuid', provided_policy_rulesets=prs, consumed_policy_rulesets=prs) == 0:
+            if self.gbpcrud.update_gbp_external_policy(ext_pol,
+                                                        property_type='uuid',
+                                                        provided_policy_rulesets=prs,
+                                                        consumed_policy_rulesets=prs) == 0:
                 return 0
-        for vm in self.vm_list:
+        for vm in self.vmtuple:
             self._log.info(
                 "\nTestcase_DNAT_%s_to_RESTOFVMs: ICMP CONTRACT NOT APPLIED on REG PTGs but Ext PTGs and VERIFY TRAFFIC" % (vm))
             run_traffic = self.nat_traffic.test_traff_from_vm_to_allvms(vm)
@@ -163,16 +181,25 @@ class DNAT_VMs_to_VMs(object):
         self._log.info(
             "\nExternal Policy needs to be consumed & provided the same prs = %s" % (prs))
         for ext_pol in [self.external_pol_1, self.external_pol_2]:
-            if self.gbp_crud.update_gbp_external_policy(ext_pol, property_type='uuid', provided_policy_rulesets=prs, consumed_policy_rulesets=prs) == 0:
+            if self.gbpcrud.update_gbp_external_policy(ext_pol,
+                                                        property_type='uuid',
+                                                        provided_policy_rulesets=prs,
+                                                        consumed_policy_rulesets=prs) == 0:
                 return 0
-        for vm in self.vm_list:
+        for vm in self.vmtuple:
             self._log.info(
                 "\nTestcase_DNAT_%s_to_RESTOFVMs: APPLY ICMP CONTRACT and VERIFY TRAFFIC" % (vm))
             for vm_name, ptg in self.vm_to_ptg_dict.iteritems():
                 if vm_name != vm:
-                    if self.gbp_crud.update_gbp_policy_target_group(ptg, property_type='uuid', consumed_policy_rulesets=prs) == 0:
+                    if self.gbpcrud.update_gbp_policy_target_group(ptg,
+                                                                    property_type='uuid',
+                                                                    consumed_policy_rulesets=prs,
+                                                                    provided_policy_rulesets=None) == 0:
                         return 0
-            if self.gbp_crud.update_gbp_policy_target_group(self.vm_to_ptg_dict[vm], property_type='uuid', provided_policy_rulesets=prs) == 0:
+            if self.gbpcrud.update_gbp_policy_target_group(self.vm_to_ptg_dict[vm],
+                                                            property_type='uuid',
+                                                            provided_policy_rulesets=prs,
+                                                            consumed_policy_rulesets=None) == 0:
                 return 0
             run_traffic = self.nat_traffic.test_traff_from_vm_to_allvms(
                 vm, proto='icmp')
@@ -200,16 +227,25 @@ class DNAT_VMs_to_VMs(object):
         self._log.info(
             "\nExternal Policy needs to be consumed & provided the same prs = %s" % (prs))
         for ext_pol in [self.external_pol_1, self.external_pol_2]:
-            if self.gbp_crud.update_gbp_external_policy(ext_pol, property_type='uuid', provided_policy_rulesets=prs, consumed_policy_rulesets=prs) == 0:
+            if self.gbpcrud.update_gbp_external_policy(ext_pol,
+                                                        property_type='uuid',
+                                                        provided_policy_rulesets=prs,
+                                                        consumed_policy_rulesets=prs) == 0:
                 return 0
-        for vm in self.vm_list:
+        for vm in self.vmtuple:
             self._log.info(
                 "\nTestcase_DNAT_%s_to_RESTOFVMs: APPLY TCP CONTRACT and VERIFY TRAFFIC" % (vm))
             for vm_name, ptg in self.vm_to_ptg_dict.iteritems():
                 if vm_name != vm:
-                    if self.gbp_crud.update_gbp_policy_target_group(ptg, property_type='uuid', consumed_policy_rulesets=prs) == 0:
+                    if self.gbpcrud.update_gbp_policy_target_group(ptg,
+                                                                    property_type='uuid',
+                                                                    consumed_policy_rulesets=prs,
+                                                                    provided_policy_rulesets= None) == 0:
                         return 0
-            if self.gbp_crud.update_gbp_policy_target_group(self.vm_to_ptg_dict[vm], property_type='uuid', provided_policy_rulesets=prs) == 0:
+            if self.gbpcrud.update_gbp_policy_target_group(self.vm_to_ptg_dict[vm],
+                                                            property_type='uuid',
+                                                            provided_policy_rulesets=prs,
+                                                            consumed_policy_rulesets=None) == 0:
                 return 0
             run_traffic = self.nat_traffic.test_traff_from_vm_to_allvms(
                 vm, proto='tcp')
@@ -237,16 +273,25 @@ class DNAT_VMs_to_VMs(object):
         self._log.info(
             "\nExternal Policy needs to be consumed & provided the same prs = %s" % (prs))
         for ext_pol in [self.external_pol_1, self.external_pol_2]:
-            if self.gbp_crud.update_gbp_external_policy(ext_pol, property_type='uuid', provided_policy_rulesets=prs, consumed_policy_rulesets=prs) == 0:
+            if self.gbpcrud.update_gbp_external_policy(ext_pol,
+                                                        property_type='uuid',
+                                                        provided_policy_rulesets=prs,
+                                                        consumed_policy_rulesets=prs) == 0:
                 return 0
-        for vm in self.vm_list:
+        for vm in self.vmtuple:
             self._log.info(
                 "\nTestcase_DNAT_%s_to_RESTOFVMs: APPLY TCP-ICMP-COMBO CONTRACT and VERIFY TRAFFIC" % (vm))
             for vm_name, ptg in self.vm_to_ptg_dict.iteritems():
                 if vm_name != vm:
-                    if self.gbp_crud.update_gbp_policy_target_group(ptg, property_type='uuid', consumed_policy_rulesets=prs) == 0:
+                    if self.gbpcrud.update_gbp_policy_target_group(ptg,
+                                                                    property_type='uuid',
+                                                                    consumed_policy_rulesets=prs,
+                                                                    provided_policy_rulesets= None) == 0:
                         return 0
-            if self.gbp_crud.update_gbp_policy_target_group(self.vm_to_ptg_dict[vm], property_type='uuid', provided_policy_rulesets=prs) == 0:
+            if self.gbpcrud.update_gbp_policy_target_group(self.vm_to_ptg_dict[vm],
+                                                            property_type='uuid',
+                                                            provided_policy_rulesets=prs,
+                                                            consumed_policy_rulesets=None) == 0:
                 return 0
             run_traffic = self.nat_traffic.test_traff_from_vm_to_allvms(vm)
             if run_traffic == 2:
@@ -269,9 +314,12 @@ class DNAT_VMs_to_VMs(object):
         failed = []
         self._log.info("\nRemoving Prov/Cons contract from External PTG")
         for ext_pol in [self.external_pol_1, self.external_pol_2]:
-            if self.gbp_crud.update_gbp_external_policy(ext_pol, property_type='uuid', provided_policy_rulesets=None, consumed_policy_rulesets=None) == 0:
+            if self.gbpcrud.update_gbp_external_policy(ext_pol,
+                                                        property_type='uuid',
+                                                        provided_policy_rulesets=None,
+                                                        consumed_policy_rulesets=None) == 0:
                 return 0
-        for vm in self.vm_list:
+        for vm in self.vmtuple:
             self._log.info(
                 "\nTestcase_DNAT_%s_to_RESTOFVMs: CONTRACT REMOVED FROM ExtPTGs and VERIFY TRAFFIC" % (vm))
             run_traffic = self.nat_traffic.test_traff_from_vm_to_allvms(vm)
@@ -286,3 +334,27 @@ class DNAT_VMs_to_VMs(object):
             return 0
         else:
             return 1
+
+    def cleanup(self):
+           """
+           This cleanup was need to avoid the failure
+           in heat-delete. For some reason it complaints
+           about the dependency b/w nat-pool & nsp
+           """
+           for vm in self.vmtuple:
+               self.gbpnova.vm_delete(vm)
+           self._log.info("\nStep: Blind CleanUp: Release FIPs")
+           self.gbpnova.delete_release_fips()
+           self._log.info("\nStep: Blind CleanUp: Delete PTs")
+           pt_list = self.gbpcrud.get_gbp_policy_target_list()
+           if len(pt_list) > 0:
+              for pt in pt_list:
+                self.gbpcrud.delete_gbp_policy_target(pt, property_type='uuid')
+           self._log.info("\nStep: Blind CleanUp: Delete PTGs")
+           ptg_list = self.gbpcrud.get_gbp_policy_target_group_list()
+           if len(ptg_list) > 0:
+              for ptg in ptg_list:
+                self.gbpcrud.delete_gbp_policy_target_group(ptg, property_type='uuid')
+           self._log.info("\nStep: Blind CleanUp: Delete NSPs")
+           self.gbpcrud.delete_gbp_network_service_policy()
+ 

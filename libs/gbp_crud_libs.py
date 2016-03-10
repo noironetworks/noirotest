@@ -494,6 +494,12 @@ class GBPCrud(object):
                                "consumed_policy_rule_sets" : consumed_dict
                                                   }
                               }
+                  if provided_policy_rulesets == None:
+                       body = {"policy_target_group" : {
+                               "consumed_policy_rule_sets" : consumed_dict,
+                                "provided_policy_rule_sets" : None
+                                 }
+                              }
                   if network_service_policy != '' and network_service_policy is not None:
                        body["policy_target_group"]["network_service_policy_id"]=network_service_policy
           elif provided_policy_rulesets != '' and provided_policy_rulesets is not None:
@@ -502,6 +508,13 @@ class GBPCrud(object):
                                "provided_policy_rule_sets" : provided_dict
                                                   }
                               }
+                    if consumed_policy_rulesets == None:
+                       body = {"policy_target_group" : {
+                               "provided_policy_rule_sets" : provided_dict,
+                               "consumed_policy_rule_sets" : None
+                                                  }
+                              }
+
                     if network_service_policy != '' and network_service_policy is not None:
                           body["policy_target_group"]["network_service_policy_id"]=network_service_policy
           elif provided_policy_rulesets is None and consumed_policy_rulesets is None:
@@ -1190,17 +1203,20 @@ class GBPCrud(object):
                   _log.error("Attribute %s and its Value %s NOT found in Object %s %s" %(arg,val,obj,obj_uuid))
                   return 0
 
-    def gbp_ext_route_add_to_extseg_util(self,extseg_id,extseg_name,route='0.0.0.0/0'):
+    def gbp_ext_route_add_to_extseg_util(self,extseg_id,extseg_name,route='60.60.60.0/24'):
         """
         Utility Method to add ext_routes to Ext_Seg
-        ONLY needed for NAT DP TESTs
+        ONLY needed for NAT DP TESTs ONLY USED For Datacenter-Out ExtSeg
+        TBD: To be enhanced
         """
         if extseg_name == 'Datacenter-Out':
-           cmd = 'crudini --get /etc/neutron/neutron.conf apic_external_network:%s cidr_exposed' %(extseg_name)
-           out = re.search('\\b(\d+.\d+.\d+).\d+.*' '', getoutput(cmd), re.I)
-           route = out.group(1)+'.0/24'
+              cmd = 'crudini --get /etc/neutron/neutron.conf apic_external_network:%s cidr_exposed' %(extseg_name)
+              out = re.search('\\b(\d+.\d+.\d+).\d+.*' '', getoutput(cmd), re.I)
+              rte = out.group(1)+'.0/24'
         cmd = 'crudini --get /etc/neutron/neutron.conf apic_external_network:%s gateway_ip' %(extseg_name)
         route_gw = getoutput(cmd)
-        _log.info("Route to be added to External Segment %s with GW %s  == %s" %(extseg_name,route_gw,route))
-        self.update_gbp_external_segment(extseg_id,external_routes=[{'destination' : route, 'nexthop' : route_gw}])
+        _log.info("Routes to be added to External Segment are %s & %s with GW %s  == %s" %(extseg_name,route_gw,route,rte))
+        self.update_gbp_external_segment(
+             extseg_id,external_routes=[{'destination' : route, 'nexthop' : route_gw},
+                                        {'destination' : rte, 'nexthop' : route_gw}])
 
