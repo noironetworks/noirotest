@@ -193,10 +193,10 @@ class Bonding(object):
         """
         with settings(warn_only=True):
              run("cp /etc/dhcp/dhclient-opflex1.4093.conf /etc/dhcp/dhclient-bond0.4093.conf")
-             cmd = "sed -i 's/send dhcp-client-identifier .*/send dhcp-client-identifier %s/' /etc/dhcp/dhclient-bond0.4093.conf" %(vif_mac)
+             cmd = "sed -i 's/send dhcp-client-identifier .*/send dhcp-client-identifier %s;/' /etc/dhcp/dhclient-bond0.4093.conf" %(vif_mac)
              run(cmd)
 
-    def modify_opflex_conf(self):
+    def modify_opflex_conf(self,opflex_mode):
         """
         Modify the OpflexAgent Conf file to make VIF as Infra-interface
         Restart the OpflexAgent
@@ -204,11 +204,21 @@ class Bonding(object):
         env.host_string = self.host_ip
         env.user = self.user
         env.pwd = self.pwd
-        path = '/etc/opflex-agent-ovs/opflex-agent-ovs.conf'
+        path = '/etc/opflex-agent-ovs/conf.d/opflex-agent-ovs.conf'
+        vif_name = 'bond0' #JISHNU:TBD, for vlan now harcoding
         with settings(warn_only=True):
              result = run("sed -i 's/\"uplink-iface\":.*/\"uplink-iface\": \"%s\",/' %s" %(vif_name,path))
              if result.succeeded:
-                restart = run("systemctl restart agent-ovs.service")
+                if opflex_mode == 'vlan':
+                   result1 = run("sed -i 's/\"encap-iface\":.*,/\"encap-iface\": \"%s\",/' %s" %(vif_name,path))
+                   result2 = run("ovs-vsctl add-port br-int bond0")
+                   if result2.succeeded:
+                      restart = run("systemctl restart agent-ovs.service")
+                   else:
+                      print "ERROR: Adding bond0 to br-int for VLAN mode == FAILed"
+                      sys.exit(1)
+                else:
+                   restart = run("systemctl restart agent-ovs.service")
                 if restart.succeeded:
                    if run("systemctl status agent-ovs.service").find("active (running)") < 0:
                       print 'ERROR: OpflexAgent is NOT ACTIVE on Restart after OpflexAgent Conf change == FAILs'
@@ -225,12 +235,12 @@ def main():
     host_ip = sys.argv[2]
     mem_intf_1 = sys.argv[3]
     mem_intf_2 = sys.argv[4]
+    opflex_mode = sys.argv[5]
     member_intf_list = [mem_intf_1,mem_intf_2]
     print "User passed == %s, %s" %(host_ip,member_intf_list)
 
     ##Initialize the BaseClass
     bndg = Bonding(host_ip)
-
     ## Bringing down Member Interface
     print "Bringing down Member Interface"
     bndg.if_down_up(nic_state='down', nic_name= member_intf_list)
@@ -251,6 +261,9 @@ def main():
     ## Bring up Virtual Interface on the parent interface bond0
     print "Bring up Virtual Interface on the parent interface bond0"
     bndg.add_virtual_intf_script(hostname)
+    bndg.if_down_up(nic_state='up', nic_name=['bond0.4093'])
+    ## Modify the OPflex Conf
+    bndg.modify_opflex_conf(opflex_mode)
 
 if __name__ == "__main__":
    main()

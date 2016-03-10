@@ -78,8 +78,13 @@ class test_diff_ptg_diff_l2p_same_l3p(object):
         test_results = {}
         for test in test_list:
                 repeat_test = 1
+                abort = 0
                 while repeat_test < 4:
-                  if test() == 1:
+                  testresult = test()
+                  if testresult == 1:
+                     break
+                  if testresult == 2:
+                     abort = 1
                      break
                   self._log.warn("Repeat Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
                   repeat_test += 1
@@ -90,6 +95,17 @@ class test_diff_ptg_diff_l2p_same_l3p(object):
                     test_results[string.upper(
                         test.__name__.lstrip('self.'))] = 'FAIL'
                     self._log.info("\n%s_%s_%s == FAIL" % (self.__class__.__name__.upper(
+                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                elif abort == 1:
+                    if 'test_1' in test.__name__ or 'test_2' in test.__name__:
+                        test_results[string.upper(
+                            test.__name__.lstrip('self.'))] = 'ABORT'
+                        self._log.info("\n%s_%s_%s 10 subtestcases == ABORT" % (self.__class__.__name__.upper(
+                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                    else:
+                        test_results[string.upper(
+                            test.__name__.lstrip('self.'))] = 'ABORT'
+                        self._log.info("\n%s_%s_%s == ABORT" % (self.__class__.__name__.upper(
                         ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
                 else:
                     if 'test_1' in test.__name__ or 'test_2' in test.__name__:
@@ -124,8 +140,8 @@ class test_diff_ptg_diff_l2p_same_l3p(object):
                 self.ntk_node, self.dhcp_ns, self.vm7_ip, dest_ip)
         results = gbppexptraff.test_run()
         self._log.info('Results from the Testcase == %s' %(results))
-        if results == {}:
-            return 0
+        if results == 2:
+            return 2
         failed = {}
         # In 'all' proto is verified for PTGs with NO_PRS, PRS_NO_RULE,
         # REM_PRS, hence below val ==1, then Fail, because pkts were

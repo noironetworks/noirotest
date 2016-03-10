@@ -83,12 +83,21 @@ class test_same_ptg_same_l2p_same_l3p(object):
                expectedRetVal = 1
             for test in test_list:
                 repeat_test = 1
+                abort = 0
                 while repeat_test < 4:
                       if flag == 'enforced':
-                         if test() == 0:
+                         testresult = test()
+                         if testresult == 0:
+                            break
+                         if testresult == 2:
+                            abort = 1
                             break
                       if flag == 'unenforced':
-                         if test() == expectedRetVal:
+                         testresult = test()
+                         if testresult == 1:
+                            break
+                         if testresult == 2:
+                            abort = 1
                             break
                       self._log.info("Repeat Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
                       repeat_test += 1
@@ -97,6 +106,17 @@ class test_same_ptg_same_l2p_same_l3p(object):
                         test.__name__.lstrip('self.'))+'_'+flag.upper()] = 'FAIL'
                     self._log.info("\n%s_%s_%s_%s == FAIL" % (self.__class__.__name__.upper(
                     ), log_string.upper(), string.upper(test.__name__.lstrip('self.')),flag.upper()))
+                elif abort == 1:
+                    if 'test_1' in test.__name__ or 'test_2' in test.__name__:
+                        test_results[string.upper(
+                            test.__name__.lstrip('self.'))+'_'+flag.upper()] = 'ABORT'
+                        self._log.info("\n%s_%s_%s_%s 10 subtestcases == ABORT" % (self.__class__.__name__.upper(
+                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.')),flag.upper()))
+                    else:
+                        test_results[string.upper(
+                            test.__name__.lstrip('self.'))+'_'+flag.upper()] = 'ABORT'
+                        self._log.info("\n%s_%s_%s_%s == ABORT" % (self.__class__.__name__.upper(
+                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.')),flag.upper()))
                 else:
                     if 'test_1' in test.__name__ or 'test_2' in test.__name__:
                         test_results[string.upper(
@@ -130,8 +150,8 @@ class test_same_ptg_same_l2p_same_l3p(object):
                 self.ntk_node, self.dhcp_ns, self.vm1_ip, dest_ip)
         results = gbppexptraff.test_run()
         self._log.info('Results from the Testcase == %s' %(results))
-        if results == {}:
-            return 0
+        if results == 2:
+            return 2
         failed = {}
         failed = {key: val for key, val in results[
             dest_ip].iteritems() if val == 0}

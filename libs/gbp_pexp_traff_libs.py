@@ -44,7 +44,7 @@ class Gbp_pexp_traff(object):
          print 'I am in No PIng'
       if noicmp==0 :
          print "Cannot run any traffic test since Source VM is Unreachable"
-         return {}
+         return 2
       login_retry = 1
       while login_retry < 4: 
         try:
