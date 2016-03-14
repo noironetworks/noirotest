@@ -43,6 +43,7 @@ class gbp_main_config(object):
         self.ntk_node = conf['ntk_node']
         self.cntlr_ip = conf['controller_ip']
         self.apic_ip = conf['apic_ip']
+        self.apic_passwd = conf['apic_passwd']
         self.heat_temp_test = conf['main_setup_heat_temp']
         self.num_hosts = conf['num_comp_nodes']
         self.heat_stack_name = conf['heat_stack_name']
@@ -118,7 +119,7 @@ class gbp_main_config(object):
                         'demo_diff_ptg_l2p_same_l3p_bd_2',
                         'demo_srvr_bd', 'demo_clnt_bd'
                        ]
-        create_add_filter(self.apic_ip, svc_epg_list)
+        create_add_filter(self.apic_ip, svc_epg_list, password=self.apic_passwd)
         sleep(15)
 
     def cleanup(self,stack=0,avail=0):

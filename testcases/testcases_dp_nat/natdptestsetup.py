@@ -40,6 +40,7 @@ class nat_dp_main_config(object):
         self.cntlr_ip = conf['controller_ip']
         self.extgw = conf['ext_gw_rtr']
         self.apic_ip = conf['apic_ip']
+        self.apic_passwd = conf['apic_passwd']
         self.dnat_heat_temp = conf['dnat_heat_temp']
         self.snat_heat_temp = conf['snat_heat_temp']
         self.num_hosts = conf['num_comp_nodes']
@@ -121,7 +122,7 @@ class nat_dp_main_config(object):
                 'WEBL2P1',
                 'WEBL2P2'
             ]
-        create_add_filter(self.apic_ip, svc_epg_list)
+        create_add_filter(self.apic_ip, svc_epg_list, password=self.apic_passwd)
         sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
 
         if do_config == 0 or do_config == 1:

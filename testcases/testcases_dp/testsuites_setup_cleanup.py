@@ -19,6 +19,7 @@ class super_hdr(object):
     nova_az = conf['nova_az_name']
     cntlr_ip = conf['controller_ip']
     apic_ip = conf['apic_ip']
+    apic_passwd = conf['apic_passwd']
     num_host = conf['num_comp_nodes']
     heat_temp = conf['main_setup_heat_temp']
     stack_name = conf['heat_stack_name']

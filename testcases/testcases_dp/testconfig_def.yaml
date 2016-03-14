@@ -1,4 +1,5 @@
 apic_ip: 172.28.184.30
+apic_passwd: 'noir0123'
 az_comp_node: f2-compute-1.noiro.lab
 controller_ip: 172.28.184.35
 heat_stack_name: gbpstack

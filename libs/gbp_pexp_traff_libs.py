@@ -49,8 +49,15 @@ class Gbp_pexp_traff(object):
       while login_retry < 4: 
         try:
            child.sendline('ip netns exec %s ssh noiro@%s' %(self.netns,self.src_ep))
-           child.expect('password:')
-           child.sendline('noir0123')
+           ssh_newkey = 'Are you sure you want to continue connecting (yes/no)?'
+           i= child.expect([ssh_newkey,'password:',pexpect.EOF])
+           if i == 0:
+              #print " JISHNU in NEW KEY"
+              child.sendline('yes')
+              i=child.expect([ssh_newkey,'password:',pexpect.EOF])
+           if i == 1:
+              #print "JISHNU in EXISTING KEY"
+              child.sendline('noir0123')
            child.expect('\$')
            break
         except Exception as e:
