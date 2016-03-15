@@ -40,7 +40,6 @@ class nat_dp_main_config(object):
         self.cntlr_ip = conf['controller_ip']
         self.extgw = conf['ext_gw_rtr']
         self.apic_ip = conf['apic_ip']
-        self.apic_passwd = conf['apic_passwd']
         self.dnat_heat_temp = conf['dnat_heat_temp']
         self.snat_heat_temp = conf['snat_heat_temp']
         self.num_hosts = conf['num_comp_nodes']
@@ -98,42 +97,42 @@ class nat_dp_main_config(object):
                      self.gbpnova.avail_zone(
                         'cli', 'delete', self.agg_id)  # Cleanup Agg_ID
                      sys.exit(1)
-        # Invoking Heat Stack for building up the Openstack Config
-        # Expecting if at all there is residual heat-stack it
-        # should be of the same name as that of this DP Reg
-        self._log.info("\nCheck and Delete Residual Heat Stack")
-        if self.gbpheat.cfg_all_cli(0, self.heat_stack_name) != 1:
-           self._log.error(
-               "\n ABORTING THE TESTSUITE RUN, Delete of Residual Heat-Stack Failed")
-           self.cleanup(stack=1) # Because residual stack-delete already failed above
-           sys.exit(1)
-        self._log.info(
+            # Invoking Heat Stack for building up the Openstack Config
+            # Expecting if at all there is residual heat-stack it
+            # should be of the same name as that of this DP Reg
+            self._log.info("\nCheck and Delete Residual Heat Stack")
+            if self.gbpheat.cfg_all_cli(0, self.heat_stack_name) != 1:
+               self._log.error(
+                   "\n ABORTING THE TESTSUITE RUN, Delete of Residual Heat-Stack Failed")
+               self.cleanup(stack=1) # Because residual stack-delete already failed above
+               sys.exit(1)
+            self._log.info(
                 "\n Invoking Heat-Temp for Config creation of %s" % (nat_type.upper()))
-        if self.gbpheat.cfg_all_cli(1, self.heat_stack_name, heat_temp=self.heat_temp_test) == 0:
-           self._log.error(
-                "\n ABORTING THE TESTSUITE RUN, Heat-Stack create of %s Failed" % (self.heat_stack_name))
-           self.cleanup()
-           sys.exit(1)
-        sleep(5)  # Sleep 5s assuming that all objects areated in APIC
-        self._log.info(
+            if self.gbpheat.cfg_all_cli(1, self.heat_stack_name, heat_temp=self.heat_temp_test) == 0:
+               self._log.error(
+                    "\n ABORTING THE TESTSUITE RUN, Heat-Stack create of %s Failed" % (self.heat_stack_name))
+               self.cleanup()
+               sys.exit(1)
+            sleep(5)  # Sleep 5s assuming that all objects areated in APIC
+            self._log.info(
                 "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
-        svc_epg_list = [
+            svc_epg_list = [
                 'APPL2P1',
                 'WEBL2P1',
                 'WEBL2P2'
-            ]
-        create_add_filter(self.apic_ip, svc_epg_list, password=self.apic_passwd)
-        sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
+                ]
+            create_add_filter(self.apic_ip, svc_epg_list)
+            sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
 
-        if do_config == 0 or do_config == 1:
-                ### <Generate the dict comprising VM-name and its FIPs > ###
-            targetvm_list = ['Web-Server', 'Web-Client-1',
+        #if do_config == 0 or do_config == 1:
+        ### <Generate the dict comprising VM-name and its FIPs > ###
+        targetvm_list = ['Web-Server', 'Web-Client-1',
                              'Web-Client-2', 'App-Server']
-            fipsOftargetVMs = {}
-            for vm in targetvm_list:
+        fipsOftargetVMs = {}
+        for vm in targetvm_list:
                 fipsOftargetVMs[vm] = self.gbpnova.get_any_vm_property(vm)['networks'][
                     0][1:3]
-            if nat_type == 'dnat':
+        if nat_type == 'dnat':
                print 'FIPs of Target VMs == %s' % (fipsOftargetVMs)
                return fipsOftargetVMs
 

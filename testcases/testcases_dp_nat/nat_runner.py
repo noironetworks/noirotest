@@ -43,17 +43,23 @@ def main():
         targetVmFips = testbed_cfg.setup(nat_type, do_config=0)
         # Fetch gbp objects via heat output
         objs_uuid = get_obj_uuids(cfgfile)
+        
+        # Note: Please always maintain the below order of DNAT Test Execution
+        # Since the DNAT_VM_to_VM has the final blind cleanup, which helps to
+        # avoid the heat stack-delete failure coming from nat_dp_main_config
+        
         # Execution of DNAT DP Tests from ExtRtr to VMs
         from testcases.testcases_dp_nat.testsuite_dnat_extgw_to_vm import DNAT_ExtGw_to_VMs
         test_dnat_extgw_to_vm = DNAT_ExtGw_to_VMs(objs_uuid, targetVmFips)
         test_dnat_extgw_to_vm.test_runner()
+        
         # Execution of DNAT DP Test from VM to ExtGW and VM-to-VM    
         from testcases.testcases_dp_nat.testsuite_dnat_vm_to_vm import DNAT_VMs_to_VMs
         test_dnat_vm_to_allvms = DNAT_VMs_to_VMs(objs_uuid, targetVmFips)
         test_dnat_vm_to_allvms.test_runner()
         # Cleanup
         testbed_cfg.cleanup()
-
+        
     if nat_type == 'snat':
         # RUN ONLY SNAT DP TESTs
         # TestSetup Configuration

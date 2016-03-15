@@ -70,13 +70,13 @@ class DNAT_ExtGw_to_VMs(object):
         test_results = {}
         for test in test_list:
                 repeat_test = 1
-                while repeat_test < 4:
+                while repeat_test < 3:
                   if test() == 1:
                      break
                   self._log.warning("Repeat Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
                   #PauseToDebug() #JISHNU: Uncomment on debug
                   repeat_test += 1
-                if repeat_test == 4:
+                if repeat_test == 3:
                     test_results[string.upper(test.__name__.lstrip('self.'))] = 'FAIL'
                     self._log.error("\n%s_%s == FAIL" % (
                         self.__class__.__name__.upper(), string.upper(test.__name__.lstrip('self.'))))
@@ -109,10 +109,14 @@ class DNAT_ExtGw_to_VMs(object):
             "\nTestcase_DNAT_EXTGWRTR_TO_TENANT_VMs: APPLY CONTRACT BUT NO RULE and VERIFY TRAFFIC")
         prs = self.test_2_prs
         for ext_pol in [self.external_pol_1, self.external_pol_2]:
-            if self.gbp_crud.update_gbp_external_policy(ext_pol, property_type='uuid', consumed_policy_rulesets=prs) == 0:
+            if self.gbp_crud.update_gbp_external_policy(ext_pol,
+                                                        property_type='uuid',
+                                                        consumed_policy_rulesets=prs) == 0:
                 return 0
         for ptg in [self.websrvr_ptg, self.webclnt_ptg, self.appsrvr_ptg]:
-            if self.gbp_crud.update_gbp_policy_target_group(ptg, property_type='uuid', provided_policy_rulesets=prs) == 0:
+            if self.gbp_crud.update_gbp_policy_target_group(ptg,
+                                                            property_type='uuid',
+                                                            provided_policy_rulesets=prs) == 0:
                 return 0
         run_traffic = traff_from_extgwrtr(self.extgwrtr, self.dest_vm_fips)
         if not isinstance(run_traffic, dict):
@@ -131,10 +135,14 @@ class DNAT_ExtGw_to_VMs(object):
             "\nTestcase_DNAT_EXTGWRTR_TO_TENANT_VMs: APPLY ICMP CONTRACT and VERIFY TRAFFIC")
         prs = self.test_3_prs
         for ext_pol in [self.external_pol_1, self.external_pol_2]:
-            if self.gbp_crud.update_gbp_external_policy(ext_pol, property_type='uuid', consumed_policy_rulesets=prs) == 0:
+            if self.gbp_crud.update_gbp_external_policy(ext_pol,
+                                                        property_type='uuid',
+                                                        consumed_policy_rulesets=prs) == 0:
                 return 0
         for ptg in [self.websrvr_ptg, self.webclnt_ptg, self.appsrvr_ptg]:
-            if self.gbp_crud.update_gbp_policy_target_group(ptg, property_type='uuid', provided_policy_rulesets=prs) == 0:
+            if self.gbp_crud.update_gbp_policy_target_group(ptg,
+                                                            property_type='uuid',
+                                                            provided_policy_rulesets=prs) == 0:
                 return 0
         run_traffic = traff_from_extgwrtr(
             self.extgwrtr, self.dest_vm_fips, proto='icmp')
@@ -154,10 +162,14 @@ class DNAT_ExtGw_to_VMs(object):
             "\nTestcase_DNAT_EXTGWRTR_TO_TENANT_VMs: APPLY TCP CONTRACT and VERIFY TRAFFIC")
         prs = self.test_4_prs
         for ext_pol in [self.external_pol_1, self.external_pol_2]:
-            if self.gbp_crud.update_gbp_external_policy(ext_pol, property_type='uuid', consumed_policy_rulesets=prs) == 0:
+            if self.gbp_crud.update_gbp_external_policy(ext_pol,
+                                                        property_type='uuid',
+                                                        consumed_policy_rulesets=prs) == 0:
                 return 0
         for ptg in [self.websrvr_ptg, self.webclnt_ptg, self.appsrvr_ptg]:
-            if self.gbp_crud.update_gbp_policy_target_group(ptg, property_type='uuid', provided_policy_rulesets=prs) == 0:
+            if self.gbp_crud.update_gbp_policy_target_group(ptg,
+                                                            property_type='uuid',
+                                                            provided_policy_rulesets=prs) == 0:
                 return 0
         run_traffic = traff_from_extgwrtr(
             self.extgwrtr, self.dest_vm_fips, proto='tcp')
@@ -177,10 +189,14 @@ class DNAT_ExtGw_to_VMs(object):
             "\nTestcase_DNAT_EXTGWRTR_TO_TENANT_VMs: APPLY ICMP-TCP-COMBO CONTRACT and VERIFY TRAFFIC")
         prs = self.test_5_prs
         for ext_pol in [self.external_pol_1, self.external_pol_2]:
-            if self.gbp_crud.update_gbp_external_policy(ext_pol, property_type='uuid', consumed_policy_rulesets=prs) == 0:
+            if self.gbp_crud.update_gbp_external_policy(ext_pol,
+                                                        property_type='uuid',
+                                                        consumed_policy_rulesets=prs) == 0:
                 return 0
         for ptg in [self.websrvr_ptg, self.webclnt_ptg, self.appsrvr_ptg]:
-            if self.gbp_crud.update_gbp_policy_target_group(ptg, property_type='uuid', provided_policy_rulesets=prs) == 0:
+            if self.gbp_crud.update_gbp_policy_target_group(ptg,
+                                                            property_type='uuid',
+                                                            provided_policy_rulesets=prs) == 0:
                 return 0
         run_traffic = traff_from_extgwrtr(self.extgwrtr, self.dest_vm_fips)
         if isinstance(run_traffic, dict):
