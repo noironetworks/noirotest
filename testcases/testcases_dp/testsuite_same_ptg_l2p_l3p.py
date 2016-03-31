@@ -45,6 +45,7 @@ class test_same_ptg_same_l2p_same_l3p(object):
         self.ntk_node = super_hdr.ntk_node
         self.apic_ip = super_hdr.apic_ip
         self.apic_passwd = super_hdr.apic_passwd
+        self.pausetodebug = super_hdr.pausetodebug
         self.ptg = objs_uuid['demo_same_ptg_l2p_l3p_ptg_id']
         self.test_2_prs = objs_uuid['demo_ruleset_norule_id']
         self.test_3_prs = objs_uuid['demo_ruleset_icmp_id']
@@ -107,7 +108,9 @@ class test_same_ptg_same_l2p_same_l3p(object):
                          if testresult == 2:
                             abort = 1
                             break
-                      self._log.info("Repeat Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
+                      self._log.info("Repeat-on-fail Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
+                      if self.pausetodebug == True:
+                         PauseToDebug()
                       repeat_test += 1
                 if repeat_test == 4:
                     test_results[string.upper(

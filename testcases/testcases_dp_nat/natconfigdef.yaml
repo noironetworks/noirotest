@@ -20,4 +20,5 @@ fip1_of_extgw: '1.102.1.1'
 fip2_of_extgw: '1.102.2.1'
 #vm_image: '"trusty-multi-if"'
 vm_image: 'ubuntu_multi_nics'
-
+# Enable the below flag inorder to live-debug on Failure of a Testcase
+pausetodebug: True

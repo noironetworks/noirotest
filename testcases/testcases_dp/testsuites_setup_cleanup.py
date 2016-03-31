@@ -13,6 +13,10 @@ from libs.raise_exceptions import *
 
 
 class super_hdr(object):
+    
+    # Expectations:
+    # * Config file name is static = testconfig_def.yaml
+    # * Location of config file is in the same place as this file & testsuites
 
     with open('testconfig_def.yaml', 'rt') as f:
         conf = yaml.load(f)
@@ -26,6 +30,7 @@ class super_hdr(object):
     vm_image = conf['vm_image']
     sshkeyname = conf['key_name']
     ntk_node = conf['ntk_node']
+    pausetodebug = conf['pausetodebug']
     gbpcfg = Gbp_Config()
     gbpverify = Gbp_Verify()
     gbpnova = Gbp_Nova(cntlr_ip)

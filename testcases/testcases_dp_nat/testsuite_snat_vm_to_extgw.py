@@ -51,15 +51,19 @@ class SNAT_VMs_to_ExtGw(object):
                         'Web-Client-1', 'Web-Client-2']
         self.gbp_crud = GBPCrud(self.ostack_controller)
         self.extgwips = objs_uuid['ipsofextgw']
+        self.pausetodebug = objs_uuid['pausetodebug']
         self.nat_traffic = NatTraffic(
             self.ostack_controller, self.vm_list, self.ntk_node)
-        # Add external routes to the Shadow L3Out(only for Datacenter-Out)
-        self.gbp_crud.gbp_ext_route_add_to_extseg_util(self.ext_seg_2,'Datacenter-Out')
 
     def test_runner(self, vpc=0):
         """
         Method to run all testcases
         """
+        # Add external routes to the Shadow L3Out(only for Datacenter-Out)
+        self.gbp_crud.AddRouteInShadowL3Out(self.ext_seg_2,
+                                                      'Datacenter-Out',
+                                                      'snat')
+
         # Note: Cleanup per testcases is not required,since every testcase
         # updates the PTG, hence over-writing previous attr vals
         test_list = [
@@ -81,8 +85,9 @@ class SNAT_VMs_to_ExtGw(object):
                   if test() == 2:
                      abort = 1
                      break
-                  self._log.warning("Repeat Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
-                  #PauseToDebug() #JISHNU: Uncomment on debug
+                  self._log.warning("Repeat-on-fail Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
+                  if self.pausetodebug == True:
+                     PauseToDebug()
                   repeat_test += 1
                 if repeat_test == 4:
                     test_results[string.upper(test.__name__.lstrip('self.'))] = 'FAIL'

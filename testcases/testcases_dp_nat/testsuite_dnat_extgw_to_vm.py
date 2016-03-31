@@ -47,16 +47,20 @@ class DNAT_ExtGw_to_VMs(object):
         self.test_3_prs = {objs_uuid['shared_ruleset_icmp_id']}
         self.test_4_prs = {objs_uuid['shared_ruleset_tcp_id']}
         self.test_5_prs = {objs_uuid['shared_ruleset_icmp_tcp_id']}
+        self.pausetodebug = objs_uuid['pausetodebug']
         self.dest_vm_fips = dest_vm_fips
         self.gbp_crud = GBPCrud(self.ostack_controller)
-        # Add external routes to the Shadow L3Out(only for Datacenter-Out)
-        self.gbp_crud.gbp_ext_route_add_to_extseg_util(self.ext_seg_2,'Datacenter-Out')
 
 
     def test_runner(self, vpc=0):
         """
         Method to run all testcases
         """
+        # Add external routes to the Shadow L3Out(only for Datacenter-Out)
+        self.gbp_crud.AddRouteInShadowL3Out(self.ext_seg_2,
+                                                       'Datacenter-Out',
+                                                       'dnat')
+
         # Note: Cleanup per testcases is not required,since every testcase
         # updates the PTG, hence over-writing previous attr vals
         test_list = [
@@ -73,8 +77,9 @@ class DNAT_ExtGw_to_VMs(object):
                 while repeat_test < 3:
                   if test() == 1:
                      break
-                  self._log.warning("Repeat Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
-                  #PauseToDebug() #JISHNU: Uncomment on debug
+                  self._log.warning("Repeat-on-fail Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
+                  if self.pausetodebug == True:
+                     PauseToDebug()
                   repeat_test += 1
                 if repeat_test == 3:
                     test_results[string.upper(test.__name__.lstrip('self.'))] = 'FAIL'

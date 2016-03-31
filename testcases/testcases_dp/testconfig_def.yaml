@@ -14,3 +14,5 @@ test_parameters:
   ip_version: ipv4
   vpc_type: vpc
 vm_image: ubuntu_multi_nics
+# Enable the below flag inorder to live-debug on Failure of a Testcase
+pausetodebug: False

@@ -43,6 +43,7 @@ class test_diff_ptg_same_l2p_l3p(object):
         stack_name = super_hdr.stack_name
         heat_temp = super_hdr.heat_temp
         self.ntk_node = super_hdr.ntk_node
+        self.pausetodebug = super_hdr.pausetodebug
         self.ptg_1 = objs_uuid['demo_diff_ptg_same_l2p_l3p_ptg1_id']
         self.ptg_2 = objs_uuid['demo_diff_ptg_same_l2p_l3p_ptg2_id']
         self.test_2_prs = objs_uuid['demo_ruleset_norule_id']
@@ -88,7 +89,9 @@ class test_diff_ptg_same_l2p_l3p(object):
                   if testresult == 2:
                      abort = 1
                      break
-                  self._log.warn("Repeat Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
+                  self._log.warn("Repeat-on-fail Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
+                  if self.pausetodebug == True:
+                     PauseToDebug()
                   repeat_test += 1
                 if repeat_test == 4: 
                     for name in ['test_8','test_9','test_9A']:

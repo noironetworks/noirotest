@@ -42,7 +42,10 @@ parameters:
     description: NAT IP-Pool for Mgmt Ext Seg
     label: mgmt_nat_ip_pool
     type: string
-
+  # default value of dc_nat_ip_pool
+  # has been hardcoded insided testsuite_dnat_vmt_to_vm.py
+  # So if you change the value, ensure to change in the
+  # above file too. Sorry :-) bear with my laziness :-( 
   dc_nat_ip_pool:
     default: '66.66.66.0/24'
     description: NAT IP-Pool for DC Ext Seg

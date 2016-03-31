@@ -1203,7 +1203,7 @@ class GBPCrud(object):
                   _log.error("Attribute %s and its Value %s NOT found in Object %s %s" %(arg,val,obj,obj_uuid))
                   return 0
 
-    def gbp_ext_route_add_to_extseg_util(self,extseg_id,extseg_name,route='60.60.60.0/24'):
+    def AddRouteInShadowL3Out(self,extseg_id,extseg_name,nattype,route=''):
         """
         Utility Method to add ext_routes to Ext_Seg
         ONLY needed for NAT DP TESTs ONLY USED For Datacenter-Out ExtSeg
@@ -1215,8 +1215,19 @@ class GBPCrud(object):
               rte = out.group(1)+'.0/24'
         cmd = 'crudini --get /etc/neutron/neutron.conf apic_external_network:%s gateway_ip' %(extseg_name)
         route_gw = getoutput(cmd)
-        _log.info("Routes to be added to External Segment are %s & %s with GW %s  == %s" %(extseg_name,route_gw,route,rte))
-        self.update_gbp_external_segment(
+        if nattype == 'dnat' and route != '':
+            _log.info("\nRoutes added to ShadowL3Out corresponding to External Segment\
+                       %s for DNAT VM2VM Traffic are %s & %s with GW %s" %(extseg_name,route,rte,route_gw))
+            self.update_gbp_external_segment(
              extseg_id,external_routes=[{'destination' : route, 'nexthop' : route_gw},
                                         {'destination' : rte, 'nexthop' : route_gw}])
-
+        if nattype == 'dnat' and route == '':
+           _log.info("\nRoutes added to ShadowL3Out corresponding to External Segment %s\
+                     for DNAT ExtRtr2VM Traffic is %s with GW %s" %(extseg_name,rte,route_gw))
+           self.update_gbp_external_segment(
+             extseg_id,external_routes=[{'destination' : rte, 'nexthop' : route_gw}])
+        if nattype == 'snat':
+           _log.info("\nRoutes added to ShadowL3Out corresponding to External Segment %s\
+                      for SNAT Traffic is %s with GW %s" %(extseg_name,rte,route_gw))
+           self.update_gbp_external_segment(
+             extseg_id,external_routes=[{'destination' : rte, 'nexthop' : route_gw}])

@@ -16,15 +16,18 @@ def get_obj_uuids(cfgfile,nat_type=''):
     if nat_type == '' or nat_type == 'dnat':
        objs_uuid = gbpverify.get_uuid_from_stack(
                     testbed_cfg.dnat_heat_temp,
-                    testbed_cfg.heat_stack_name)
+                    testbed_cfg.heat_stack_name
+                    )
     if nat_type == 'snat':
        objs_uuid = gbpverify.get_uuid_from_stack(
                     testbed_cfg.snat_heat_temp,
-                    testbed_cfg.heat_stack_name)
+                    testbed_cfg.heat_stack_name
+                    )
     objs_uuid['external_gw'] = testbed_cfg.extgw
     objs_uuid['ostack_controller'] = testbed_cfg.cntlr_ip
     objs_uuid['ipsofextgw'] = testbed_cfg.ips_of_extgw
     objs_uuid['ntk_node'] = testbed_cfg.ntk_node
+    objs_uuid['pausetodebug'] = testbed_cfg.pausetodebug
     print 'OBJS_UUID == \n', objs_uuid
     return objs_uuid
 
@@ -52,13 +55,14 @@ def main():
         from testcases.testcases_dp_nat.testsuite_dnat_extgw_to_vm import DNAT_ExtGw_to_VMs
         test_dnat_extgw_to_vm = DNAT_ExtGw_to_VMs(objs_uuid, targetVmFips)
         test_dnat_extgw_to_vm.test_runner()
-        
+       
         # Execution of DNAT DP Test from VM to ExtGW and VM-to-VM    
         from testcases.testcases_dp_nat.testsuite_dnat_vm_to_vm import DNAT_VMs_to_VMs
         test_dnat_vm_to_allvms = DNAT_VMs_to_VMs(objs_uuid, targetVmFips)
         test_dnat_vm_to_allvms.test_runner()
         # Cleanup
         testbed_cfg.cleanup()
+        print "\nDNAT TestSuite executed Successfully\n"
         
     if nat_type == 'snat':
         # RUN ONLY SNAT DP TESTs
@@ -73,6 +77,7 @@ def main():
         test_snat_allvms_to_extgw.test_runner()
         # Cleanup after the SNAT Testsuite is run
         testbed_cfg.cleanup()
+        print "\nSNAT TestSuite executed Successfully\n"
 
 if __name__ == "__main__":
     main()

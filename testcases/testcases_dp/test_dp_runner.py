@@ -64,6 +64,7 @@ def main():
                         testsuite.test_runner(log_string, location)
         """
     testbed_cfg.cleanup()
+    print "\nDataPath TestSuite executed Successfully\n"
 
 if __name__ == "__main__":
     main()

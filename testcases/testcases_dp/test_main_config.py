@@ -66,7 +66,7 @@ class gbp_main_config(object):
         getoutput(cmd)
 
         # Updating/Enabling Nova config for quota & availability-zone
-        self._log.info("\n Update/Enable Nova Quota & Availability Zone")
+        self._log.info("\n Update Nova Quota")
         if self.gbpnova.quota_update() == 0:
             self._log.error(
                 "\n ABORTING THE TESTSUITE RUN, Updating the Nova Quota's Failed")
@@ -78,6 +78,7 @@ class gbp_main_config(object):
                   self._log.warning("Residual Nova Agg exits, hence deleting it")
                   self.gbpnova.avail_zone('cli', 'removehost', self.nova_agg, hostname=self.comp_node)
                   self.gbpnova.avail_zone('cli', 'delete', self.nova_agg)
+               self._log.info("\nCreating Nova Host-aggregate & its Availability-zone")
                self.agg_id = self.gbpnova.avail_zone(
                        'api', 'create', self.nova_agg, avail_zone_name=self.nova_az)
             except Exception, e:
@@ -86,6 +87,7 @@ class gbp_main_config(object):
                 sys.exit(1)
             self._log.info(" Agg %s" % (self.agg_id))
             try:
+             self._log.info("\nAdding Nova host to availaibility-zone")
              self.gbpnova.avail_zone('api', 'addhost', self.agg_id, hostname=self.comp_node)
             except Exception, e:
                 self._log.error(

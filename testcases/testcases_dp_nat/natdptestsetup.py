@@ -46,6 +46,7 @@ class nat_dp_main_config(object):
         self.heat_stack_name = conf['heat_stack_name']
         self.ips_of_extgw = [conf['fip1_of_extgw'],
                              conf['fip2_of_extgw'], self.extgw]
+        self.pausetodebug = conf['pausetodebug']
         self.gbpcfg = Gbp_Config()
         self.gbpverify = Gbp_Verify()
         self.gbpnova = Gbp_Nova(self.cntlr_ip)
@@ -70,7 +71,7 @@ class nat_dp_main_config(object):
             self.heat_temp_test = self.snat_heat_temp
         if do_config == 0:
             self._log.info(
-                "\n Updating/Creating Nova Quota, Availability Zone")
+                "\n Updating Nova Quota")
             if self.gbpnova.quota_update() == 0:
                 self._log.info(
                     "\n ABORTING THE TESTSUITE RUN, Updating the Nova Quota's Failed")
@@ -79,9 +80,10 @@ class nat_dp_main_config(object):
                try:
                    cmd = "nova aggregate-list" # Check if Agg already exists then delete
                    if self.nova_agg in getoutput(cmd):
-                      self._log.warning("Residual Nova Agg exits, hence deleting it")
+                      self._log.warning("\nResidual Nova Agg exits, hence deleting it")
                       self.gbpnova.avail_zone('cli', 'removehost', self.nova_agg, hostname=self.comp_node)
                       self.gbpnova.avail_zone('cli', 'delete', self.nova_agg)
+                   self._log.info("\nCreating Nova Host-Aggregate & its Availability-zone")
                    self.agg_id = self.gbpnova.avail_zone(
                         'api', 'create', self.nova_agg, avail_zone_name=self.nova_az)
                except Exception, e:
@@ -90,6 +92,7 @@ class nat_dp_main_config(object):
                    sys.exit(1)
                self._log.info(" Agg %s" % (self.agg_id))
                try:
+                 self._log.info("\nAdding Nova host to availability-zone")
                  self.gbpnova.avail_zone('api', 'addhost', self.agg_id, hostname=self.comp_node)
                except Exception, e:
                      self._log.info(

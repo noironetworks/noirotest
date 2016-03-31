@@ -46,6 +46,7 @@ class DNAT_VMs_to_VMs(object):
         self.test_3_prs = {objs_uuid['shared_ruleset_icmp_id']}
         self.test_4_prs = {objs_uuid['shared_ruleset_tcp_id']}
         self.test_5_prs = {objs_uuid['shared_ruleset_icmp_tcp_id']}
+        self.pausetodebug = objs_uuid['pausetodebug']
         self.vmfortraff = ['App-Server', 'Web-Server', 'Web-Client-1', 'Web-Client-2']
         self.vmtuple = ('App-Server', 'Web-Server', 'Web-Client-1', 'Web-Client-2')
         # Note: vmfortraff & vmtuple could have been addressed as a single
@@ -63,8 +64,6 @@ class DNAT_VMs_to_VMs(object):
         self.dest_vm_fips = dest_vm_fips
         self.gbpcrud = GBPCrud(self.ostack_controller)
         self.gbpnova = Gbp_Nova(self.ostack_controller)
-        # Add external routes to the Shadow L3Out(only for Datacenter-Out)
-        self.gbpcrud.gbp_ext_route_add_to_extseg_util(self.ext_seg_2,'Datacenter-Out')
         self.nat_traffic = NatTraffic(
             self.ostack_controller, self.vmfortraff, self.ntk_node)
 
@@ -72,6 +71,12 @@ class DNAT_VMs_to_VMs(object):
         """
         Method to run all testcases
         """
+        # Add external routes to the Shadow L3Out(only for Datacenter-Out)
+        self.gbpcrud.AddRouteInShadowL3Out(self.ext_seg_2,
+                                                      'Datacenter-Out',
+                                                      'dnat',
+                                                      route='66.66.66.0/24') #Hard-coded reference from yaml file param dc_nat_ip_pool
+
         # Note: Cleanup per testcases is not required,since every testcase
         # updates the PTG, hence over-writing previous attr vals
         test_list = [
@@ -93,8 +98,9 @@ class DNAT_VMs_to_VMs(object):
                   if test() == 2:
                      abort = 1
                      break
-                  self._log.warning("Repeat Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
-                  PauseToDebug() #JISHNU: Uncomment on debug
+                  self._log.warning("Repeat-on-fail Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
+                  if self.pausetodebug == True:
+                     PauseToDebug()
                   repeat_test += 1
                 if repeat_test == 3:
                     test_results[string.upper(test.__name__.lstrip('self.'))] = 'FAIL'
