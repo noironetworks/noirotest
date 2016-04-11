@@ -267,7 +267,6 @@ class NatTestSuite(object):
            return 0
         if self.steps.testDisassociateFipFromVMs() == 0:
            return 0
-        self.steps.DeleteOrCleanup('cleanup')
 
     def test_nat_func_5(self):
         """
@@ -407,10 +406,11 @@ class NatTestSuite(object):
 
         if self.steps.testDisassociateFipFromVMs() == 0:
            return 0
+        self.steps.DeleteOrCleanup('cleanup')
 
     def test_nat_func_7(self):
         """
-        Testcase in NAT Functionality
+        Testcase-7 in NAT Functionality
         """
         self.steps._log.info(
               "\nExecution of Testcase TEST_NAT_FUNC_7 starts")
@@ -465,25 +465,25 @@ class NatTestSuite(object):
         if self.steps.testDisassociateFipFromVMs(release_fip=1) == 0:
            return 0
 
-
     def test_nat_func_8(self):
         """
-        Testcase in NAT Functionality
+        Testcase-7 in NAT Functionality
         """
-        self.steps.DeleteOrCleanup('cleanup')
-        if self.steps.testCreateExtSegWithDefault() == 0:
-           return 0
-        if self.steps.testCreateNatPoolAssociateExtSeg() == 0:
-           return 0
+        self.steps._log.info(
+              "\nExecution of Testcase TEST_NAT_FUNC_8 starts")
         if self.steps.testCreatePtgDefaultL3p() == 0:
            return 0
         if self.steps.testCreateNonDefaultL3pAndL2p() == 0:
            return 0
         if self.steps.testCreatePtgWithNonDefaultL3p() == 0:
            return 0
-        if self.steps.testAssociateExtSegToBothL3ps() == 0:
-           return 0
         if self.steps.testCreatePolicyTargetForEachPtg() == 0:
+           return 0
+        if self.steps.testLaunchVmsForEachPt() == 0:
+           return 0
+        print "Sleeping for VM to come up ..."
+        sleep(10)
+        if self.steps.testCreateExtSegWithDefault('Management-Out') == 0:
            return 0
         if self.steps.testCreateUpdateExternalPolicy() == 0:
            return 0
@@ -493,15 +493,35 @@ class NatTestSuite(object):
                                    self.globalcfg.prsicmptcp
                                    ) == 0:
                return 0
-        if testVerifyCfgdObjects == 0:
+        if self.steps.testVerifyCfgdObjects == 0:
            return 0
-        if testLaunchVmsForEachPt() == 0:
+        if self.steps.testAssociateExtSegToBothL3ps() == 0:
            return 0
-        sleep(60)
-        if testAssociateFipToVMs() == 0:
+        if self.steps.testCreateNatPoolAssociateExtSeg() == 0:
            return 0
-        if testTrafficFromExtRtrToVmFip == 0:
+        if self.steps.testAssociateFipToVMs() == 0:
            return 0
+        sleep(30)
+        self.forextrtr.add_route_in_extrtr(
+                                          self.extrtr,
+                                          self.fipsubnet1,
+                                          self.gwip1_extrtr,
+                                          action='update'
+                                          )
+        if self.steps.testTrafficFromExtRtrToVmFip(self.extrtr) == 0:
+           return 0
+        if self.steps.testCreateUpdateExternalPolicy(delete=1) == 0:
+           return 0
+        if self.steps.testCreateUpdateExternalPolicy() == 0:
+           return 0
+        if self.steps.testApplyUpdatePrsToPtg('external',
+                                              self.globalcfg.prsicmptcp
+                                              ) == 0:
+           return 0
+        sleep(20) #Above update takes time to take effect on the ACI side
+        if self.steps.testTrafficFromExtRtrToVmFip(self.extrtr) == 0:
+           return 0
+
 
     def test_nat_func_9(self):
         """

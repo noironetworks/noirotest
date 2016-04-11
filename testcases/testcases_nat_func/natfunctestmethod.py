@@ -191,14 +191,32 @@ class NatFuncTestMethods(object):
             self.DeleteOrCleanup('cleanup')
             return 0
 
-    def testCreateUpdateExternalPolicy(self,update=0,updextseg=''):
+    def testCreateUpdateExternalPolicy(self,update=0,delete=0,updextseg=''):
         """
         Create ExtPolicy with ExtSegment
         Apply Policy RuleSets
         update:: 1, then MUST pass updextseg(the new extsegid to which
                     this existing ExtPol should now associate to
         """
-        if update == 0:
+        if delete == 1:
+            self._log.info("\nStep: Delete ExtPolicy")  
+            if self.gbpcrud.delete_gbp_external_policy(
+                           self.extpolid
+                           ) == 0:
+               self._log.error(
+                    "\nDeletion of External Policy failed")   
+               return 0
+        elif update == 1:
+            self._log.info(
+                 "\nStep: Update ExtPolicy with External Segment")  
+            if self.gbpcrud.update_gbp_external_policy(
+                           self.extpolname,
+                           external_segments=[updextseg]
+                           ) == 0:
+               self._log.error(
+                    "\nUpdation of External Policy with ExtSeg failed")   
+               return 0
+        else:
            self._log.info(
                "\nStep: Create ExtPolicy with ExtSegment and Apply PolicyRuleSets\n")
            self.extpolid = self.gbpcrud.create_gbp_external_policy(
@@ -209,17 +227,8 @@ class NatFuncTestMethods(object):
               self._log.error("\nCreation of External Policy failed")
               self.DeleteOrCleanup('cleanup')
               return 0
-        else:
-            self._log.info(
-                 "\nStep: Update ExtPolicy with External Segment")  
-            if self.gbpcrud.update_gbp_external_policy(
-                           self.extpolname,
-                           external_segments=[updextseg]
-                           ) == 0:
-               self._log.error(
-                    "\nUpdation of External Policy with ExtSeg failed")   
-               return 0
-
+           return self.extpolid
+   
     def testVerifyCfgdObjects(self):
         """
         Verify all the configured objects and their atts
@@ -256,7 +265,6 @@ class NatFuncTestMethods(object):
         Lanuch VMs
         """
         self._log.info("\nStep: Launch VMs\n")
-        
         # launch Nova VMs
         if self.gbpnova.vm_create_api(self.vm1name,
                                       'ubuntu_multi_nics',
