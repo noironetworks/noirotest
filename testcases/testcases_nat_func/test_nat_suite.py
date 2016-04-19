@@ -23,12 +23,15 @@ class NatTestSuite(object):
     def __init__(self,cfgfile):
         with open(cfgfile, 'rt') as f:
             conf = yaml.load(f)
-        self.cntlr_ip = conf['controller_ip']
+        self.cntlrip = conf['controller_ip']
         self.extrtr = conf['ext_rtr']
-        self.gwip1_extrtr = conf['gwip1_extrtr']
-        self.gwip2_extrtr = conf['gwip2_extrtr']
-        self.globalcfg = GbpNatFuncGlobalCfg(self.cntlr_ip)
-        self.steps = NatFuncTestMethods(self.cntlr_ip)
+        self.extrtr_ip1 = conf['extrtr_ip1']
+        self.extrtr_ip2 = conf['extrtr_ip2']
+        self.gwiplist = [self.extrtr_ip1, self.extrtr_ip2]
+        self.ntknode = conf['network_node']
+        self.apicip = conf['apic_ip']
+        self.globalcfg = GbpNatFuncGlobalCfg(self.cntlrip)
+        self.steps = NatFuncTestMethods(self.cntlrip,self.ntknode)
         self.natpoolname = self.steps.natpoolname2
         self.fipsubnet1 = self.steps.natippool1
         self.fipsubnet2 = self.steps.natippool2
@@ -64,6 +67,11 @@ class NatTestSuite(object):
                      ]
         for test in test_list:
                 self.steps.DeleteOrCleanup('cleanup')
+                matchsnat = 0
+                if 'snat' in test.__name__.lstrip('self.'): #intent of the below if block: to call addhostpoolcidr on first match
+                    matchsnat += 1
+                    if matchsnat == 1:
+                       self.steps.addhostpoolcidr()
                 if test() == 0:
                     test_results[string.upper(test.__name__.lstrip('self.'))] = 'FAIL'
                     self.steps._log.error("\n%s_%s == FAIL" % (
@@ -467,7 +475,7 @@ class NatTestSuite(object):
 
     def test_nat_func_8(self):
         """
-        Testcase-7 in NAT Functionality
+        Testcase-8 in NAT Functionality
         """
         self.steps._log.info(
               "\nExecution of Testcase TEST_NAT_FUNC_8 starts")
@@ -523,11 +531,13 @@ class NatTestSuite(object):
            return 0
 
 
-    def test_nat_func_9(self):
+    def test_snat_func_9(self):
         """
-        Testcase in NAT Functionality
+        Testcase-9 in NAT Functionality
         """
-        self.steps.DeleteOrCleanup('cleanup')
+        self.steps._log.info(
+                  "\nExecution of Testcase TEST_NAT_FUNC_9 starts")
+        
         if self.steps.testCreateExtSegWithDefault() == 0:
            return 0
         if self.steps.testCreateNatPoolAssociateExtSeg() == 0:

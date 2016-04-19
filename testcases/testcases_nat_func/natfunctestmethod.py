@@ -10,7 +10,10 @@ from libs.gbp_aci_libs import Gbp_Aci
 from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_nova_libs import Gbp_Nova
 from libs.raise_exceptions import *
+from libs.gbp_utils import *
 from traff_from_extgw import *
+from traff_from_allvms_to_extgw import NatTraffic
+
 
 class NatFuncTestMethods(object):
     """
@@ -30,7 +33,7 @@ class NatFuncTestMethods(object):
     _log.addHandler(hdlr)
     _log.setLevel(logging.INFO)
 
-    def __init__(self,cntlrip):
+    def __init__(self,cntlrip,ntknode):
 
         self.gbpcrud = GBPCrud(cntlrip)
         self.gbpnova = Gbp_Nova(cntlrip)
@@ -39,6 +42,8 @@ class NatFuncTestMethods(object):
         self.natpoolname2 = 'GbpNatPoolTest2'
         self.natippool1 = '55.55.55.0/24'
         self.natippool2 = '66.66.66.0/24'
+        self.snatpool = '50.50.50.0/24'
+        self.snatcidr = '50.50.50.1/24'
         self.l3pname = 'L3PNat'
         self.l3pippool = '20.20.20.0/24'
         self.l3ppreflen = 26
@@ -48,7 +53,24 @@ class NatFuncTestMethods(object):
         self.extpolname = 'ExtPolTest'
         self.vm1name = 'TestVM1'
         self.vm2name = 'TestVM2'
+        self.vmlist = [self.vm1name, self.vm2name]
+        self.nat_traffic = NatTraffic(
+            cntlrip, self.vmlist, ntknode)
      
+    def addhostpoolcidr(self,fileloc='/etc/neutron/neutron.conf'):
+        """
+        Add host_pool_cidr config flag and restarts neutron-server
+        fileloc :: location of the neutron config
+                   file in which apic_external_network
+                   section is defined
+        """
+        self._log.info("\nAdding host_pool_cidr to neutron conf")
+        crudcmd = 'crudini --set '+fileloc+\
+                  ' apic_external_network:Management-Out'+\
+                  ' '+'host_pool_cidr %s' %(self.snatcidr)
+        self._log.info("\nThe cmd to be executed for SNAT conf ==> %s" %(crudcmd))
+        getoutput(crudcmd)
+        getoutput('service neutron-server restart')
 
     def testCreateExtSegWithDefault(self,extsegname):
         """
@@ -402,6 +424,40 @@ class NatFuncTestMethods(object):
                 "\nFollowing Traffic Test from External GW Router Failed == %s" % (run_traffic))
             return 0
         
+    def testTrafficFromVMsToExtRtr(self,extgwips):
+        """
+        Ping and TCP traffic from VMs to ExtRtr
+        """
+        self._log.info("\nStep: Ping and TCP traffic from VMs to ExtRtr\n")
+        failed = {}
+        for srcvm in self.vmlist:
+            run_traffic = self.nat_traffic.test_traff_anyvm_to_extgw(
+                                                      srcvm, extgwips)
+            if run_traffic == 2:
+                   self._log.error("\n Traffic VM %s Unreachable, Test = Aborted" %(srcvm))
+                   return 0
+            if isinstance(run_traffic, tuple):
+                    failed[srcvm] = run_traffic[1]
+        if len(failed) > 0:
+                self._log.info(
+                "\nFollowing Traffic Test Failed After Applying ICMP-TCP-Combo Contract == %s" % (failed))
+                return 0
+
+
+    def AddSShContract(self,apicip):
+        """
+        Adds SSH contract between NS and EPG
+        Needed for SNAT Tests
+        """
+        self._log.info(
+            "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
+        svcepglist = [
+                'TestPtg1',
+                'TestPtg2'
+                ]
+        create_add_filter(apicip, svcepglist)
+        sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
+
     def DeleteOrCleanup(self,action,obj=None,uuid=''):
         """
         Specific Delete or Blind Cleanup

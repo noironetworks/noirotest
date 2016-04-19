@@ -304,9 +304,9 @@ class Gbp_Nova(object):
         Returns any VM property
         Pass vmname string & the property name string
         """
-        instance = self.nova.servers.find(name=vmname)
         vm_dict = {}
         try:
+           instance = self.nova.servers.find(name=vmname)
            vm_dict['name'] = instance.name.encode('ascii')
            vm_dict['id'] = instance.id.encode('ascii')
            vm_dict['networks'] = instance.networks.values()

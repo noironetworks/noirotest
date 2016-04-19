@@ -165,6 +165,34 @@ class Apic(object):
     def post(self, path, data):
         return requests.post(self.url(path), data=data, cookies=self.cookies, verify=False)
 
+    def get(self,path):
+        path = '/api/node/mo/uni.json?query-target=subtree&target-subtree-class=fvTenant'
+        return requests.get(self.url(path), cookies=self.cookies, verify=False)
+    
+    def delete(self,path):
+        return requests.delete(self.url(path), cookies=self.cookies, verify=False)
+
+def gettenants():
+    apic = Apic('172.28.184.30','admin','noir0123')
+    apic.get('dummy','yummy')
+
+def deletetenants(apicIp,username='admin',password='noir0123'):
+    """
+    Deletes all user created tenants on the APIC
+    """
+    path = '/api/node/mo/uni.json?query-target=subtree&target-subtree-class=fvTenant'
+    apic = Apic(apicIp,username,password)
+    req = apic.get(path)
+    tenantlist = []
+    for fvtenant in req.json()['imdata']:
+        tenantlist.append(fvtenant['fvTenant']['attributes']['dn'])
+    for donotdel in ['uni/tn-common','uni/tn-infra','uni/tn-mgmt']:
+        tenantlist.remove(donotdel)
+    print 'List of Tenants to be deleted ==\n', tenantlist
+    for deltnt in tenantlist:
+        path = '/api/node/mo/%s.json' %(deltnt)
+        apic.delete(path)
+
 def create_add_filter(apicIp,svcepg,username='admin',password='noir0123',tenant='_noirolab_admin'):
         """
         svcepg: Preferably pass a list of svcepgs if more than one
