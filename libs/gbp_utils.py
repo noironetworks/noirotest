@@ -172,10 +172,6 @@ class Apic(object):
     def delete(self,path):
         return requests.delete(self.url(path), cookies=self.cookies, verify=False)
 
-def gettenants():
-    apic = Apic('172.28.184.30','admin','noir0123')
-    apic.get('dummy','yummy')
-
 def deletetenants(apicIp,username='admin',password='noir0123'):
     """
     Deletes all user created tenants on the APIC
@@ -240,6 +236,21 @@ def addEnforcedToPtg(apic_ip,epg,flag='enforced',username='admin',password='noir
     path = '/api/node/mo/uni/tn-_noirolab_admin/ap-noirolab_app/epg-%s.json' %(epg)
     data = '{"fvAEPg":{"attributes":{"dn":"uni/tn-_noirolab_admin/ap-noirolab_app/epg-%s","pcEnfPref":"%s"},"children":[]}}' %(epg,flag)
     req = apic.post(path, data)
+    print req.text
+
+def enable_disable_switch_port(port,leaf_id,action,apicIp,username='admin',password='noir0123'):
+    """
+    Enable/disable port on the Leaf
+     action = 'enable' or 'disable'
+    """
+    apic = Apic(apicIp,username,password)
+    path = '/api/node/mo/uni/fabric/outofsvc.json'
+    if action == 'disable':
+       data = '{"fabricRsOosPath":{"attributes":{"tDn":"topology/pod-1/paths-%s/pathep-[%s]","lc":"blacklist"},"children":[]}}' %(leaf_id,port)
+    if action == 'enable':
+       data = '{"fabricRsOosPath":{"attributes":{"dn":"uni/fabric/outofsvc/rsoosPath-[topology/pod-1/paths-%s/pathep-[%s]]","status":"deleted"},"children":[]}}' %(leaf_id,port)
+    print data
+    req = apic.post(path,data)
     print req.text
 
 def add_route_in_extrtr(rtrip,route,nexthop,action='add',ostype='ubuntu',user='noiro',pwd='noir0123'):
