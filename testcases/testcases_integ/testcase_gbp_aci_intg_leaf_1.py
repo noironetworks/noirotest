@@ -10,22 +10,24 @@ from libs.gbp_heat_libs import Gbp_Heat
 from libs.gbp_nova_libs import Gbp_Nova
 from libs.raise_exceptions import *
 from libs.gbp_aci_libs import Gbp_Aci
+from libs.gbp_utils import *
 from test_utils import *
 
 
-class  testcase_gbp_aci_intg_leaf_1(object):
+class testcase_gbp_aci_intg_leaf_1(object):
     """
     This is a GBP_ACI Integration TestCase
     """
     # Initialize logging
-    logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)
-    _log = logging.getLogger( __name__ )
-    hdlr = logging.FileHandler('/tmp/ testcase_gbp_aci_intg_leaf_1.log')
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    hdlr.setFormatter(formatter)
-    _log.addHandler(hdlr)
+    #logging.basicConfig(level=logging.INFO)
+    _log = logging.getLogger(__name__)
     _log.setLevel(logging.INFO)
-    _log.setLevel(logging.DEBUG)
+    # create a logfile handler
+    hdlr = logging.FileHandler('/tmp/testcase_gbp_aci_intg_leaf_1.log')
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    hdlr.setFormatter(formatter)
+    # Add the handler to the logger
+    _log.addHandler(hdlr)
 
     def __init__(self,params):
 
@@ -88,8 +90,9 @@ class  testcase_gbp_aci_intg_leaf_1(object):
            self._log.info("\n ABORTING THE TESTSUITE RUN, HEAT STACK CREATE of %s Failed" %(self.heat_stack_name))
            self.test_CleanUp()
            sys.exit(1)
-        print 'Enable SSH .. sleeping for 60 secs'
-        sleep(60)
+        print 'Enable SSH .. sleeping for 5 secs'
+        create_add_filter(self.apic_ip,'demo_bd') # 'demo_bd' is the name of L2Policy in the Heat Temp
+        sleep(5)
         return 1
 
 
@@ -109,8 +112,8 @@ class  testcase_gbp_aci_intg_leaf_1(object):
         self._log.info("\nReconnect Leaf Port connected to Comp-Node-1\n")
         if self.gbpaci.enable_disable_switch_port(self.apic_ip,self.node_id,'enable',self.leaf_port_comp_node1) == 0:
            return 0
-        self._log.info("\n Sleeping for 60 secs for Opflex to converge\n")
-        sleep(60)
+        self._log.info("\n Sleeping for 20 secs for Opflex to converge\n")
+        sleep(20)
         return 1
        
     def test_step_VerifyTraffic(self):

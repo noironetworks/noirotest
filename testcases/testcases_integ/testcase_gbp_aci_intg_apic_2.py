@@ -9,6 +9,7 @@ from libs.gbp_heat_libs import Gbp_Heat
 from libs.raise_exceptions import *
 from libs.gbp_aci_libs import Gbp_Aci
 from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_utils import *
 from test_utils import *
 
 
@@ -19,7 +20,7 @@ class  testcase_gbp_aci_intg_apic_2(object):
     # Initialize logging
     logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)
     _log = logging.getLogger( __name__ )
-    hdlr = logging.FileHandler('/tmp/ testcase_gbp_aci_intg_apic_2.log')
+    hdlr = logging.FileHandler('/tmp/testcase_gbp_aci_intg_apic_2.log')
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     hdlr.setFormatter(formatter)
     _log.addHandler(hdlr)
@@ -80,6 +81,9 @@ class  testcase_gbp_aci_intg_apic_2(object):
            self._log.info("\n ABORTING THE TESTSUITE RUN, HEAT STACK CREATE of %s Failed" %(self.heat_stack_name))
            self.test_CleanUp()
            sys.exit(1)
+        print 'Enable SSH .. sleeping for 20 secs'
+        create_add_filter(self.apic_ip,'demo_bd') # 'demo_bd' is the name of L2Policy in the Heat Temp
+        sleep(20)
         return 1
 
     def test_step_DisconnectApic(self):
@@ -123,5 +127,5 @@ class  testcase_gbp_aci_intg_apic_2(object):
         self.gbpnova.avail_zone('api','removehost',self.agg_id,hostname=self.az_comp_node)
         self.gbpnova.avail_zone('api','delete',self.agg_id)
         self.gbpheat.cfg_all_cli(0,self.heat_stack_name)
-        sys.exit(1)
+        #sys.exit(1)
 

@@ -7,16 +7,16 @@ nova_az_name: 'gbp_zone'
 
 # User editable config params
 num_comp_nodes: 2
-controller_ip: '172.28.184.45'
-compnode1_ip: '172.28.184.46'
-compnode2_ip: '172.28.184.47'
-comp_nodes: ['172.28.184.46','172.28.184.47']
-apic_ip: '172.28.184.40'
-leaf1_ip: '172.28.184.41'
-leaf2_ip: '172.28.184.42'
-leaf1_node_id: '301'
-leaf2_node_id: '302'
-az_comp_node: 'f3-compute-1.noiro.lab'
+controller_ip: '172.28.184.35'
+compnode1_ip: '172.28.184.36'
+compnode2_ip: '172.28.184.37'
+comp_nodes: ['172.28.184.36','172.28.184.37']
+apic_ip: '172.28.184.30'
+leaf1_ip: '172.28.184.31'
+leaf2_ip: '172.28.184.32'
+leaf1_node_id: '201'
+leaf2_node_id: '202'
+az_comp_node: 'f2-compute-1.noiro.lab'
 vm_image: 'ubuntu_multi_nics'
 leaf1_to_compnode1_conn: 'eth1/33'
 leaf1_to_compnode2_conn: 'eth1/34'

@@ -10,22 +10,24 @@ from libs.gbp_heat_libs import Gbp_Heat
 from libs.raise_exceptions import *
 from libs.gbp_aci_libs import Gbp_Aci
 from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_utils import *
 from test_utils import *
 
 
-class  testcase_gbp_aci_intg_leaf_vpc_1(object):
+class testcase_gbp_aci_intg_leaf_vpc_flap_1(object):
     """
     This is a GBP_ACI Integration TestCase
     """
     # Initialize logging
-    logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)
-    _log = logging.getLogger( __name__ )
-    hdlr = logging.FileHandler('/tmp/ testcase_gbp_aci_intg_leaf_8.log')
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    hdlr.setFormatter(formatter)
-    _log.addHandler(hdlr)
+    #logging.basicConfig(level=logging.INFO)
+    _log = logging.getLogger(__name__)
     _log.setLevel(logging.INFO)
-    _log.setLevel(logging.DEBUG)
+    # create a logfile handler
+    hdlr = logging.FileHandler('/tmp/testcase_gbp_aci_intg_leaf_vpc_flap_1.log')
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    hdlr.setFormatter(formatter)
+    # Add the handler to the logger
+    _log.addHandler(hdlr)
 
     def __init__(self,params):
 
@@ -40,29 +42,34 @@ class  testcase_gbp_aci_intg_leaf_vpc_1(object):
       self.nova_agg = params['nova_agg']
       self.nova_az = params['nova_az']
       self.ntk_node = params['ntk_node']
-      self.leaf_port = params['leaf1_port1'] #This connects Leaf1 to Comp-node1
-      self.node_id = params['leaf1_node_id']
+      self.leaf1_port = params['leaf1_port1'] #This connects Leaf1 to Comp-node1
+      self.leaf2_port = params['leaf2_port1'] #This connects Leaf2 to Comp-node1
+      self.node1_id = params['leaf1_node_id']
+      self.node2_id = params['leaf2_node_id']
 
 
     def test_runner(self):
         """
         Method to run the Testcase in Ordered Steps
         """
-        test_name = 'VPC_DISCON_LEAF1_NODE1'
-        self._log.info("\nSteps of the TESTCASE_GBP_INTG_LEAF_VPC_1_VPC_DISCON_LEAF1_NODE1 to be executed\n")
+        test_name = 'VPC_DISCON_LEAF1&2_NODE1'
+        self._log.info("\nSteps of the TESTCASE_GBP_INTG_LEAF_VPC_1_VPC_DISCON_LEAF1&2_NODE1 to be executed\n")
         testcase_steps = [self.test_step_SetUpConfig,
-                          self.test_step_DisconnectLeafOneHost,
+                          self.test_step_DisconnectLeaf1Host,
+                          self.test_step_VerifyTraffic,
+                          self.test_step_DisconnectLeaf2Host,
                           self.test_step_VerifyTraffic
                          ]
         for step in testcase_steps:  ##TODO: Needs FIX
             try:
                if step()!=1:
+                  PauseToDebug()
                   self._log.info("Test Failed at Step == %s" %(step.__name__.lstrip('self')))
                   raise TestFailed("%s_%s@_%s == FAILED" %(self.__class__.__name__.upper(),test_name,step.__name__.lstrip('self.')))
             except TestFailed as err:
                print 'Noiro ==',err
                self.test_CleanUp()
-        self._log.info("%s == PASSED" %(self.__class__.__name__.upper(),test_name))        
+        self._log.info("%s_%s == PASSED" %(self.__class__.__name__.upper(),test_name))        
         self.test_CleanUp()
 
     def test_step_SetUpConfig(self):
@@ -84,17 +91,34 @@ class  testcase_gbp_aci_intg_leaf_vpc_1(object):
            self._log.info("\n ABORTING THE TESTSUITE RUN, HEAT STACK CREATE of %s Failed" %(self.heat_stack_name))
            self.test_CleanUp()
            sys.exit(1)
+        print 'Enable SSH .. sleeping for 20 secs'
+        create_add_filter(self.apic_ip,'demo_bd') # 'demo_bd' is the name of L2Policy in the Heat Temp
+        sleep(20)
         return 1
 
-    def test_step_DisconnectLeafOneHost(self):
+    def test_step_DisconnectLeaf1Host(self):
         """
-        Test Step to Disconnect Leaf Port from One Comp-node1
+        Test Step to Disconnect Leaf1 Port of vPC from Comp-node1
         """
-        self._log.info("\nStep to Disconnect Link between Leaf1 and Comp-Node-1\n")
-        if self.gbpaci.enable_disable_switch_port(self.apic_ip,self.node_id,'disable',self.leaf_port) == 0:
+        self._log.info("\nStep to Disconnect Link between Leaf1 and Comp-Node-1 in vPC\n")
+        if self.gbpaci.enable_disable_switch_port(self.apic_ip,self.node1_id,'disable',self.leaf1_port) == 0:
            return 0
         return 1
  
+    def test_step_DisconnectLeaf2Host(self):
+        """
+        Test Step to Disconnect Leaf2 Port from Comp-node1
+        """
+        self._log.info("\nStep to Disconnect Link between Leaf2 and Comp-Node-1 in vPC\n")
+        # Before disabling Leaf2-CompNode1 link, ensure to enable Leaf1-CompNode1 link
+        self.gbpaci.enable_disable_switch_port(self.apic_ip,self.node1_id,'enable',self.leaf1_port)
+        print '\n Sleeping for 30 secs after enabling Leaf1-CompNode1 link'
+        sleep(30)
+        self._log.info("\nStep to Disconnect Link between Leaf2 and Comp-Node-1 in vPC\n")
+        if self.gbpaci.enable_disable_switch_port(self.apic_ip,self.node2_id,'disable',self.leaf2_port) == 0:
+           return 0
+        return 1
+
     def test_step_VerifyTraffic(self):
         """
         Send and Verify traffic
@@ -107,8 +131,9 @@ class  testcase_gbp_aci_intg_leaf_vpc_1(object):
         Cleanup the Testcase setup
         """
         self._log.info("\nCleanUp to be executed\n")
-        self.gbpaci.enable_disable_switch_port(self.apic_ip,self.node_id,'enable',self.leaf_port)
+        self.gbpaci.enable_disable_switch_port(self.apic_ip,self.node1_id,'enable',self.leaf1_port)
+        self.gbpaci.enable_disable_switch_port(self.apic_ip,self.node2_id,'enable',self.leaf2_port)
         self.gbpnova.avail_zone('api','removehost',self.agg_id,hostname=self.az_comp_node)
         self.gbpnova.avail_zone('api','delete',self.agg_id)
         self.gbpheat.cfg_all_cli(0,self.heat_stack_name)
-        sys.exit(1)
+        #sys.exit(1)

@@ -35,12 +35,18 @@ def verify_traff(ntk_node,vm_loc='default',proto=['all']):
         if vm_loc == 'default':
             samehosttrf = Gbp_pexp_traff(ntk_node,dhcp_ns,vm4_ip,vm5_ip)
             result_samehost = samehosttrf.test_run()
+            if result_samehost == 2:
+               return 0
             diffhosttrf = Gbp_pexp_traff(ntk_node,dhcp_ns,vm4_ip,vm6_ip)
             result_diffhost = diffhosttrf.test_run()
+            if result_diffhost == 2:
+               return 0
             results = {'same_host': result_samehost,\
                        'diff_host_same_leaf': result_diffhost}
         if vm_loc != 'default':
-           results=gbppexptraff.test_run()
+           results = gbppexptraff.test_run()
+           if results == 2:
+              return 0
         print 'Results from the Testcase == ', results
         failed={}
         if proto[0] == 'all' and vm_loc != 'default': 
