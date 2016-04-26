@@ -6,7 +6,6 @@ import os
 import datetime
 import string
 from time import sleep
-from libs.gbp_conf_libs import Gbp_Config
 from libs.gbp_heat_libs import Gbp_Heat
 from libs.raise_exceptions import *
 from libs.gbp_aci_libs import Gbp_Aci
@@ -15,61 +14,59 @@ from libs.gbp_utils import *
 from test_utils import *
 
 
-class  testcase_gbp_aci_intg_leaf_4(object):
+class testcase_gbp_aci_intg_leaf_vpc_2(object):
     """
     This is a GBP_ACI Integration TestCase
     """
     # Initialize logging
-    logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)
-    _log = logging.getLogger( __name__ )
-    hdlr = logging.FileHandler('/tmp/testcase_gbp_aci_intg_leaf_4.log')
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    hdlr.setFormatter(formatter)
-    _log.addHandler(hdlr)
+    #logging.basicConfig(level=logging.INFO)
+    _log = logging.getLogger(__name__)
     _log.setLevel(logging.INFO)
-    _log.setLevel(logging.DEBUG)
+    # create a logfile handler
+    hdlr = logging.FileHandler('/tmp/testcase_gbp_aci_intg_leaf_vpc_2.log')
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    hdlr.setFormatter(formatter)
+    # Add the handler to the logger
+    _log.addHandler(hdlr)
 
     def __init__(self,params):
 
-      self.gbpcfg = Gbp_Config()
       self.gbpaci = Gbp_Aci()
-      self.heat_stack_name = 'gbpleaf5'
+      self.heat_stack_name = 'gbpvpc1'
       cntlr_ip = params['cntlr_ip']
       self.heat_temp_test = params['heat_temp_file']
       self.gbpheat = Gbp_Heat(cntlr_ip)
       self.gbpnova = Gbp_Nova(cntlr_ip)
-      self.leaf_ip = params['leaf1_ip']
       self.apic_ip = params['apic_ip']
-      self.ntk_node = params['ntk_node']
       self.az_comp_node = params['az_comp_node']
       self.nova_agg = params['nova_agg']
       self.nova_az = params['nova_az']
-      self.leaf_port1 = params['leaf1_port1']
-      self.leaf_port2 = params['leaf1_port2']
-      self.comp_nodes = params['comp_node_ips']
-
+      self.ntk_node = params['ntk_node']
+      self.leaf2_ip = params['leaf2_ip']
+      self.leafname = params['leaf2name']
+      self.debug = params['pausetodebug']
 
     def test_runner(self):
         """
         Method to run the Testcase in Ordered Steps
         """
-        test_name = 'STOP_OPFLEXAGNT_SETUPCFG_START_OPFLEXAGNT'
-        self._log.info("\nSteps of the TESTCASE_GBP_INTG_LEAF_4_STOP_OPFLEXAGNT_SETUPCFG_START_OPFLEXAGNT to be executed\n")
-        testcase_steps = [
-                          self.test_step_StopOPflexAgent,
-                          self.test_step_SetUpConfig,
-                          self.test_step_StartOpflexAgent,
+        test_name = 'REBOOT_LEAF2'
+        self._log.info("\nSteps of the TESTCASE_GBP_INTG_LEAF_VPC_2_REBOOT_LEAF2 to be executed\n")
+        testcase_steps = [self.test_step_SetUpConfig,
+                          self.test_step_RebootLeaf,
                           self.test_step_VerifyTraffic
                          ]
-        for step in testcase_steps:  ##TODO: Needs FIX
-            try:
-               if step()!=1:
+	status = ''
+        for step in testcase_steps:
+            if step()!=1:
                   self._log.info("Test Failed at Step == %s" %(step.__name__.lstrip('self')))
-                  raise TestFailed("%s_%s@_%s == FAILED" %(self.__class__.__name__.upper(),test_name,step.__name__.lstrip('self.')))
-            except TestFailed as err:
-               print 'Noiro ==',err
-               self.test_CleanUp()
-        self._log.info("%s_%s == PASSED" %(self.__class__.__name__.upper(),test_name))        
+                  if self.debug == True:
+                     PauseToDebug()
+                  self._log.info("%s_%s == FAILED" %(self.__class__.__name__.upper(),test_name))
+                  status = 'failed'
+                  break
+        if status != 'failed':
+           self._log.info("%s_%s == PASSED" %(self.__class__.__name__.upper(),test_name))
         self.test_CleanUp()
 
     def test_step_SetUpConfig(self):
@@ -96,33 +93,35 @@ class  testcase_gbp_aci_intg_leaf_4(object):
         sleep(20)
         return 1
 
-
-    def test_step_StopOPflexAgent(self):
+    def test_step_RebootLeaf(self):
         """
-        Test Step to Stop OpflexAgent on two Comp-nodes
+        Test Step to Reboot Leaf1
         """
-        self._log.info("\nStep to Stop OpflexAgent on two Comp-nodes\n")
-        for node in self.comp_nodes:
-          if self.gbpcfg.restart_service(node,'agent-ovs.service',action='stop') == 0:
-             return 0
+        self._log.info("\nStep to Reboot Leaf2 in vPC\n")
+        if self.gbpaci.reboot_aci(self.leaf2_ip) == 0:
+           return 0
+        sleep(10) #For reboot to kick-in
         return 1
 
-    def test_step_StartOpflexAgent(self):
-        """
-        Test Step to Start OpflexAgent on two Comp-nodes
-        """
-        self._log.info("\nStep to Start OpflexAgent on two Comp-nodes\n")
-        for node in self.comp_nodes:
-          if self.gbpcfg.restart_service(node,'agent-ovs.service',action='start') == 0:
-             return 0
-        sleep(20)
-        return 1
-       
     def test_step_VerifyTraffic(self):
         """
-        Send and Verify traffic
+        Send and Verify traffic while one of the Leaf is booting up
         """
-        self._log.info("\nSend and Verify traffic for Intra & Inter Host\n")
+        self._log.info("\nSend and Verify Traffic\n")
+        return verify_traff(self.ntk_node)
+
+    def test_step_VerifyLeafTraffic(self):
+        """
+        Verify Leaf status as Active
+        Send and Verify Traffic Again
+        """
+        print '\nSleep for every 20s and probe for Leaf become Active'
+        while True:
+              if self.gbpaci.aciStatus(self.apic_ip,self.leafname):
+                 break
+              else:
+                  sleep(20)
+        self._log.info("\nSend and Verify Traffic as Leaf has become Active Post-Reboot\n")
         return verify_traff(self.ntk_node)
 
     def test_CleanUp(self):
@@ -130,10 +129,7 @@ class  testcase_gbp_aci_intg_leaf_4(object):
         Cleanup the Testcase setup
         """
         self._log.info("\nCleanUp to be executed\n")
-        for node in self.comp_nodes:
-           self.gbpcfg.restart_service(node,'agent-ovs.service',action='start')
         self.gbpnova.avail_zone('api','removehost',self.agg_id,hostname=self.az_comp_node)
         self.gbpnova.avail_zone('api','delete',self.agg_id)
         self.gbpheat.cfg_all_cli(0,self.heat_stack_name)
         #sys.exit(1)
-

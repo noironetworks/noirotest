@@ -14,7 +14,9 @@ comp_nodes: ['172.28.184.36','172.28.184.37']
 apic_ip: '172.28.184.30'
 leaf1_ip: '172.28.184.31'
 leaf2_ip: '172.28.184.32'
+leaf1name: 'f2-leaf-1'
 leaf1_node_id: '201'
+leaf2name: 'f2-leaf-2'
 leaf2_node_id: '202'
 az_comp_node: 'f2-compute-1.noiro.lab'
 vm_image: 'ubuntu_multi_nics'
@@ -24,4 +26,4 @@ leaf2_to_compnode1_conn: 'eth1/33'
 leaf2_to_compnode2_conn: 'eth1/34'
 leaf1_to_spine_conn: 'eth1/49'
 leaf2_to_spine_conn: 'eth1/49'
-
+pausetodebug: True

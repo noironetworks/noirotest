@@ -6,10 +6,11 @@ import os
 import datetime
 import string
 from time import sleep
+from libs.gbp_conf_libs import Gbp_Config
 from libs.gbp_heat_libs import Gbp_Heat
-from libs.gbp_nova_libs import Gbp_Nova
 from libs.raise_exceptions import *
 from libs.gbp_aci_libs import Gbp_Aci
+from libs.gbp_nova_libs import Gbp_Nova
 from libs.gbp_utils import *
 from test_utils import *
 
@@ -30,8 +31,9 @@ class  testcase_gbp_aci_intg_leaf_3(object):
 
     def __init__(self,params):
 
+      self.gbpcfg = Gbp_Config()
       self.gbpaci = Gbp_Aci()
-      self.heat_stack_name = 'gbpleaf3'
+      self.heat_stack_name = 'gbpleaf5'
       cntlr_ip = params['cntlr_ip']
       self.heat_temp_test = params['heat_temp_file']
       self.gbpheat = Gbp_Heat(cntlr_ip)
@@ -42,33 +44,31 @@ class  testcase_gbp_aci_intg_leaf_3(object):
       self.az_comp_node = params['az_comp_node']
       self.nova_agg = params['nova_agg']
       self.nova_az = params['nova_az']
-      self.leaf_port_comp_node1 = params['leaf1_port1'] #This connects Leaf1 to Comp-node1
-      self.leaf_port_comp_node2 = params['leaf1_port2'] #This connects Leaf1 to Comp-node2
-      self.node_id = params['leaf1_node_id']
+      self.comp_nodes = params['comp_node_ips']
 
 
     def test_runner(self):
         """
         Method to run the Testcase in Ordered Steps
         """
-        test_name = 'SETUPCFG_WITH_OFFLINE_BOTH_COMP_NODES'
-        self._log.info("\nSteps of the TESTCASE_GBP_INTG_LEAF_3_SETUPCFG_WITH_OFFLINE_BOTH_COMP_NODES to be executed\n")
-        testcase_steps = [self.test_step_DisconnectLeaf,
+        test_name = 'STOP_OPFLEXAGNT_SETUPCFG_START_OPFLEXAGNT'
+        self._log.info("\nSteps of the TESTCASE_GBP_INTG_LEAF_3_STOP_OPFLEXAGNT_SETUPCFG_START_OPFLEXAGNT to be executed\n")
+        testcase_steps = [
+                          self.test_step_StopOPflexAgent,
                           self.test_step_SetUpConfig,
-                          self.test_step_ReconnectLeaf,
+                          self.test_step_StartOpflexAgent,
                           self.test_step_VerifyTraffic
                          ]
-        for step in testcase_steps:  ##TODO: Needs FIX
-            try:
-               if step()!=1:
+	status = ''
+        for step in testcase_steps:
+            if step()!=1:
                   self._log.info("Test Failed at Step == %s" %(step.__name__.lstrip('self')))
-                  raise TestFailed("%s_%s@_%s == FAILED" %(self.__class__.__name__.upper(),test_name,step.__name__.lstrip('self.')))
-            except TestFailed as err:
-              print 'Noiro ==',err
-              self.test_CleanUp()
-        self._log.info("%s_%s == PASSED" %(self.__class__.__name__.upper(),test_name))        
+                  self._log.info("%s_%s == FAILED" %(self.__class__.__name__.upper(),test_name))        
+                  status = 'failed'
+                  break
+        if status != 'failed':
+           self._log.info("%s_%s == PASSED" %(self.__class__.__name__.upper(),test_name))        
         self.test_CleanUp()
-
 
     def test_step_SetUpConfig(self):
         """
@@ -94,32 +94,33 @@ class  testcase_gbp_aci_intg_leaf_3(object):
         sleep(20)
         return 1
 
-    def test_step_DisconnectLeaf(self):
+
+    def test_step_StopOPflexAgent(self):
         """
-        Test Step to Disconnect Leaf Port from two Comp-nodes
+        Test Step to Stop OpflexAgent on two Comp-nodes
         """
-        self._log.info("\nStep to Disconnect Leaf Port from Two Comp-nodes= CompNode1 & CompNode2\n")
-        for port in [self.leaf_port_comp_node1,self.leaf_port_comp_node2]:
-          if self.gbpaci.enable_disable_switch_port(self.apic_ip,self.node_id,'disable',port) == 0:
-           return 0
+        self._log.info("\nStep to Stop OpflexAgent on two Comp-nodes\n")
+        for node in self.comp_nodes:
+          if self.gbpcfg.restart_service(node,'agent-ovs.service',action='stop') == 0:
+             return 0
         return 1
 
-    def test_step_ReconnectLeaf(self):
+    def test_step_StartOpflexAgent(self):
         """
-        Test Step to Reconnect Leaf Port to two Comp-nodes
+        Test Step to Start OpflexAgent on two Comp-nodes
         """
-        self._log.info("\nStep to RE-connect Leaf Ports to both Comp-nodes= CompNode1 & CompNode2\n")
-        for port in [self.leaf_port_comp_node1,self.leaf_port_comp_node2]:
-          if self.gbpaci.enable_disable_switch_port(self.apic_ip,self.node_id,'enable',port) == 0:
-           return 0
-        sleep(60)  ##For Opflex to re-converge
+        self._log.info("\nStep to Start OpflexAgent on two Comp-nodes\n")
+        for node in self.comp_nodes:
+          if self.gbpcfg.restart_service(node,'agent-ovs.service',action='start') == 0:
+             return 0
+        sleep(20)
         return 1
-
+       
     def test_step_VerifyTraffic(self):
         """
         Send and Verify traffic
         """
-        self._log.info("\nSend and Verify Traffic\n")
+        self._log.info("\nSend and Verify traffic for Intra & Inter Host\n")
         return verify_traff(self.ntk_node)
 
     def test_CleanUp(self):
@@ -127,7 +128,10 @@ class  testcase_gbp_aci_intg_leaf_3(object):
         Cleanup the Testcase setup
         """
         self._log.info("\nCleanUp to be executed\n")
+        for node in self.comp_nodes:
+           self.gbpcfg.restart_service(node,'agent-ovs.service',action='start')
         self.gbpnova.avail_zone('api','removehost',self.agg_id,hostname=self.az_comp_node)
         self.gbpnova.avail_zone('api','delete',self.agg_id)
         self.gbpheat.cfg_all_cli(0,self.heat_stack_name)
         #sys.exit(1)
+

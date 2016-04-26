@@ -47,6 +47,7 @@ class testcase_gbp_aci_intg_leaf_vpc_flap_5(object):
       self.leaf2_port_comp_node2 = params['leaf2_port2'] #This connects Leaf2 to Comp-node2
       self.leaf1_node_id = params['leaf1_node_id']
       self.leaf2_node_id = params['leaf2_node_id']
+      self.debug = params['pausetodebug']
 
 
     def test_runner(self):
@@ -59,15 +60,17 @@ class testcase_gbp_aci_intg_leaf_vpc_flap_5(object):
                           self.test_step_DisconnectLeafsFromHosts,
                           self.test_step_VerifyTraffic
                          ]
-        for step in testcase_steps:  ##TODO: Needs FIX
-            try:
-               if step()!=1:
+        status = ''
+        for step in testcase_steps:
+            if step()!=1:
                   self._log.info("Test Failed at Step == %s" %(step.__name__.lstrip('self')))
-                  raise TestFailed("%s_%s@_%s == FAILED" %(self.__class__.__name__.upper(),test_name,step.__name__.lstrip('self.')))
-            except TestFailed as err:
-               print 'Noiro ==',err
-               self.test_CleanUp()
-        self._log.info("%s_%s == PASSED" %(self.__class__.__name__.upper(),test_name))        
+                  if self.debug == True:
+                     PauseToDebug()
+                  self._log.info("%s_%s == FAILED" %(self.__class__.__name__.upper(),test_name))        
+                  status = 'failed'
+                  break
+        if status != 'failed':
+           self._log.info("%s_%s == PASSED" %(self.__class__.__name__.upper(),test_name))        
         self.test_CleanUp()
 
     def test_step_SetUpConfig(self):

@@ -4,6 +4,8 @@ import glob
 import importlib
 import yaml
 from commands import *
+getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
+
 
 def main():
     f = open(sys.argv[1],'rt')
@@ -28,7 +30,9 @@ class wrapper(object):
                                      'compnode1_ip' : config_file['compnode1_ip'],
                                      'compnode2_ip' : config_file['compnode2_ip'],
                                      'apic_ip' : config_file['apic_ip'],
+                                     'leaf1name': config_file['leaf1name'],
                                      'leaf1_node_id' : config_file['leaf1_node_id'],
+                                     'leaf2name': config_file['leaf2name'],
                                      'leaf2_node_id' : config_file['leaf2_node_id'],
                                      'leaf1_ip' : config_file['leaf1_ip'],
                                      'leaf2_ip' : config_file['leaf2_ip'],
@@ -37,7 +41,8 @@ class wrapper(object):
                                      'leaf2_port1' : config_file['leaf2_to_compnode1_conn'],
                                      'leaf2_port2' : config_file['leaf2_to_compnode2_conn'],
                                      'leaf1_spine_conn' : config_file['leaf1_to_spine_conn'],
-                                     'leaf2_spine_conn' : config_file['leaf2_to_spine_conn']
+                                     'leaf2_spine_conn' : config_file['leaf2_to_spine_conn'],
+                                     'pausetodebug': config_file['pausetodebug']
                                     }
 
 

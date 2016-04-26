@@ -98,7 +98,7 @@ class Gbp_Aci(object):
         
         return 1 
 
-    def apic_verify_mos(self,apic_ip,objs,tenant='admin'):
+    def apic_verify_mos(self,apic_ip,objs,tenant='admin',uname='admin',passwd='noir0123'):
         """
         Function to verify MOs in APIC
         """
@@ -106,8 +106,8 @@ class Gbp_Aci(object):
         if not isinstance(objs,list):
            objs = [objs]
         env.host_string = apic_ip
-        env.user = 'admin'
-        env.password = 'noir0123'
+        env.user = uname
+        env.password = passwd
         output = run("ls -ltr /mit/uni/tn-%s" %(tenant))
         for obj in objs:
             regex = re.compile(r"\W%s\W" %(obj))
@@ -153,15 +153,29 @@ class Gbp_Aci(object):
         print output
         return 1
 
-    def reboot_aci(self,ip):
+    def reboot_aci(self,ip,node='leaf'):
         """
         Reboot APIC/Leaf/Spine
         ip:: ip of the aci device to be rebooted
         """
-        self.exec_admin_cmd(ip,'system-reboot')
+        
+        if node == 'apic':
+           cmd = 'reload controller 1'
+        else:
+           cmd = 'system-reboot'
+        self.exec_admin_cmd(ip,cmd)
         return 1
 
+    def aciStatus(self,apic_ip,node,nodetype='leaf',status='active'):
+        """
+        Verify the node status in ACI
+        node: leaf or spine's hostname
+        """
+        cmdout = self.exec_admin_cmd(apic_ip,'acidiag fnvread | grep %s' %(node))
+        if re.search('\d+\s+%s\s+[A-Z0-9]+\s+\d+.\d+.\d+.\d+\/32\s+\\b%s\s+\d\s+\\b%s' %(node,nodetype,status),cmdout,re.I) != None:
+           return 1
            
+
 class Apic(object):
     def __init__(self, addr, user, passwd, ssl=True):
         self.addr = addr
