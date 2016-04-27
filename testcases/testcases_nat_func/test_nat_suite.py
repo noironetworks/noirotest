@@ -530,7 +530,6 @@ class NatTestSuite(object):
         if self.steps.testTrafficFromExtRtrToVmFip(self.extrtr) == 0:
            return 0
 
-
     def test_snat_func_9(self):
         """
         Testcase-9 in NAT Functionality
@@ -538,9 +537,7 @@ class NatTestSuite(object):
         self.steps._log.info(
                   "\nExecution of Testcase TEST_NAT_FUNC_9 starts")
         
-        if self.steps.testCreateExtSegWithDefault() == 0:
-           return 0
-        if self.steps.testCreateNatPoolAssociateExtSeg() == 0:
+        if self.steps.testCreateExtSegWithDefault('Management-Out') == 0:
            return 0
         if self.steps.testCreatePtgDefaultL3p() == 0:
            return 0
@@ -548,10 +545,13 @@ class NatTestSuite(object):
            return 0
         if self.steps.testCreatePtgWithNonDefaultL3p() == 0:
            return 0
-        if self.steps.testAssociateExtSegToBothL3ps() == 0:
-           return 0
+        self.steps.AddSShContract(self.apicip) ## Adding SSH contract
         if self.steps.testCreatePolicyTargetForEachPtg() == 0:
            return 0
+        if self.steps.testLaunchVmsForEachPt() == 0:
+           return 0
+        print "Sleeping for VM to come up ..."
+        sleep(10)
         if self.steps.testCreateUpdateExternalPolicy() == 0:
            return 0
         for ptgtype in ['internal','external']:
@@ -560,14 +560,18 @@ class NatTestSuite(object):
                                    self.globalcfg.prsicmptcp
                                    ) == 0:
                return 0
-        if testVerifyCfgdObjects == 0:
+        if self.steps.testVerifyCfgdObjects == 0:
            return 0
-        if testLaunchVmsForEachPt() == 0:
+        if self.steps.testAssociateExtSegToBothL3ps() == 0:
            return 0
-        sleep(60)
-        if testAssociateFipToVMs() == 0:
-           return 0
-        if testTrafficFromExtRtrToVmFip == 0:
+        sleep(15)
+        self.forextrtr.add_route_in_extrtr(
+                                          self.extrtr,
+                                          self.steps.snatpool,
+                                          self.gwip1_extrtr,
+                                          action='update'
+                                          )
+        if self.steps.testTrafficFromVMsToExtRtr(self.gwiplist) == 0:
            return 0
 
     def test_nat_func_10(self):

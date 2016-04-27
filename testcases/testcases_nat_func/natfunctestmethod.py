@@ -453,7 +453,7 @@ class NatFuncTestMethods(object):
             "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
         svcepglist = [
                 'TestPtg1',
-                'TestPtg2'
+                'L2PNat'
                 ]
         create_add_filter(apicip, svcepglist)
         sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
