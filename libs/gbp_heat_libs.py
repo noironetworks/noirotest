@@ -85,7 +85,7 @@ class Gbp_Heat(object):
               _log.info("The stack does not exist, so no need of delete")
               return 1 
            # Else then proceed with delete as the said stack exists
-           cmd_cfg = "heat stack-delete %s" %(name)
+           cmd_cfg = "heat stack-delete %s -y" %(name)
            cfg_out = getoutput(cmd_cfg)
            _log.info("Sleeping for 10 secs ... to check if stack got deleted")
            sleep(10)
