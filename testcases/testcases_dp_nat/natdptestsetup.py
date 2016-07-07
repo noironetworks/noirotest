@@ -47,10 +47,13 @@ class nat_dp_main_config(object):
         self.ips_of_extgw = [conf['fip1_of_extgw'],
                              conf['fip2_of_extgw'], self.extgw]
         self.pausetodebug = conf['pausetodebug']
+        self.neutronconffile = conf['neutronconffile']
         self.gbpcfg = Gbp_Config()
         self.gbpverify = Gbp_Verify()
         self.gbpnova = Gbp_Nova(self.cntlr_ip)
         self.gbpheat = Gbp_Heat(self.cntlr_ip)
+        self.hostpoolcidrL3OutA = '50.50.50.1/24'
+        self.hostpoolcidrL3OutB = '60.60.60.1/24'
 
     def setup(self, nat_type, do_config=0):
         """
@@ -100,6 +103,9 @@ class nat_dp_main_config(object):
                      self.gbpnova.avail_zone(
                         'cli', 'delete', self.agg_id)  # Cleanup Agg_ID
                      sys.exit(1)
+            # Adding host_pool_cidr to the both L3Outs
+            snataddhostpoolcidr(self.cntlr_ip,self.neutronconffile,'Management-Out',self.hostpoolcidrL3OutA)
+            snataddhostpoolcidr(self.cntlr_ip,self.neutronconffile,'Datacenter-Out',self.hostpoolcidrL3OutB)
             # Invoking Heat Stack for building up the Openstack Config
             # Expecting if at all there is residual heat-stack it
             # should be of the same name as that of this DP Reg

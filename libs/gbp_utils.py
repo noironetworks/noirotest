@@ -284,6 +284,26 @@ def add_route_in_extrtr(rtrip,route,nexthop,action='add',ostype='ubuntu',user='n
             sudo("ip route del %s" %(route))
             sudo("ip route add %s via %s" %(route,nexthop))
 
+def snataddhostpoolcidr(controllerIp,
+                        neutronconffile,
+                        L3Outname,
+                        hostpoolcidr,user='root',pwd='noir0123'):
+    """
+    Add host_pool_cidr config flag and restarts neutron-server
+    neutronconffile :: name with location of the neutron config
+               file in which apic_external_network
+               section is defined
+    P.S. If there is an existing host_pool_cidr, then it will
+    over-riden
+    """
+    env.host_string = controllerIp
+    env.user = user
+    env.password = pwd
+    cmd = 'sed -i '+"'/apic_external_network:%s" %(L3Outname)+'/a '+"host_pool_cidr=%s'" %(hostpoolcidr)+" /etc/neutron/neutron.conf"
+    print cmd
+    run(cmd)
+    run('service neutron-server restart')
+
 def PauseToDebug():
     while True:
           try:
