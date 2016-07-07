@@ -13,6 +13,7 @@ num_comp_nodes: 2
 apic_ip: '172.28.184.30'
 apic_passwd: 'noir0123'
 controller_ip: '172.28.184.35'
+neutronconffile: '/etc/neutron/neutron.conf' #Ensure it has the VALID apic_external_network config section defined
 ntk_node: '172.28.184.36'
 az_comp_node: 'f2-compute-1.noiro.lab'
 ext_gw_rtr: '172.28.184.38'
