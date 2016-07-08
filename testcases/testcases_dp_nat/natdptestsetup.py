@@ -103,9 +103,10 @@ class nat_dp_main_config(object):
                      self.gbpnova.avail_zone(
                         'cli', 'delete', self.agg_id)  # Cleanup Agg_ID
                      sys.exit(1)
-            # Adding host_pool_cidr to the both L3Outs
-            snataddhostpoolcidr(self.cntlr_ip,self.neutronconffile,'Management-Out',self.hostpoolcidrL3OutA)
-            snataddhostpoolcidr(self.cntlr_ip,self.neutronconffile,'Datacenter-Out',self.hostpoolcidrL3OutB)
+            if nat_type == 'snat':
+                # Adding host_pool_cidr to the both L3Outs
+                snataddhostpoolcidr(self.cntlr_ip,self.neutronconffile,'Management-Out',self.hostpoolcidrL3OutA)
+                snataddhostpoolcidr(self.cntlr_ip,self.neutronconffile,'Datacenter-Out',self.hostpoolcidrL3OutB)
             # Invoking Heat Stack for building up the Openstack Config
             # Expecting if at all there is residual heat-stack it
             # should be of the same name as that of this DP Reg

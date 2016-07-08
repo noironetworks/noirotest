@@ -299,10 +299,13 @@ def snataddhostpoolcidr(controllerIp,
     env.host_string = controllerIp
     env.user = user
     env.password = pwd
-    cmd = 'sed -i '+"'/apic_external_network:%s" %(L3Outname)+'/a '+"host_pool_cidr=%s'" %(hostpoolcidr)+" /etc/neutron/neutron.conf"
-    print cmd
-    run(cmd)
-    run('service neutron-server restart')
+    with settings(warn_only=True):
+         chk_string = run('grep -r %s %s' %(hostpoolcidr,neutronconffile))
+         if chk_string.failed:
+            cmd = 'sed -i '+"'/apic_external_network:%s" %(L3Outname)+'/a '+"host_pool_cidr=%s' " %(hostpoolcidr)+neutronconffile
+            print cmd
+            run(cmd)
+            run('service neutron-server restart')
 
 def PauseToDebug():
     while True:
