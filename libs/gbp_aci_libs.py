@@ -5,6 +5,8 @@ import os
 import re
 import datetime
 import pexpect
+import json
+import requests
 from time import sleep
 from commands import *
 from fabric.api import cd,run,env, hide, get, settings, local, lcd
@@ -176,19 +178,18 @@ class Gbp_Aci(object):
            return 1
            
 
-class Apic(object):
-    def __init__(self, addr, user, passwd, ssl=True):
+class GbpApic(object):
+    def __init__(self, addr, username='admin', password='noir0123', ssl=True):
         self.addr = addr
         self.ssl = ssl
-        self.user = user
-        self.passwd = passwd
+        self.user = username
+        self.passwd = password
         self.cookies = None
         self.login()
 
     def url(self, path):
         if self.ssl:
             return 'https://%s%s' % (self.addr, path)
-        #return 'http://%s%s' % (self.addr, path)
 
     def login(self):
         data = '{"aaaUser":{"attributes":{"name": "%s", "pwd": "%s"}}}' % (self.user, self.passwd)
@@ -204,73 +205,154 @@ class Apic(object):
         return requests.post(self.url(path), data=data, cookies=self.cookies, verify=False)
 
     def get(self,path):
-        path = '/api/node/mo/uni.json?query-target=subtree&target-subtree-class=fvTenant'
         return requests.get(self.url(path), cookies=self.cookies, verify=False)
 
     def delete(self,path):
         return requests.delete(self.url(path), cookies=self.cookies, verify=False)
 
+    def getEpgOper(self,tenant,apicsystemID='noirolab'):
+	"""
+        Method to fetch EPG and their Endpoints for a given tenant
+        apicsystemID: same value against the config_param apic_system_id
+        tenant: List, comprising name of tenants
+	"""
+	if isinstance(tenant,str):
+	   tenant = [tenant]
+	finaldictEpg = {}
+	for tnt in tenant:
+	    finaldictEpg[tnt] = {}
+            apictenant = 'tn-_%s_%s' %(apicsystemID,tnt)
+	    tenantepgdict = {}
+	    pathtenantepg = '/api/node/mo/uni/%s/ap-%s.json?query-target=children&target-subtree-class=fvAEPg'\
+                            %(apictenant,apicsystemID)
+	    print 'Tenant EPG Path', pathtenantepg
+	    reqforepgs = self.get(pathtenantepg)
+            tntDetails = reqforepgs.json()['imdata']
+  	    for item in tntDetails:
+                epgName = item['fvAEPg']['attributes']['name']
+		epgDn = item['fvAEPg']['attributes']['dn']
+                tenantepgdict[epgDn] = epgName
+	    if len(tenantepgdict):
+	        for dn,name in tenantepgdict.iteritems():
+		    finaldictEpg[tnt][name] = {}
+	            pathepfromepg = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvCEp' %(dn)
+	            print 'PATH == ',pathepfromepg
+	            reqforeps = self.get(pathepfromepg)
+                    epgDetails = reqforeps.json()['imdata']
+                    for item in epgDetails:
+			finaldictEpg[tnt][name]['status'] = item['fvCEp']['attributes']['lcC'].encode()
+			finaldictEpg[tnt][name]['vm'] = item['fvCEp']['attributes']['contName'].encode()
+			finaldictEpg[tnt][name]['ip'] = item['fvCEp']['attributes']['ip'].encode()
+			finaldictEpg[tnt][name]['encap'] = item['fvCEp']['attributes']['encap'].encode()
+			finaldictEpg[tnt][name]['mcastaddr'] = item['fvCEp']['attributes']['mcastAddr'].encode()
+        print 'EPG Details == \n', finaldictEpg
+	return finaldictEpg
            
-def deletetenants(apicIp,username='admin',password='noir0123'):
-    """
-    Deletes all user created tenants on the APIC
-    """
-    path = '/api/node/mo/uni.json?query-target=subtree&target-subtree-class=fvTenant'
-    apic = Apic(apicIp,username,password)
-    req = apic.get(path)
-    tenantlist = []
-    for fvtenant in req.json()['imdata']:
-        tenantlist.append(fvtenant['fvTenant']['attributes']['dn'])
-    for donotdel in ['uni/tn-common','uni/tn-infra','uni/tn-mgmt']:
-        tenantlist.remove(donotdel)
-    print 'List of Tenants to be deleted ==\n', tenantlist
-    for deltnt in tenantlist:
-        path = '/api/node/mo/%s.json' %(deltnt)
-        apic.delete(path)
+    def getBdOper(self,tenant,apicsystemID='noirolab'):
+	"""
+	Method to fetch subnets,their scopes,L3out association
+	"""
+        if isinstance(tenant,str):
+           tenant = [tenant]
+        finaldictBD = {}
+        for tnt in tenant:
+            finaldictBD[tnt] = {}
+            apictenant = 'tn-_%s_%s' %(apicsystemID,tnt)
+	    tenantbddict = {}
+	    pathtenantbd = '/api/node/mo/uni/%s.json?query-target=children&target-subtree-class=fvBD'\
+			   %(apictenant)
+	    print 'Tenant BD Path', pathtenantbd
+	    reqforbds = self.get(pathtenantbd)
+	    tntDetails = reqforbds.json()['imdata']
+	    for item in tntDetails:
+		bdName = item['fvBD']['attributes']['name'].encode()
+		bdDn = item['fvBD']['attributes']['dn'].encode()
+		tenantbddict[bdDn] = bdName
+	    if len(tenantbddict):
+	        for dn,name in tenantbddict.iteritems():
+		    finaldictBD[tnt][name] = {}
+		    #Fetch Subnets and their Scopes for a given BD
+		    pathforbdsubnets = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvSubnet'\
+				       %(dn)
+		    reqforsubnets = self.get(pathforbdsubnets)
+		    subnetDetails = reqforsubnets.json()['imdata']
+		    subnetdict = {}
+		    for item in range(len(subnetDetails)):
+			subnetdict.setdefault('subnet-%s' %(item),{})['ip'] = subnetDetails[item]['fvSubnet']['attributes']['ip'].encode()
+			subnetdict['subnet-%s' %(item)]['scope'] = subnetDetails[item]['fvSubnet']['attributes']['scope'].encode()
+		    finaldictBD[tnt][name]['subnets']=subnetdict
+		    #Fetch L3Out Association for a given BD
+		    pathL3OutLink = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvRsBDToOut' %(dn)
+		    reqforL3Out = self.get(pathL3OutLink)
+		    L3outDetails = reqforL3Out.json()['imdata']
+		    if len(L3outDetails):
+		       finaldictBD[tnt][name]['l3outasso'] = L3outDetails[0]['fvRsBDToOut']['attributes']['tnL3extOutName'].encode()
+		    else:
+		       finaldictBD[tnt][name]['l3outasso'] = ''
+		    #Fetch Operational L3Out for a given BD
+		    pathL3OutOper = '/api/node/mo/%s.json?rsp-subtree-include=relations&rsp-subtree-class=l3extOut' %(dn)
+		    reqforOperL3Out = self.get(pathL3OutOper)
+		    OperL3OutDetails = reqforOperL3Out.json()['imdata']
+		    try:
+		        finaldictBD[tnt][name]['l3outoper'] = OperL3OutDetails[0]['l3extOut']['attributes']['name'].encode()
+		    except:
+			finaldictBD[tnt][name]['l3outoper'] = ''
+	print 'BD Details == \n', finaldictBD
+	return finaldictBD
 
-def create_add_filter(apicIp,svcepg,username='admin',password='noir0123',tenant='_noirolab_admin'):
+    def deletetenants(self):
+        """
+        Deletes all user created tenants on the APIC
+        """
+        path = '/api/node/mo/uni.json?query-target=subtree&target-subtree-class=fvTenant'
+        req = self.get(path)
+        tenantlist = []
+        for fvtenant in req.json()['imdata']:
+            tenantlist.append(fvtenant['fvTenant']['attributes']['dn'])
+        for donotdel in ['uni/tn-common','uni/tn-infra','uni/tn-mgmt']:
+            tenantlist.remove(donotdel)
+        print 'List of Tenants to be deleted ==\n', tenantlist
+        for deltnt in tenantlist:
+            path = '/api/node/mo/%s.json' %(deltnt)
+            self.delete(path)
+
+    def create_add_filter(self,svcepg,tenant='admin',apicsystemID='noirolab'):
         """
         svcepg: Preferably pass a list of svcepgs if more than one
         """
-        apic = Apic(apicIp,username,password)
-
         #Create the noiro-ssh filter with ssh & rev-ssh subjects
-
-        path = '/api/node/mo/uni/tn-%s/flt-noiro-ssh.json' %(tenant)
-        data = '{"vzFilter":{"attributes":{"dn":"uni/tn-%s/flt-noiro-ssh","name":"noiro-ssh","rn":"flt-noiro-ssh","status":"created"},"children":[{"vzEntry":{"attributes":{"dn":"uni/tn-%s/flt-noiro-ssh/e-ssh","name":"ssh","etherT":"ip","prot":"tcp","sFromPort":"22","sToPort":"22","rn":"e-ssh","status":"created"},"children":[]}},{"vzEntry":{"attributes":{"dn":"uni/tn-%s/flt-noiro-ssh/e-ssh-rev","name":"ssh-rev","etherT":"ip","prot":"tcp","dFromPort":"22","dToPort":"22","rn":"e-ssh-rev","status":"created"},"children":[]}}]}}' %(tenant,tenant,tenant)
-        req = apic.post(path, data)
-        print req.text
-
+        apictenant = 'tn-_%s_%s' %(apicsystemID,tenant)
+        path = '/api/node/mo/uni/%s/flt-noiro-ssh.json' %(apictenant)
+        data = '{"vzFilter":{"attributes":{"dn":"uni/%s/flt-noiro-ssh","name":"noiro-ssh","rn":"flt-noiro-ssh","status":"created"},"children":[{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh","name":"ssh","etherT":"ip","prot":"tcp","sFromPort":"22","sToPort":"22","rn":"e-ssh","status":"created"},"children":[]}},{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh-rev","name":"ssh-rev","etherT":"ip","prot":"tcp","dFromPort":"22","dToPort":"22","rn":"e-ssh-rev","status":"created"},"children":[]}}]}}' %(3*(s,))
+        req = self.post(path, data)
         # Add the noiro-ssh filter to every svcepg_contract
         if not isinstance(svcepg,list):
            svcepg = [svcepg]
         for epg in svcepg:
-            path = '/api/node/mo/uni/tn-%s/brc-Svc-%s/subj-Svc-%s.json' %(tenant,epg,epg)
+            path = '/api/node/mo/uni/%s/brc-Svc-%s/subj-Svc-%s.json' %(apictenant,epg,epg)
             data = '{"vzRsSubjFiltAtt":{"attributes":{"tnVzFilterName":"noiro-ssh","status":"created"},"children":[]}}'
-            req = apic.post(path, data)
-            print req.text
+            req = self.post(path, data)
 
-def addEnforcedToPtg(apic_ip,epg,flag='enforced',username='admin',password='noir0123',tenant='_noirolab_admin'):
-    """
-    Add Enforced flag to the PTG
-    """
-    apic = Apic(apic_ip,username,password)
-    path = '/api/node/mo/uni/tn-_noirolab_admin/ap-noirolab_app/epg-%s.json' %(epg)
-    data = '{"fvAEPg":{"attributes":{"dn":"uni/tn-_noirolab_admin/ap-noirolab_app/epg-%s","pcEnfPref":"%s"},"children":[]}}' %(epg,flag)
-    req = apic.post(path, data)
-    print req.text
+    def addEnforcedToPtg(self,epg,flag='enforced',tenant='admin',apicsystemID='noirolab'):
+        """
+        Add Enforced flag to the PTG
+        """
+        apictenant = 'tn-_%s_%s' %(apicsystemID,tenant)
+        path = '/api/node/mo/uni/%s/ap-%s_app/epg-%s.json' %(apictenant,apicsystemID,epg)
+        data = '{"fvAEPg":{"attributes":{"dn":"uni/%s/ap-%s_app/epg-%s","pcEnfPref":"%s"},"children":[]}}' %(apictenant,apicsystemID,epg,flag)
+        req = self.post(path, data)
+        print req.text
 
-def enable_disable_switch_port(port,leaf_id,action,apicIp,username='admin',password='noir0123'):
-    """
-    Enable/disable port on the Leaf
-     action = 'enable' or 'disable'
-    """
-    apic = Apic(apicIp,username,password)
-    path = '/api/node/mo/uni/fabric/outofsvc.json'
-    if action == 'disable':
-       data = '{"fabricRsOosPath":{"attributes":{"tDn":"topology/pod-1/paths-%s/pathep-[%s]","lc":"blacklist"},"children":[]}}' %(leaf_id,port)
-    if action == 'enable':
-       data = '{"fabricRsOosPath":{"attributes":{"dn":"uni/fabric/outofsvc/rsoosPath-[topology/pod-1/paths-%s/pathep-[%s]]","status":"deleted"},"children":[]}}' %(leaf_id,port)
-    print data
-    req = apic.post(path,data)
-    print req.text
+    def enable_disable_switch_port(self,port,leaf_id,action):
+        """
+        Enable/disable port on the Leaf
+        action = 'enable' or 'disable'
+        """
+        path = '/api/node/mo/uni/fabric/outofsvc.json'
+        if action == 'disable':
+           data = '{"fabricRsOosPath":{"attributes":{"tDn":"topology/pod-1/paths-%s/pathep-[%s]","lc":"blacklist"},"children":[]}}' %(leaf_id,port)
+        if action == 'enable':
+           data = '{"fabricRsOosPath":{"attributes":{"dn":"uni/fabric/outofsvc/rsoosPath-[topology/pod-1/paths-%s/pathep-[%s]]","status":"deleted"},"children":[]}}' %(leaf_id,port)
+        print data
+        req = self.post(path,data)
+        print req.text
