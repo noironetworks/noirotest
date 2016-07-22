@@ -179,11 +179,17 @@ class Gbp_Aci(object):
            
 
 class GbpApic(object):
-    def __init__(self, addr, username='admin', password='noir0123', ssl=True):
+    def __init__(self, addr,mode,apicsystemID='noirolab',username='admin', password='noir0123', ssl=True):
         self.addr = addr
         self.ssl = ssl
         self.user = username
         self.passwd = password
+	self.apicsystemID = apicsystemID
+	self.mode = mode # pass the arg mode as 'gbp' or 'ml2'
+	if self.mode == 'gbp':
+               self.appProfile = 'ap-%s_app' %(self.apicsystemID)
+        elif self.mode == 'ml2':
+               self.appProfile = 'ap-%s' %(self.apicsystemID)
         self.cookies = None
         self.login()
 
@@ -210,10 +216,9 @@ class GbpApic(object):
     def delete(self,path):
         return requests.delete(self.url(path), cookies=self.cookies, verify=False)
 
-    def getEpgOper(self,tenant,apicsystemID='noirolab'):
+    def getEpgOper(self,tenant):
 	"""
         Method to fetch EPG and their Endpoints for a given tenant
-        apicsystemID: same value against the config_param apic_system_id
         tenant: List, comprising name of tenants
 	"""
 	if isinstance(tenant,str):
@@ -221,10 +226,10 @@ class GbpApic(object):
 	finaldictEpg = {}
 	for tnt in tenant:
 	    finaldictEpg[tnt] = {}
-            apictenant = 'tn-_%s_%s' %(apicsystemID,tnt)
+            apictenant = 'tn-_%s_%s' %(self.apicsystemID,tnt)
 	    tenantepgdict = {}
-	    pathtenantepg = '/api/node/mo/uni/%s/ap-%s.json?query-target=children&target-subtree-class=fvAEPg'\
-                            %(apictenant,apicsystemID)
+	    pathtenantepg = '/api/node/mo/uni/%s/%s.json?query-target=children&target-subtree-class=fvAEPg'\
+                            %(apictenant,self.appProfile)
 	    print 'Tenant EPG Path', pathtenantepg
 	    reqforepgs = self.get(pathtenantepg)
             tntDetails = reqforepgs.json()['imdata']
@@ -248,7 +253,7 @@ class GbpApic(object):
         print 'EPG Details == \n', finaldictEpg
 	return finaldictEpg
            
-    def getBdOper(self,tenant,apicsystemID='noirolab'):
+    def getBdOper(self,tenant):
 	"""
 	Method to fetch subnets,their scopes,L3out association
 	"""
@@ -257,7 +262,7 @@ class GbpApic(object):
         finaldictBD = {}
         for tnt in tenant:
             finaldictBD[tnt] = {}
-            apictenant = 'tn-_%s_%s' %(apicsystemID,tnt)
+            apictenant = 'tn-_%s_%s' %(self.apicsystemID,tnt)
 	    tenantbddict = {}
 	    pathtenantbd = '/api/node/mo/uni/%s.json?query-target=children&target-subtree-class=fvBD'\
 			   %(apictenant)
@@ -281,6 +286,14 @@ class GbpApic(object):
 			subnetdict.setdefault('subnet-%s' %(item),{})['ip'] = subnetDetails[item]['fvSubnet']['attributes']['ip'].encode()
 			subnetdict['subnet-%s' %(item)]['scope'] = subnetDetails[item]['fvSubnet']['attributes']['scope'].encode()
 		    finaldictBD[tnt][name]['subnets']=subnetdict
+		    # Fetch the VRF associated with a given BD
+		    print 'DN for VRF == \n', dn
+		    pathforvrf = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvRsCtx' %(dn)
+		    reqforvrf = self.get(pathforvrf)
+		    vrfDetails = reqforvrf.json()['imdata']
+		    if len(vrfDetails):
+			finaldictBD[tnt][name]['vrfname'] = vrfDetails[0]['fvRsCtx']['attributes']['tnFvCtxName'].encode()
+			finaldictBD[tnt][name]['vrfstate'] = vrfDetails[0]['fvRsCtx']['attributes']['state'].encode()
 		    #Fetch L3Out Association for a given BD
 		    pathL3OutLink = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvRsBDToOut' %(dn)
 		    reqforL3Out = self.get(pathL3OutLink)
@@ -300,6 +313,24 @@ class GbpApic(object):
 	print 'BD Details == \n', finaldictBD
 	return finaldictBD
 
+    
+    def getHyperVisor(self):
+        """
+        Return Connection Status of the Hypervisors
+        """
+        path = '/api/node/class/opflexODev.json'
+        req = self.get(path)
+        details = req.json()['imdata']
+        hypervisor = {}
+        if len(details):
+           for comp in details:
+               name = comp['opflexODev']['attributes']['hostName'].encode()
+               hypervisor.setdefault(name,{})['status'] = comp['opflexODev']['attributes']['state'].encode()
+               hypervisor[name]['domname'] = comp['opflexODev']['attributes']['domName'].encode()
+               hypervisor[name]['cntrlname'] = comp['opflexODev']['attributes']['ctrlrName'].encode()
+           print hypervisor
+        return hypervisor
+
     def deletetenants(self):
         """
         Deletes all user created tenants on the APIC
@@ -316,12 +347,12 @@ class GbpApic(object):
             path = '/api/node/mo/%s.json' %(deltnt)
             self.delete(path)
 
-    def create_add_filter(self,svcepg,tenant='admin',apicsystemID='noirolab'):
+    def create_add_filter(self,svcepg,tenant='admin'):
         """
         svcepg: Preferably pass a list of svcepgs if more than one
         """
         #Create the noiro-ssh filter with ssh & rev-ssh subjects
-        apictenant = 'tn-_%s_%s' %(apicsystemID,tenant)
+        apictenant = 'tn-_%s_%s' %(self.apicsystemID,tenant)
         path = '/api/node/mo/uni/%s/flt-noiro-ssh.json' %(apictenant)
         data = '{"vzFilter":{"attributes":{"dn":"uni/%s/flt-noiro-ssh","name":"noiro-ssh","rn":"flt-noiro-ssh","status":"created"},"children":[{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh","name":"ssh","etherT":"ip","prot":"tcp","sFromPort":"22","sToPort":"22","rn":"e-ssh","status":"created"},"children":[]}},{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh-rev","name":"ssh-rev","etherT":"ip","prot":"tcp","dFromPort":"22","dToPort":"22","rn":"e-ssh-rev","status":"created"},"children":[]}}]}}' %(3*(s,))
         req = self.post(path, data)
@@ -333,13 +364,13 @@ class GbpApic(object):
             data = '{"vzRsSubjFiltAtt":{"attributes":{"tnVzFilterName":"noiro-ssh","status":"created"},"children":[]}}'
             req = self.post(path, data)
 
-    def addEnforcedToPtg(self,epg,flag='enforced',tenant='admin',apicsystemID='noirolab'):
+    def addEnforcedToPtg(self,epg,flag='enforced',tenant='admin'):
         """
         Add Enforced flag to the PTG
         """
-        apictenant = 'tn-_%s_%s' %(apicsystemID,tenant)
-        path = '/api/node/mo/uni/%s/ap-%s_app/epg-%s.json' %(apictenant,apicsystemID,epg)
-        data = '{"fvAEPg":{"attributes":{"dn":"uni/%s/ap-%s_app/epg-%s","pcEnfPref":"%s"},"children":[]}}' %(apictenant,apicsystemID,epg,flag)
+        apictenant = 'tn-_%s_%s' %(self.apicsystemID,tenant)
+        path = '/api/node/mo/uni/%s/%s/epg-%s.json' %(apictenant,self.appProfile,epg)
+        data = '{"fvAEPg":{"attributes":{"dn":"uni/%s/%s/epg-%s","pcEnfPref":"%s"},"children":[]}}' %(apictenant,self.appProfile,epg,flag)
         req = self.post(path, data)
         print req.text
 
@@ -356,3 +387,5 @@ class GbpApic(object):
         print data
         req = self.post(path,data)
         print req.text
+
+	    
