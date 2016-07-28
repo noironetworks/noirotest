@@ -162,10 +162,4 @@ class neutronCli(object):
 	      return rtrId
 	self.runcmd(cmd) 	   		
 	  
-def main():
-    neutron = neutronCli('172.28.184.35')
-    neutron.netcrud('CokeNtk10','create',tenant='coke')
-
-if __name__ == "__main__":
-   main()
 
