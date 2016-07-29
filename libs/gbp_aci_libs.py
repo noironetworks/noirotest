@@ -357,6 +357,26 @@ class GbpApic(object):
 	print 'L3 Out Details == \n', finaldictL3Out
 	return finaldictL3Out
 
+    def getVrfs(self,tenant):
+	"""
+	Fetch VRF for tenant/s
+	"""
+        if isinstance(tenant,str):
+           tenant = [tenant]
+	finalvrfdict = {}
+	for tnt in tenant:
+	    finalvrfdict[tnt] = []
+	    if tnt == 'common':
+               apictenant = 'tn-common'
+            else:
+               apictenant = 'tn-_%s_%s' %(self.apicsystemID,tnt)
+            pathtenantvrf = '/api/node/mo/uni/%s.json?query-target=children&target-subtree-class=fvCtx' %(apictenant)
+	    reqforvrfs = self.get(pathtenantvrf)
+	    tntDetails = reqforvrfs.json()['imdata']
+	    for item in tntDetails:
+		finalvrfdict[tnt].append(item['fvCtx']['attributes']['name'].encode())
+	return finalvrfdict
+
     def getHyperVisor(self):
         """
         Return Connection Status of the Hypervisors

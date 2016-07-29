@@ -15,10 +15,10 @@ from natfunctestmethod import NatFuncTestMethods
 
 def main():
     cfgfile = sys.argv[1]
-    suite=NatTestSuite(cfgfile)
+    suite=NatGbpTestSuite(cfgfile)
     suite.test_runner()
 
-class NatTestSuite(object):
+class NatGbpTestSuite(object):
     
     def __init__(self,cfgfile):
         with open(cfgfile, 'rt') as f:

@@ -88,18 +88,37 @@ class neutronCli(object):
 	self.username = username
 	self.password = password
 	
-    def runcmd(self,cmd):
+    def runcmd(self,cmd,create_tnt=False,tnt_list=[]):
         env.host_string = self.controller
         env.user = self.username
         env.password = self.password
         with settings(warn_only=True):
              run("hostname")
-             run("nova-manage version")
         srcRc = 'source /root/keystonerc_admin'
         print "EXECUTING THE NEUTRON CLI"
         with prefix(srcRc):
-                   output = run(cmd)
-		   return output
+		if create_tnt and len(tnt_list):
+		   for tnt in tnt_list:
+			keycmd1 = 'keystone tenant-create --name %s' %(tnt)
+			keycmd2 = 'keystone user-role-add --user admin --tenant %s --role admin' %(tnt)
+			for keycmd in [keycmd1,keycmd2]:
+			    run(keycmd) 
+                output = run(cmd)
+		return output
+
+    def addDelkeystoneTnt(self,tenantList,action):
+	'''
+	Add/Delete Tenants in Openstack
+	action: vlaid strings are 'create','delete'
+	'''
+	for tnt in tenantList:
+	    if action == 'create':
+	       cmd1 = 'keystone tenant-create --name %s' %(tnt)
+	       cmd2 = 'keystone user-role-add --user admin --tenant %s --role admin' %(tnt)
+	       for cmd in [cmd1,cmd2]:
+		   self.runcmd(cmd)
+	    if action == 'delete':
+		cmd = 'keystone tenant-delete --name %s' %(tnt)
 
     def getuuid(self,cmd_out):
         '''
@@ -113,7 +132,7 @@ class neutronCli(object):
             return 0
 
     def netcrud(self,name,action,\
-                tenant='admin',external=None, shared=False):
+                tenant='admin',external=False, shared=False):
         if action == 'create':
 	   if external:
 	        if shared:
@@ -146,7 +165,7 @@ class neutronCli(object):
 
     def rtrcrud(self,name,action,rtrprop=None,gw=None,subnet=None,tenant='admin'):
         """
- 	action: Valid strings are 'create','delete','set','clear'
+ 	action: Valid strings are 'create','delete','add','set','clear'
 	rtrprop: Valid strings are 'gateway' or 'interface'
 	gw: Name or ID of the External Netk. Mandatory param when rtrprop='gateway'
         subnet: Name or ID of the subnet. Mandatory when rtrprop='interface'
