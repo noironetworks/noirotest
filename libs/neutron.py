@@ -88,7 +88,7 @@ class neutronCli(object):
 	self.username = username
 	self.password = password
 	
-    def runcmd(self,cmd,create_tnt=False,tnt_list=[]):
+    def runcmd(self,cmd):
         env.host_string = self.controller
         env.user = self.username
         env.password = self.password
@@ -97,12 +97,6 @@ class neutronCli(object):
         srcRc = 'source /root/keystonerc_admin'
         print "EXECUTING THE NEUTRON CLI"
         with prefix(srcRc):
-		if create_tnt and len(tnt_list):
-		   for tnt in tnt_list:
-			keycmd1 = 'keystone tenant-create --name %s' %(tnt)
-			keycmd2 = 'keystone user-role-add --user admin --tenant %s --role admin' %(tnt)
-			for keycmd in [keycmd1,keycmd2]:
-			    run(keycmd) 
                 output = run(cmd)
 		return output
 
