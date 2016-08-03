@@ -3,7 +3,7 @@ import sys
 import re
 from fabric.api import cd, run, env, hide, get, settings
 from fabric.context_managers import *
-#from neutronclient.v2_0 import client as nclient
+from neutronclient.v2_0 import client as nclient
 
 class neutronPy(object):
     def __init__(self, controllerIp, username='admin', password='noir0123', tenant='admin'):
@@ -34,7 +34,7 @@ class neutronPy(object):
         nid = netw['network']['id']
         return nid
    
-    def create_subnet(self, name, cidr, netid, gateway=None):
+    def create_subnet(self, name, cidr, netid):
         cn = {'subnets': [{'name': name, 'cidr': cidr, 'ip_version': 4, 'network_id': netid}]}
         snid = self.client.create_subnet(body=cn)
         return snid['subnets'][0]['id']
@@ -97,8 +97,8 @@ class neutronCli(object):
         srcRc = 'source /root/keystonerc_admin'
         print "EXECUTING THE NEUTRON CLI"
         with prefix(srcRc):
-                output = run(cmd)
-		return output
+                _output = run(cmd)
+		return _output
 
     def addDelkeystoneTnt(self,tenantList,action):
 	'''

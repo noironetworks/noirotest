@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import datetime
 import logging
 import pprint
 import string
@@ -42,9 +41,10 @@ class NatML2TestSuite(object):
 	self.neutron = neutronCli(self.cntlrip)
 	self.apic = GbpApic(self.apicip,'ml2')
 	self.tnt1,self.tnt2 = self.tenant_list[0],self.tenant_list[1]
-	self.ntkNames = {self.tnt1:['Net1','Net2','Net3']
-			 self.tnt2: ['ntk1','ntk2','ntk3']}
-	self.subNames = {self.tnt1: ['Sub1','Sub2','Sub3']
+	self.ntkNames = {self.tnt1:['Net1','Net2','Net3'],
+			 self.tnt2: ['ntk1','ntk2','ntk3']
+			}
+	self.subNames = {self.tnt1: ['Subnet1','Subnet2','Subnet3'],
 			 self.tnt2: ['sub1','sub2','sub3']
 			}
 	self.apicsystemID = 'noirolab' #TODO: should auto fetch from neutron config
@@ -57,7 +57,6 @@ class NatML2TestSuite(object):
         """
         Method to run the Testcase in Ordered Steps
         """
-        """
 	# Add Tenants
 	LOG.info("\n Step:Common: Add Tenants and Users in Openstack")
 	self.neutron.addDelkeystoneTnt(self.tenant_list,'create')
@@ -66,13 +65,17 @@ class NatML2TestSuite(object):
 	# Add L3Out as Shared by 'Admin' Tenant
 	LOG.info("\nStep:Common: Add L3Out=Management-Out as Shared by Admin Tenant")
 	self.neutron.netcrud('Management-Out','create',external=True,shared=True)
-	"""
-        test_list = [self.test_vpr_nat_func_1]
+
+        test_list = [self.test_vpr_nat_func_1,
+		     self.test_vpr_nat_func_2,
+		     self.test_vpr_nat_func_3,
+		     self.test_vpr_nat_func_4]
         for test in test_list:
                 if test() == 0:
                     test_results[string.upper(test.__name__.lstrip('self.'))] = 'FAIL'
                     LOG.error("\n%s_%s == FAIL" % (
                         self.__class__.__name__.upper(), string.upper(test.__name__.lstrip('self.'))))
+		    sys.exit(1) #TBD: JISHNU should be removed later
                 else:
                     test_results[string.upper(test.__name__.lstrip('self.'))] = 'PASS'
                     LOG.info("\n%s_%s == PASS" % (
@@ -127,11 +130,11 @@ class NatML2TestSuite(object):
 	LOG.info("\nRouter IDs for the respective Tenants == %s" %(self.rtrIDs))
 
 	LOG.info("\n# Step-3-TC-1:VerifyACI: VRF got created for this Router #")
-	vrfnotfound = []
-	if [vrfnotfound.append(self.rtrIDs[tnt]) for tnt in self.tenant_list\
+	vrfnotfound = [self.rtrIDs[tnt] for tnt in self.tenant_list\
                 if '_%s_%s' %(self.apicsystemID,self.rtrIDs[tnt])
-		not in self.apic.getVrfs(tnt)[tnt]]:
-	    LOG.info("\nStep-3-TC-1:Fail: Following VRFs not found in ACI = %" %(vrfnotfound))
+		not in self.apic.getVrfs(tnt)[tnt]]
+	if vrfnotfound:
+	    LOG.info("\nStep-3-TC-1:Fail: Following VRFs not found in ACI = %s" %(vrfnotfound))
             return 0    
 
 	LOG.info("\n# Step-4-TC-1:VerifyACI: BDs and their VRF resolves to *_shared #")
@@ -144,7 +147,7 @@ class NatML2TestSuite(object):
 	LOG.info("\n# Step-5-TC-1: Add resp Router Interfaces to Tenants' networks #")
 	for tnt in self.tenant_list:
 	    [self.neutron.rtrcrud(self.rtrIDs[tnt],'add',rtrprop='interface',
-			         subnet=subnetId) for subnetId in self.subnetIDs[tnt]]
+			         subnet=subnetId,tenant=tnt) for subnetId in self.subnetIDs[tnt]]
 
         LOG.info("\n# Step-6-TC-1: VerifyACI: Router's VRF resolves in the Tenant's BDs #")
 	unmatchedvrfs = self.verifyAciBDtoVRF(self.rtrIDs)
@@ -173,7 +176,7 @@ class NatML2TestSuite(object):
 	LOG.info("\n# Step-1-TC-2: Remove each tenant's Router from the attached ntks #")
 	for tnt in self.tenant_list:
 	    [self.neutron.rtrcrud(self.rtrIDs[tnt],'delete',rtrprop='interface',
-			         subnet=subnetId) for subnetId in self.subnetIDs[tnt]]
+			         subnet=subnetId,tenant=tnt) for subnetId in self.subnetIDs[tnt]]
 
 	LOG.info("\n# Step-2-TC-2:VerifyACI: VRF for each BD VRF resolves to *_shared #")
 	unmatchedvrfs = self.verifyAciBDtoVRF(self.defaultVrf)
@@ -187,9 +190,9 @@ class NatML2TestSuite(object):
 	self.newCidrs = ['101.101.101.0/28','102.102.102.0/28','103.103.103.0/28']
 	self.newSubNames = ['newSub1','newSub2','newSub3']
 	self.new_subnetIDs = {}
-	for index in len(range(self.newSubNames)):
-	    for tnt in self.tenant_list:
-	        self.new_subnetIDs[tnt] = []
+	for tnt in self.tenant_list:
+	    self.new_subnetIDs[tnt] = []
+	    for index in range(len(self.newSubNames)):
 	        self.new_subnetIDs[tnt].append(self.neutron.subnetcrud(
 				        self.newSubNames[index],
                                         'create',
@@ -200,29 +203,29 @@ class NatML2TestSuite(object):
 	LOG.info("\n# Step-4-TC-2: Add back the Routers's interfaces to the above new subnets #")
 	for tnt in self.tenant_list:
 	    [self.neutron.rtrcrud(self.rtrIDs[tnt],'add',rtrprop='interface',
-			         subnet=subnetId) for subnetId in self.new_subnetIDs[tnt]]
+			         subnet=subnetId,tenant=tnt) for subnetId in self.new_subnetIDs[tnt]]
 
         LOG.info("\n# Step-5-TC-2: VerifyACI: Router's VRF resolves in the Tenant's BDs #")
 	unmatchedvrfs = self.verifyAciBDtoVRF(self.rtrIDs)
 	if unmatchedvrfs:
-	    LOG.error("\nStep-5-TC-2:Fail:VRFs did NOT resolve in following BD %s >>"
+	    LOG.error("\nStep-5-TC-2:Fail:VRFs did NOT resolve in following BD >> %s"
 	              %(unmatchedvrfs))
 	    return 0	     
 
-	LOG.info("\n# Step-6-TC-2: Add back the Routers's interfaces to the above new subnets #")
+	LOG.info("\n# Step-6-TC-2: Add back the Routers's interfaces to existing Old subnets of tenants #")
 	for tnt in self.tenant_list:
 	    [self.neutron.rtrcrud(self.rtrIDs[tnt],'add',rtrprop='interface',
-			         subnet=subnetId) for subnetId in self.subnetIDs[tnt]]
-
-	LOG.info("\nStep-7-TC-2: Remove the router interface from all but one subnet in each ntk #")
+			         subnet=subnetId,tenant=tnt) for subnetId in self.subnetIDs[tnt]]
+	#TBD: Step 7(Verify in Neutron router-ports are connected to multiple subnets
+	LOG.info("\nStep-8-TC-2: Remove the router interface from all but one subnet in each ntk #")
 	for tnt in self.tenant_list:
             [self.neutron.rtrcrud(self.rtrIDs[tnt],'delete',rtrprop='interface',
-                                 subnet=subnetId) for subnetId in self.new_subnetIDs[tnt]]
+                                 subnet=subnetId,tenant=tnt) for subnetId in self.new_subnetIDs[tnt]]
 
-	LOG.info("\nStep-7-TC-2VerifyACI: The BDs are STILL connected to Router's VRF #")
+	LOG.info("\nStep-9-TC-2VerifyACI: The BDs are STILL connected to Router's VRF #")
 	unmatchedvrfs = self.verifyAciBDtoVRF(self.rtrIDs)
 	if unmatchedvrfs:
-	    LOG.error("\nStep-7-TC-2:Fail:VRFs did NOT resolve in following BD %s >>"
+	    LOG.error("\nStep-9-TC-2:Fail:VRFs did NOT resolve in following BD >> %s"
 	              %(unmatchedvrfs))
 	    return 0	     
 
@@ -234,26 +237,27 @@ class NatML2TestSuite(object):
 		 "# Remove the router interfaces to keep it attached to only One Ntk  #\n"
 		 "# VerifyACI: VRF for all but one BD's VRF resolves to *_shared   #\n"
 		 "# Add new addtional Router in Tenant, attach to its unrouted BDs #n"
-		 "# VerifyACI: Resp Router's VRF resolves in the Tenant's BDs      #\n"
+		 "# VerifyACI: VRF got created for the new router in ACI           #\n"
+		 "# VerifyACI: Resp new Router's VRF resolves in the Tenant's BDs  #\n"
 		 "#####################################################\n")
 
         LOG.info("\n Execution of Testcase starts #")
 	LOG.info("\n# Step-1-TC-3: Remove the router interfaces to keep it attached to only One Ntk #")
 	for tnt in self.tenant_list:
 	    [self.neutron.rtrcrud(self.rtrIDs[tnt],'delete',rtrprop='interface',
-			         subnet=subnetName) for subnetName  in self.subNames[tnt][1:]]
+			         subnet=subnetName,tenant=tnt) for subnetName  in self.subNames[tnt][1:]]
 	
 	LOG.info("\nStep-2-TC-3: VerifyACI: VRF for all but one BD's VRF resolves to *_shared #")
 	unmatched = {}
 	bdcheck = self.apic.getBdOper(self.tenant_list)
 	for tnt in self.tenant_list:
 	    unmatched[tnt] = []
-	    if [unmatched[tnt].append(bdname) for bdname in self.ntkNames[tnt][1:]\
-                if '_%s_%s' %(self.apicsystemID,rtrIDs[tnt]) != bdcheck[tnt][bdname]['vrfname']\
+	    if [unmatched[tnt].append(bdname) for bdname in self.ntkNames[tnt][0]\
+                if '_%s_%s' %(self.apicsystemID,self.rtrIDs[tnt]) != bdcheck[tnt][bdname]['vrfname']\
                 or bdcheck[tnt][bdname]['vrfstate'] != 'formed']:
 		LOG.info("\nStep-2-TC-3:Fail:Following BDs are not associated with correct VRF = %s" %(unmatched))
                 return 0
-	    if [unmatched[tnt].append(bdname) for bdname in self.ntkNames[tnt][0]\
+	    if [unmatched[tnt].append(bdname) for bdname in self.ntkNames[tnt][1:]\
 		if '_%s_%s' %(self.apicsystemID,'shared') != bdcheck[tnt][bdname]['vrfname']\
 		or bdcheck[tnt][bdname]['vrfstate'] != 'formed']:
                 LOG.info("\nStep-2-TC-3:Fail:Following BDs are not associated with 'shared' VRF = %s" %(unmatched))
@@ -267,29 +271,70 @@ class NatML2TestSuite(object):
 	LOG.info("\n2nd Router IDs for the respective Tenants == %s" %(self.newrtrIDs))
 
 	LOG.info("\n# Step-4-TC-3:VerifyACI: VRF got created for this Router #")
-	vrfnotfound = []
-	if [vrfnotfound.append(self.newrtrIDs[tnt]) for tnt in self.tenant_list\
+	vrfnotfound = [self.newrtrIDs[tnt] for tnt in self.tenant_list\
                 if '_%s_%s' %(self.apicsystemID,self.newrtrIDs[tnt])
-		not in self.apic.getVrfs(tnt)[tnt]]:
-	    LOG.info("\nStep-4-TC-3:Fail: Following VRFs not found in ACI = %" %(vrfnotfound))
+		not in self.apic.getVrfs(tnt)[tnt]]
+	if vrfnotfound:
+	    LOG.info("\nStep-4-TC-3:Fail: Following VRFs not found in ACI = %s" %(vrfnotfound))
             return 0    
 	
 	LOG.info("\n Step-5-TC-3: Attach new router to the networks which are in *_shared vrf")
 	for tnt in self.tenant_list:
 	    [self.neutron.rtrcrud(self.newrtrIDs[tnt],'add',rtrprop='interface',
-			         subnet=subnetName) for subnetName in self.subNames[tnt][1:]]
+			         subnet=subnetName,tenant=tnt) for subnetName in self.subNames[tnt][1:]]
 	
+	LOG.info("\nStep-6-TC-3: Resp new Router's VRF resolves in the Tenant's BDs #")
+	unmatched = {}
+	bdcheck = self.apic.getBdOper(self.tenant_list)
+	for tnt in self.tenant_list:
+	    unmatched[tnt] = []
+	    if [unmatched[tnt].append(bdname) for bdname in self.ntkNames[tnt][1:]\
+                if '_%s_%s' %(self.apicsystemID,self.rtrIDs[tnt]) != bdcheck[tnt][bdname]['vrfname']\
+                or bdcheck[tnt][bdname]['vrfstate'] != 'formed']:
+		LOG.info("\nStep-6-TC-3:Fail:Following BDs are not associated with correct VRF = %s" %(unmatched))
+		return 0
 	
     def test_vpr_nat_func_4(self):
         """
         Testcase-4 in VPR-NAT Workflow
         """
-        LOG.info("\n########  Testcase TEST_VPR_NAT_FUNC_4   ############\n"
+        LOG.info("\n########  Testcase TEST_VPR_NAT_FUNC_4   ###################\n"
 		 "# Remove the routers' interfaces from all attached networks  #\n"
-		 "# VerifyACI: VRF for all BD's VRF resolves to *_shared   #\n"
-		 "# Delete the routers					   #\n"
-		 "# VerifyACI: VRFs of the deleted routers are deleted also  #\n"
-		 "#####################################################\n")
+		 "# VerifyACI: VRF for all BD's VRF resolves to *_shared       #\n"
+		 "# Delete all the routers                                     #\n"
+		 "# VerifyACI: VRFs of the deleted routers are deleted also    #\n"
+		 "##############################################################\n")
+
+	LOG.info("\n Execution of Testcase starts #")
+	LOG.info("\n Step-1-TC-4: Remove the routers' interfaces from all attached networks #")
+	for tnt in self.tenant_list:
+	    [self.neutron.rtrcrud(self.newrtrIDs[tnt],'delete',rtrprop='interface',
+			         subnet=subnetName,tenant=tnt) for subnetName in self.subNames[tnt][1:]]
+	    [self.neutron.rtrcrud(self.rtrIDs[tnt],'delete',rtrprop='interface',
+				subnet=subnetName,tenant=tnt) for subnetName in self.subNames[tnt][0]]
+	
+	LOG.info("\n# Step-2-TC-4:VerifyACI: VRF for all BD's VRF resolves to *_shared #")
+	unmatchedvrfs = self.verifyAciBDtoVRF(self.defaultVrf)
+	if unmatchedvrfs:
+	    LOG.error("\nStep-2-TC-4:Fail: Unresolved VRF for following BDs >> %s" %(unmatchedvrfs))
+	    return 0	     
+
+	#Merging the two dicts rtrIDs & newrtrIDs
+	mergedDict = {}
+	for k in self.rtrIDs.iterkeys(): #where k/key = tenant
+	    mergedDict[k] = [self.rtrIDs[k],self.newrtrIDs[k]]
+
+	LOG.info("\nStep-3-TC-4: Delete all the routers #")
+	[self.neutron.rtrcrud(rtr,'create',tenant=tnt) for rtr in mergedDict[tnt]\
+	 for tnt in self.tenant_list]
+
+	LOG.info("\n# Step-4-TC-4:VerifyACI: VRF got created for this Router #")
+	vrfnotfound = [rtr for rtr in mergedDict[tnt] for tnt in self.tenant_list\
+                if '_%s_%s' %(self.apicsystemID,rtr)
+		not in self.apic.getVrfs(tnt)[tnt]]
+	if len(vrfnotfound) != 2:
+	    LOG.info("\nStep-4-TC-4:Fail: Following Routers' VRF stale in ACI = %s" %(vrfnotfound))
+            return 0    
 
 if __name__ == "__main__":
     main()

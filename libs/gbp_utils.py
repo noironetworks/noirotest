@@ -16,38 +16,19 @@ from fabric.api import cd,run,env, hide, get, settings,sudo
 from fabric.contrib import files
 from time import sleep
 
-
-def sshClient(hostname, user, passwd,scp=0,file_name=''):
-    sshclient = paramiko.SSHClient()
-    sshclient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    try:
-        sshclient.connect(hostname, username=user, password=passwd)
-    except Exception, e:
-        raise ErrorConnectingToServer("Error connecting to server %s: %s" % (hostname, e))
-        sshclient = None
-    if scp!=0:
-       _scp=SCPClient(sshclient.get_transport())
-       try:
-          _scp.put()
-       except Exception, e:
-           raise ErrorCoyFilesToServer("Error copying files from the server %s: %s" %(hostname, e))
-           return None
-    return sshclient
-
-
 def report_table(suitename):
     ps = subprocess.Popen(['grep', '-r', 'TESTCASE', '/tmp/%s.log' %(suitename)], stdout=subprocess.PIPE)
-    output = ps.communicate()[0]
-    #print output
-    output = output.splitlines()
+    outPut = ps.communicate()[0]
+    #print outPut
+    outPut = outPut.splitlines()
     line = 0
     tc_dict = {}
-    while line < len(output):
-        find1 = re.search('\\b(TESTCASE_GBP_.*)\\b: (.*)' , output[line], re.I)
+    while line < len(outPut):
+        find1 = re.search('\\b(TESTCASE_GBP_.*)\\b: (.*)' , outPut[line], re.I)
         if find1 != None:
            line += 1
-           if line <= len(output) - 1:
-              find2 = re.search('\\b%s\\b: (.*)' %(find1.group(1)), output[line],re.I)
+           if line <= len(outPut) - 1:
+              find2 = re.search('\\b%s\\b: (.*)' %(find1.group(1)), outPut[line],re.I)
               if find2 != None:
                  tc_dict[find1.group(1)]=find2.group(1), find1.group(2)
         line += 1

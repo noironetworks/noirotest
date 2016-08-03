@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 def isurlreachable(url):
     request = urllib2.Request(url)
     try:
-        response = urllib2.urlopen(request)
+        urllib2.urlopen(request)
     except:
         return False
     else:
@@ -34,7 +34,7 @@ def generateToken(challenge, url):
                 return m.group(1)
             print numTries
         except Exception, e:
-            #print "Exception %s seen while trying to fetch root debug token" % e
+            print "Exception %s seen while trying to fetch root debug token" % e
             pass
         time.sleep(delay)
 

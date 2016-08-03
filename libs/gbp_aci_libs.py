@@ -33,9 +33,9 @@ class Gbp_Aci(object):
         Verifies whether executed cmd has any known error string
         """
         for err in self.err_strings:
-            if re.search('\\b%s\\b' %(err), cmd_out, re.I):
-               _log.info(cmd_out)
-               _log.info("Cmd execution failed! with this Return Error: \n%s" %(cmd_ver))
+            if re.search('\\b%s\\b' %(err), cmd_output, re.I):
+               _log.info(cmd_output)
+               _log.info("Cmd execution failed! with this Return Error: \n%s" %(err))
                return 0
 
     def exec_admin_cmd(self,ip,cmd='',passwd='noir0123'):
@@ -110,10 +110,10 @@ class Gbp_Aci(object):
         env.host_string = apic_ip
         env.user = uname
         env.password = passwd
-        output = run("ls -ltr /mit/uni/tn-%s" %(tenant))
+        _output = run("ls -ltr /mit/uni/tn-%s" %(tenant))
         for obj in objs:
             regex = re.compile(r"\W%s\W" %(obj))
-            if bool(regex.search(output)) == False:
+            if not bool(regex.search(_output)):
                  return 0
         return 1
 
@@ -132,7 +132,7 @@ class Gbp_Aci(object):
         else:
             print "Passing Invalid string for param 'action'"
             return 0
-        if local(cmd).succeeded == True:
+        if local(cmd).succeeded:
                return 1
         else:
                return 0
@@ -151,8 +151,8 @@ class Gbp_Aci(object):
            cmd = 'switchport %s switch %s interface %s' %(action,switch_node_id,port)
         if action == 'disable':
            cmd = 'switchport %s switch %s interface %s' %(action,switch_node_id,port)
-        output = run(cmd)
-        print output
+        _output = run(cmd)
+        print _output
         return 1
 
     def reboot_aci(self,ip,node='leaf'):
@@ -417,7 +417,7 @@ class GbpApic(object):
         #Create the noiro-ssh filter with ssh & rev-ssh subjects
         apictenant = 'tn-_%s_%s' %(self.apicsystemID,tenant)
         path = '/api/node/mo/uni/%s/flt-noiro-ssh.json' %(apictenant)
-        data = '{"vzFilter":{"attributes":{"dn":"uni/%s/flt-noiro-ssh","name":"noiro-ssh","rn":"flt-noiro-ssh","status":"created"},"children":[{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh","name":"ssh","etherT":"ip","prot":"tcp","sFromPort":"22","sToPort":"22","rn":"e-ssh","status":"created"},"children":[]}},{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh-rev","name":"ssh-rev","etherT":"ip","prot":"tcp","dFromPort":"22","dToPort":"22","rn":"e-ssh-rev","status":"created"},"children":[]}}]}}' %(3*(s,))
+        data = '{"vzFilter":{"attributes":{"dn":"uni/%s/flt-noiro-ssh","name":"noiro-ssh","rn":"flt-noiro-ssh","status":"created"},"children":[{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh","name":"ssh","etherT":"ip","prot":"tcp","sFromPort":"22","sToPort":"22","rn":"e-ssh","status":"created"},"children":[]}},{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh-rev","name":"ssh-rev","etherT":"ip","prot":"tcp","dFromPort":"22","dToPort":"22","rn":"e-ssh-rev","status":"created"},"children":[]}}]}}' %(3*(apictenant,))
         req = self.post(path, data)
         # Add the noiro-ssh filter to every svcepg_contract
         if not isinstance(svcepg,list):
