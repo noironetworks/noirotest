@@ -251,15 +251,16 @@ class NatML2TestSuite(object):
 	unmatched = {}
 	bdcheck = self.apic.getBdOper(self.tenant_list)
 	for tnt in self.tenant_list:
-	    unmatched[tnt] = []
-	    if [unmatched[tnt].append(bdname) for bdname in self.ntkNames[tnt][0]\
-                if '_%s_%s' %(self.apicsystemID,self.rtrIDs[tnt]) != bdcheck[tnt][bdname]['vrfname']\
-                or bdcheck[tnt][bdname]['vrfstate'] != 'formed']:
-		LOG.info("\nStep-2-TC-3:Fail:Following BDs are not associated with correct VRF = %s" %(unmatched))
+	    bdname = self.ntkNames[tnt][0]
+            if '_%s_%s' %(self.apicsystemID,self.rtrIDs[tnt]) != bdcheck[tnt][bdname]['vrfname'] \
+               or bdcheck[tnt][bdname]['vrfstate'] != 'formed':
+		LOG.info("\nStep-2-TC-3:Fail:Tenaant %s BD %s not associated with correct VRF %s" \
+		        %(tnt,bdname,self.rtrIDs[tnt]))
                 return 0
-	    if [unmatched[tnt].append(bdname) for bdname in self.ntkNames[tnt][1:]\
-		if '_%s_%s' %(self.apicsystemID,'shared') != bdcheck[tnt][bdname]['vrfname']\
-		or bdcheck[tnt][bdname]['vrfstate'] != 'formed']:
+	    unmatched[tnt] = [bdname for bdname in self.ntkNames[tnt][1:] \
+                              if '_%s_%s' %(self.apicsystemID,'shared') != bdcheck[tnt][bdname]['vrfname'] \
+			         or bdcheck[tnt][bdname]['vrfstate'] != 'formed']
+	    if unmatched[tnt]:
                 LOG.info("\nStep-2-TC-3:Fail:Following BDs are not associated with 'shared' VRF = %s" %(unmatched))
                 return 0
 
@@ -289,9 +290,9 @@ class NatML2TestSuite(object):
 	for tnt in self.tenant_list:
 	    unmatched[tnt] = []
 	    if [unmatched[tnt].append(bdname) for bdname in self.ntkNames[tnt][1:]\
-                if '_%s_%s' %(self.apicsystemID,self.rtrIDs[tnt]) != bdcheck[tnt][bdname]['vrfname']\
+                if '_%s_%s' %(self.apicsystemID,self.newrtrIDs[tnt]) != bdcheck[tnt][bdname]['vrfname']\
                 or bdcheck[tnt][bdname]['vrfstate'] != 'formed']:
-		LOG.info("\nStep-6-TC-3:Fail:Following BDs are not associated with correct VRF = %s" %(unmatched))
+		LOG.info("\nStep-6-TC-3:Fail:Following BDs are NOT associated with correct VRF = %s" %(unmatched))
 		return 0
 	
     def test_vpr_nat_func_4(self):
