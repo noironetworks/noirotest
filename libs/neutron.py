@@ -97,8 +97,12 @@ class neutronCli(object):
         srcRc = 'source /root/keystonerc_admin'
         print "EXECUTING THE NEUTRON CLI"
         with prefix(srcRc):
-                _output = run(cmd)
-		return _output
+		try:
+                   _output = run(cmd)
+		   return _output
+		except:
+		   print "Invalid command due to unknown neutron resource"
+		   return ''
 
     def addDelkeystoneTnt(self,tenantList,action):
 	'''
@@ -118,12 +122,12 @@ class neutronCli(object):
         '''
         Extracts UUID of the neutron object
         '''
-        match=re.search("\\bid\\b\s+\| (.*) \|",cmd_out,re.I)
-        if match:
-           obj_uuid = match.group(1)
-           return obj_uuid.rstrip()
-        else:
-            return 0
+	if cmd_out:
+            match=re.search("\\bid\\b\s+\| (.*) \|",cmd_out,re.I)
+            if match:
+               obj_uuid = match.group(1)
+               return obj_uuid.rstrip()
+	return 0
 
     def netcrud(self,name,action,\
                 tenant='admin',external=False, shared=False):
@@ -136,8 +140,9 @@ class neutronCli(object):
 	   else:
 	        cmd = 'neutron --os-tenant-name %s net-create %s' %(tenant,name)
 	   ntkId = self.getuuid(self.runcmd(cmd))
-	   #print 'Output of ID ==\n', ntkId
-	   return ntkId
+	   if ntkID:
+	       #print 'Output of ID ==\n', ntkId
+	       return ntkId
 	if action == 'delete':
 	   cmd = 'neutron --os-tenant-name %s net-delete %s' %(tenant,name)
            self.runcmd(cmd)
@@ -152,7 +157,8 @@ class neutronCli(object):
 	if action == 'create':
 	   cmd = 'neutron --os-tenant-name %s subnet-create %s %s --name %s' %(tenant,ntkNameId,cidr,name) 
 	   subnetId = self.getuuid(self.runcmd(cmd))
-	   return subnetId
+	   if subnetId:
+	       return subnetId
 	if action == 'delete':
 	   cmd = 'neutron --os-tenant-name %s subnet-delete %s' %(tenant,name)	  
 	   self.runcmd(cmd)
@@ -172,7 +178,37 @@ class neutronCli(object):
 	   cmd = 'neutron --os-tenant-name %s router-%s %s' %(tenant,action,name)
 	   if action == 'create':
 	      rtrId = self.getuuid(self.runcmd(cmd))
-	      return rtrId
+	      if rtrId:
+	          return rtrId
 	self.runcmd(cmd) 	   		
-	  
+	
+    def Stripper(self,cmdout):
+	"""
+	Not the Las Vegas one
+	"""
+	_out = cmdout.split('\n')
+	final_out = _out[3:len(_out) - 1]
+	final_IDlist = [x.strip(' ') for x in [item.strip('|\r') for item in final_out]]
+	return final_IDlist
 
+    def deleteAll(self,tenant):
+	cmd = 'neutron --os-tenant-name %s router-list -c id' %(tenant)
+	cmd_out = self.runcmd(cmd)
+	if cmd_out:
+	    rtrList = self.Stripper(cmd_out)
+	    for rtr in rtrList:
+	         rtrout = self.runcmd('neutron --os-tenant-name %s router-port-list %s -c id' %(tenant,rtr))
+		 if rtrout:
+		    rtrportList = self.Stripper(rtrout)
+		    print rtrportList
+		    for port in rtrportList:
+		        portdelcmd = 'neutron --os-tenant-name %s router-interface-delete %s port="%s"' %(tenant,rtr,port)
+			self.runcmd(portdelcmd)
+		 self.runcmd('neutron --os-tenant-name %s router-delete %s' %(tenant,rtr))   
+	cmdnet = 'neutron --os-tenant-name %s net-list -c id' %(tenant)
+	cmdOut = self.runcmd(cmdnet)
+	if cmdOut:
+		netList = self.Stripper(cmdOut)
+	if netList:
+	   for net in netList:
+		self.runcmd('neutron --os-tenant-name %s net-delete %s' %(tenant,net))

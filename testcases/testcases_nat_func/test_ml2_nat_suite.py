@@ -91,7 +91,7 @@ class NatML2TestSuite(object):
                 if '_%s_%s' %(self.apicsystemID,rtrid_dict[tnt]) != bdcheck[tnt][bdname]['vrfname']\
                 or bdcheck[tnt][bdname]['vrfstate'] != 'formed']:
                    return unmatched
-
+    
     def test_vpr_nat_func_1(self):
         """
         Testcase-1 in VPR-NAT Workflow
@@ -294,7 +294,7 @@ class NatML2TestSuite(object):
                 or bdcheck[tnt][bdname]['vrfstate'] != 'formed']:
 		LOG.info("\nStep-6-TC-3:Fail:Following BDs are NOT associated with correct VRF = %s" %(unmatched))
 		return 0
-	
+    
     def test_vpr_nat_func_4(self):
         """
         Testcase-4 in VPR-NAT Workflow
@@ -305,14 +305,13 @@ class NatML2TestSuite(object):
 		 "# Delete all the routers                                     #\n"
 		 "# VerifyACI: VRFs of the deleted routers are deleted also    #\n"
 		 "##############################################################\n")
-
 	LOG.info("\n Execution of Testcase starts #")
 	LOG.info("\n Step-1-TC-4: Remove the routers' interfaces from all attached networks #")
 	for tnt in self.tenant_list:
 	    [self.neutron.rtrcrud(self.newrtrIDs[tnt],'delete',rtrprop='interface',
 			         subnet=subnetName,tenant=tnt) for subnetName in self.subNames[tnt][1:]]
-	    [self.neutron.rtrcrud(self.rtrIDs[tnt],'delete',rtrprop='interface',
-				subnet=subnetName,tenant=tnt) for subnetName in self.subNames[tnt][0]]
+	    self.neutron.rtrcrud(self.rtrIDs[tnt],'delete',rtrprop='interface',
+				subnet=self.subNames[tnt][0],tenant=tnt)
 	
 	LOG.info("\n# Step-2-TC-4:VerifyACI: VRF for all BD's VRF resolves to *_shared #")
 	unmatchedvrfs = self.verifyAciBDtoVRF(self.defaultVrf)
@@ -326,16 +325,31 @@ class NatML2TestSuite(object):
 	    mergedDict[k] = [self.rtrIDs[k],self.newrtrIDs[k]]
 
 	LOG.info("\nStep-3-TC-4: Delete all the routers #")
-	[self.neutron.rtrcrud(rtr,'create',tenant=tnt) for rtr in mergedDict[tnt]\
-	 for tnt in self.tenant_list]
+	[self.neutron.rtrcrud(rtr,'delete',tenant=tnt) for tnt in self.tenant_list \
+         for rtr in mergedDict[tnt]]
 
-	LOG.info("\n# Step-4-TC-4:VerifyACI: VRF got created for this Router #")
+	LOG.info("\n# Step-4-TC-4:VerifyACI: VRFs of the deleted routers are deleted also #")
+	""""""
+	getVrfs = self.apic.getVrfs(self.tenant_list)
+	print getVrfs
 	vrfnotfound = [rtr for rtr in mergedDict[tnt] for tnt in self.tenant_list\
-                if '_%s_%s' %(self.apicsystemID,rtr)
-		not in self.apic.getVrfs(tnt)[tnt]]
+                if '_%s_%s' %(self.apicsystemID,rtr) not in getVrfs[tnt]]
 	if len(vrfnotfound) != 2:
 	    LOG.info("\nStep-4-TC-4:Fail: Following Routers' VRF stale in ACI = %s" %(vrfnotfound))
             return 0    
+
+    def test_vpr_nat_func_5(self):
+        """
+        Testcase-5  in VPR-NAT Workflow
+	"""
+	LOG.info("\n########  Testcase TEST_VPR_NAT_FUNC_5#  ###################\n"
+                 "# Remove the routers' interfaces from all attached networks  #\n"
+                 "# VerifyACI: VRF for all BD's VRF resolves to *_shared       #\n"
+                 "# Delete all the routers                                     #\n"
+                 "# VerifyACI: VRFs of the deleted routers are deleted also    #\n"
+                 "##############################################################\n")
+        LOG.info("\n Execution of Testcase starts #")
+
 
 if __name__ == "__main__":
     main()
