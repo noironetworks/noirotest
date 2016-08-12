@@ -84,6 +84,7 @@ class Gbp_Aci(object):
                out = re.search('\\broot\\b\s+(\d+).*/isan/bin/svc_ifc_opflexp',self.exec_root_cmd(leaf_ip,cmd_ps),re.I)
                if out == None:
                   break
+	       i=i+1
         if act == 'start':
            cmd_start = 'vsh & test reparse 0xf'
            self.exec_root_cmd(leaf_ip,cmd_start)
@@ -418,14 +419,14 @@ class GbpApic(object):
         apictenant = 'tn-_%s_%s' %(self.apicsystemID,tenant)
         path = '/api/node/mo/uni/%s/flt-noiro-ssh.json' %(apictenant)
         data = '{"vzFilter":{"attributes":{"dn":"uni/%s/flt-noiro-ssh","name":"noiro-ssh","rn":"flt-noiro-ssh","status":"created"},"children":[{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh","name":"ssh","etherT":"ip","prot":"tcp","sFromPort":"22","sToPort":"22","rn":"e-ssh","status":"created"},"children":[]}},{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh-rev","name":"ssh-rev","etherT":"ip","prot":"tcp","dFromPort":"22","dToPort":"22","rn":"e-ssh-rev","status":"created"},"children":[]}}]}}' %(3*(apictenant,))
-        req = self.post(path, data)
+        self.post(path, data)
         # Add the noiro-ssh filter to every svcepg_contract
         if not isinstance(svcepg,list):
            svcepg = [svcepg]
         for epg in svcepg:
             path = '/api/node/mo/uni/%s/brc-Svc-%s/subj-Svc-%s.json' %(apictenant,epg,epg)
             data = '{"vzRsSubjFiltAtt":{"attributes":{"tnVzFilterName":"noiro-ssh","status":"created"},"children":[]}}'
-            req = self.post(path, data)
+            self.post(path, data)
 
     def addEnforcedToPtg(self,epg,flag='enforced',tenant='admin'):
         """

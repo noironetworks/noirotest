@@ -192,7 +192,7 @@ def create_add_filter(apicIp,svcepg,username='admin',password='noir0123',tenant=
             req = apic.post(path, data)
             print req.text
 
-def action_service(hostIp,servicename,action='restart',user='root',pwd='noir0123',ostype='redhat'):
+def action_service(hostIp,service='agent-ovs',action='restart',user='root',pwd='noir0123'):
         """
         Action = Stop,Start,Restart on Any Service
         """
@@ -200,8 +200,7 @@ def action_service(hostIp,servicename,action='restart',user='root',pwd='noir0123
         env.user = user
         env.password = pwd
         with settings(warn_only=True):
-                #restart = run("systemctl %s %s.service" %(action,servicename))  JISHNU TBD
-                restart = run("systemctl restart agent-ovs.service" )
+                restart = run("service %s %s" %(service,action))
                 sleep(5)
                 if restart.succeeded:
                    if run("systemctl status agent-ovs.service" ).find("active (running)") < 0:
@@ -214,7 +213,7 @@ def addEnforcedToPtg(apic_ip,epg,flag='enforced',username='admin',password='noir
     Add Enforced flag to the PTG
     """
     apic = Apic(apic_ip,username,password)
-    path = '/api/node/mo/uni/tn-_noirolab_admin/ap-noirolab_app/epg-%s.json' %(epg)
+    path = '/api/node/mo/uni/tn-%s/ap-noirolab_app/epg-%s.json' %(tenant,epg)
     data = '{"fvAEPg":{"attributes":{"dn":"uni/tn-_noirolab_admin/ap-noirolab_app/epg-%s","pcEnfPref":"%s"},"children":[]}}' %(epg,flag)
     req = apic.post(path, data)
     print req.text

@@ -62,7 +62,7 @@ class Compute(object):
 	   remotefilename = '/var/lib/opflex-agent-ovs/endpoints/%s.rdconfig' %(tenantID)
 	if rtrID != 'shared':
 	   remotefilename = '/var/lib/opflex-agent-ovs/endpoints/router:%s.rdconfig' %(rtrID)
-	rdconfig = GetReadFiles(remotefilename)
+	rdconfig = self.GetReadFiles(remotefilename)
 	if isinstance(rdconfig,dict):
 	    if tenantName != rdconfig["domain-policy-space"]:
 	       print 'Tenant Name is NOT in the rdconfig'
@@ -80,20 +80,26 @@ class Compute(object):
 	    print 'rdConfig file was NOT found in the Compute Node'
 	    return 0
     
-    def verify_EpFile(self,portID,attribute,value):
+    def verify_EpFile(self,portID,**kwargs):
 	"""
 	Verify the EP Files
+	key = pass exact name string as it
+        appears in the EP file with no '-' instead '_'
+	example: vm-name , should be passed as vm_name
 	"""
 	remoteFile = '/var/lib/opflex-agent-ovs/endpoints/%s.ep' %(portID)
-	epfile = GetReadFiles(remoteFile)
-	if attribute == "vm-name":
-	   if value != epfile["attributes"]["vm-name"]:
-		return 0
-	elif attribute == "ip-address-mapping":
-             if not len(epfile["ip-address-mapping"]):
-		return  0
-	else:
-	   if value != epfile["%s" %(attribute)]:
-	      return 0
+	epfile = self.GetReadFiles(remoteFile)
+	for key, value in kwargs.iteritems():
+	    if key == "vm_name":
+	        if value != epfile["attributes"]["vm-name"]:
+		     return 0
+	    elif key == "ip_address_mapping":
+                if not len(epfile["ip-address-mapping"]):
+		    return  0
+	    else:
+                if '_' in key:
+                  key = key.replace('_','-')
+	        if value != epfile["%s" %(key)]:
+	           return 0
            
 

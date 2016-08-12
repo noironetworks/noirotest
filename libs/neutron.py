@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import re
+from time import sleep
 from fabric.api import cd, run, env, hide, get, settings
 from fabric.context_managers import *
 from neutronclient.v2_0 import client as nclient
@@ -140,7 +141,7 @@ class neutronCli(object):
 	   else:
 	        cmd = 'neutron --os-tenant-name %s net-create %s' %(tenant,name)
 	   ntkId = self.getuuid(self.runcmd(cmd))
-	   if ntkID:
+	   if ntkId:
 	       #print 'Output of ID ==\n', ntkId
 	       return ntkId
 	if action == 'delete':
@@ -212,3 +213,26 @@ class neutronCli(object):
 	if netList:
 	   for net in netList:
 		self.runcmd('neutron --os-tenant-name %s net-delete %s' %(tenant,net))
+
+    def spawnVM(self,tenant,vmname,net='',port=''):
+        """
+        Method for spawning VMs using net-id or port-id
+        """
+        if net:
+           cmd = 'nova --os-tenant-name %s boot %s --image ubuntu_multi_nics --flavor m1.large --nic net-id=%s' %(tenant,vmname,net)
+        if port:
+           cmd = 'nova --os-tenant-name %s boot %s --image ubuntu_multi_nics --flavor m1.large --nic port-id=%s' %(tenant,vmname,port)
+        if self.runcmd(cmd):
+	    sleep(5)
+	    vmout = self.runcmd('nova --os-tenant-name %s show %s | grep network' %(tenant,vmname))
+	    match = re.search("\\b(\d+.\d+.\d+.\d+)\\b.*",vmout,re.I)
+	    if match:
+		vmip = match.group(1)
+	        self.runcmd('neutron --os-tenant-name %s port-list | grep %s' %(tenant,vmip))
+		portID = self.getuuid(self.runcmd(
+                         'neutron --os-tenant-name %s port-list | grep %s'\
+                        %(tenant,vmip)))
+	        return [vmip,portID]
+	else:
+	    return []
+
