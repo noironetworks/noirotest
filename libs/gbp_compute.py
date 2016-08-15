@@ -64,6 +64,7 @@ class Compute(object):
 	   remotefilename = '/var/lib/opflex-agent-ovs/endpoints/router:%s.rdconfig' %(rtrID)
 	rdconfig = self.GetReadFiles(remotefilename)
 	if isinstance(rdconfig,dict):
+	    tenantName = '_%s_%s' %(apicSystemID,tenantName)
 	    if tenantName != rdconfig["domain-policy-space"]:
 	       print 'Tenant Name is NOT in the rdconfig'
 	       return 0
@@ -76,30 +77,37 @@ class Compute(object):
 	       if '_%s_%s' %(apicSystemID,rtrID) != rdconfig["domain-name"]:
                    print 'VRF/domain-name is NOT in the rdconfig'
 	           return 0
+	    return 1
 	else:
 	    print 'rdConfig file was NOT found in the Compute Node'
 	    return 0
     
-    def verify_EpFile(self,portID,**kwargs):
+    def verify_EpFile(self,portID,portMAC,**kwargs):
 	"""
 	Verify the EP Files
 	key = pass exact name string as it
         appears in the EP file with no '-' instead '_'
 	example: vm-name , should be passed as vm_name
 	"""
-	remoteFile = '/var/lib/opflex-agent-ovs/endpoints/%s.ep' %(portID)
+	remoteFile = '/var/lib/opflex-agent-ovs/endpoints/%s_%s.ep' %(portID,portMAC)
 	epfile = self.GetReadFiles(remoteFile)
-	for key, value in kwargs.iteritems():
-	    if key == "vm_name":
-	        if value != epfile["attributes"]["vm-name"]:
-		     return 0
-	    elif key == "ip_address_mapping":
-                if not len(epfile["ip-address-mapping"]):
-		    return  0
-	    else:
-                if '_' in key:
-                  key = key.replace('_','-')
-	        if value != epfile["%s" %(key)]:
-	           return 0
-           
+	if epfile:
+	    for key, value in kwargs.iteritems():
+	        if key == "vm_name":
+	            if value != epfile["attributes"]["vm-name"]:
+		         return 0
+	        elif key == "ip_address_mapping":
+                    if not len(epfile["ip-address-mapping"]):
+		        return  0
+	        else:
+                    if '_' in key:
+                      key = key.replace('_','-')
+	            if value != epfile[key]:
+		       print "Mismatch between user fed and epfile",\
+		              value, epfile[key]
+	               return 0
+	    return 1
+        else:
+	    return 0   
+	
 

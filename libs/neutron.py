@@ -223,16 +223,18 @@ class neutronCli(object):
         if port:
            cmd = 'nova --os-tenant-name %s boot %s --image ubuntu_multi_nics --flavor m1.large --nic port-id=%s' %(tenant,vmname,port)
         if self.runcmd(cmd):
-	    sleep(5)
+	    sleep(10)
 	    vmout = self.runcmd('nova --os-tenant-name %s show %s | grep network' %(tenant,vmname))
 	    match = re.search("\\b(\d+.\d+.\d+.\d+)\\b.*",vmout,re.I)
 	    if match:
 		vmip = match.group(1)
-	        self.runcmd('neutron --os-tenant-name %s port-list | grep %s' %(tenant,vmip))
-		portID = self.getuuid(self.runcmd(
-                         'neutron --os-tenant-name %s port-list | grep %s'\
-                        %(tenant,vmip)))
-	        return [vmip,portID]
+		_out = self.runcmd('nova --os-tenant-name %s interface-list %s | grep ACTIVE'\
+				   %(tenant,vmname))
+		if _out.succeeded:
+		    portMAC = re.search(r'(([0-9a-f]{2}:){5}[0-9a-f]{2})',_out,re.I).group()
+		    _match = [i.strip(' ') for i in _out.split('|')]
+		    portID = _match[_match.index('ACTIVE')+1]
+	        return [vmip,portID,portMAC]
 	else:
 	    return []
 

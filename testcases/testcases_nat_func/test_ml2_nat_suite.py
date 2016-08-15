@@ -69,9 +69,9 @@ class NatML2TestSuite(object):
 	self.neutron.netcrud('Management-Out','create',external=True,shared=True)
 
         test_list = [self.test_vpr_func_1,
-		     self.test_vpr_func_2,
-		     self.test_vpr_func_3,
-		     self.test_vpr_func_4,
+		     #self.test_vpr_func_2,
+		     #self.test_vpr_func_3,
+		     #self.test_vpr_func_4,
 		     self.test_vpr_func_5]
         for test in test_list:
                 if test() == 0:
@@ -138,7 +138,7 @@ class NatML2TestSuite(object):
 			                ntkNameId=netID,
 					cidr=self.Cidrs[tnt][index],
 					tenant=tnt))
-
+	"""
 	LOG.info("\n# Step-2:TC-1: Add Router for the tenants #")
 	self.rtrIDs = {}
 	for tnt in self.tenant_list:
@@ -172,7 +172,7 @@ class NatML2TestSuite(object):
 	    LOG.error("\nStep-6-TC-1:Fail: Unresolved VRF for following BDs >> %s"
 	              %(unmatchedvrfs))
 	    return 0	     
-
+        """
     def test_vpr_func_2(self):
         """
         Testcase-2 in VPR-Functionality Workflow
@@ -398,6 +398,7 @@ class NatML2TestSuite(object):
 
 	LOG.info("\n# Step-4-TC-5: Bring up VMs on each of the network of a given tenant #")
 	self.NETtoVM = {}
+	"""
 	for i in range(len(self.networkIDs[self.tnt1])):
 	    self.NETtoVM[self.netIDnames[self.tnt1]\
                             [self.networkIDs[self.tnt1][i]]]={}
@@ -405,14 +406,26 @@ class NatML2TestSuite(object):
 	    vmcreate = self.neutron.spawnVM(self.tnt1,
 					     self.vmname,
 				             net=self.networkIDs[self.tnt1][i])
-	    #vmcreate: label for the return value which is [vmip,portID]
+        """
+	vm_num = 1
+	for _id,name in self.netIDnames[self.tnt1].iteritems():
+	    self.NETtoVM[name]={}
+	    self.vmname = '%s-VM-' %(self.tnt1)+str(vm_num)
+	    vmcreate = self.neutron.spawnVM(self.tnt1,
+                                             self.vmname,
+                                             net=_id)
+	    #vmcreate: label for the return value which is [vmip,portID,portMAC]
 	    if not vmcreate:
 	           LOG.error("\nStep-4-TC-5:Fail: VM Creation Failed")
 		   return 0
 	    else:
+		"""
 	        self.NETtoVM[self.netIDnames[self.tnt1]\
                                 [self.networkIDs[self.tnt1][i]]]\
 			        [self.vmname]=vmcreate
+		"""
+		self.NETtoVM[name][self.vmname]=vmcreate
+	    vm_num = vm_num+1
 
 	LOG.info("\n# Step-5-TC-5:VerifyACI: Verify the Endpoint Learnings #")	
 	LOG.info("\nSleeping for 20 secs for the Opflex-Agent to send GARP")
@@ -428,13 +441,16 @@ class NatML2TestSuite(object):
 	LOG.info("\n# Step-6-TC-5: Verify: EP files of VMs refers domain-name to Routers' VRF #")
 	for key,val in self.NETtoVM.iteritems(): #key=Network name
 	    for value in val.itervalues():
+	        vmip,vmportID,vmportMAC = value
 	        if not self.comp2.verify_EpFile(
-                         value[1],
+                         vmportID,
+		         vmportMAC,
 			 endpoint_group_name='%s|%s' %(self.apicsystemID,key),
 			 domain_name = '_%s_%s' %(self.apicsystemID,self.rtrID)
-			 ) or \
-		       self.ntknode.verify_EpFile(
-                        value[1],
+			 ) and \
+		       not self.ntknode.verify_EpFile(
+                        vmportID,
+			vmportMAC,
                         endpoint_group_name='%s|%s' %(self.apicsystemID,key),
                         domain_name = '_%s_%s' %(self.apicsystemID,self.rtrID)
 		        ):
@@ -445,8 +461,8 @@ class NatML2TestSuite(object):
 	if not self.comp2.verify_rdConfig(self.tnt1,
                                           self.rtrID,
                                           self.subNames[self.tnt1]
-		   		          ) or \
-               self.ntknode.verify_rdConfig(self.tnt1,
+		   		          ) and \
+               not self.ntknode.verify_rdConfig(self.tnt1,
 					    self.rtrID,
 					    self.subNames[self.tnt1]
 					    ):
