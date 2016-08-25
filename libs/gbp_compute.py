@@ -99,6 +99,10 @@ class Compute(object):
 	        elif key == "ip_address_mapping":
                     if not len(epfile["ip-address-mapping"]):
 		        return  0
+		    else: #return the attributes
+		        return epfile["ip-address-mapping"][0]["next-hop-if"],\
+			       epfile["ip-address-mapping"][0]["policy-space-name"],\
+			       epfile["ip-address-mapping"][0]["endpoint-group-name"]		
 	        else:
                     if '_' in key:
                       key = key.replace('_','-')
@@ -110,4 +114,18 @@ class Compute(object):
         else:
 	    return 0   
 	
-
+    def getSNATEp(self,L3OutName):
+	"""
+	Verifies the content of SNAT EP
+	"""
+	remoteFile = '/var/lib/opflex-agent-ovs/endpoints/%s.ep' %(L3OutName)
+	epfile = self.GetReadFiles(remoteFile)
+	if epfile:
+	    return epfile["interface-name"],\
+		   epfile["ip"][0],\
+		   epfile["policy-space-name"],\
+		   epfile["endpoint-group-name"],\
+		   epfile["attributes"]["vm-name"]
+	else:
+	    print "SNAT EP File NOT FOUND"
+	    return 0

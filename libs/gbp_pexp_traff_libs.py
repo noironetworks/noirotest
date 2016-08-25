@@ -106,15 +106,29 @@ class Gbp_pexp_traff(object):
                else:
                   results[dest_ep]['tcp']=0
            else:
-               child.sendline(cmd_s)
-               child.expect('#')
-               print "Sent Only TCP SYN to %s" %(dest_ep)
-               result=child.before
-               print result
-               if self.parse_hping(result,self.pkt_cnt) !=0:
-                  results[dest_ep]['tcp']=1
-               else:
-                  results[dest_ep]['tcp']=0
+		"""
+                child.sendline(cmd_s)
+                child.expect('#')
+                print "Sent Only TCP SYN to %s" %(dest_ep)
+                result=child.before
+                print result
+                if self.parse_hping(result,self.pkt_cnt) !=0:
+                    results[dest_ep]['tcp']=1
+                else:
+                    results[dest_ep]['tcp']=0
+		"""
+		#Over-riding the label cmd_s,to run simple ncat
+	        cmd_s = "nc -w 1 -v %s -z %s" %(dest_ep,port)
+                child.sendline(cmd_s)
+                child.expect('#')
+                print "Sent Only TCP SYN to %s" %(dest_ep)
+                result=child.before
+                print result
+                if 'succeeded' in result:
+                    results[dest_ep]['tcp']=1
+                else:
+                    results[dest_ep]['tcp']=0
+		
         if protocol=='udp' or protocol=='all':
            cmd = "hping3 %s --udp -p %s -c %s --fast -q" %(dest_ep,port,self.pkt_cnt)
            child.sendline(cmd)

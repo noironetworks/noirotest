@@ -27,7 +27,8 @@ class NatTraffic(object):
         print " List of VMs passed from the testsuite ", vm_list
         self.vm_to_ip_ns = {}
         for vm in self.vm_list:
-            vm_to_ip_list = gbpnova.get_any_vm_property(vm)['networks'][0]
+            #vm_to_ip_list = gbpnova.get_any_vm_property(vm)['networks'][0]
+            vm_to_ip_list = gbpnova.get_any_vm_property(vm)[0]
             vm_to_ip_list = [ip.encode('ascii') for ip in vm_to_ip_list]
             src_vm_pvt_ip_subnet = re.search(
                 '(\d+.\d+.\d+).\d+', vm_to_ip_list[0].encode('ascii'), re.I).group(1)

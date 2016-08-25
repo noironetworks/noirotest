@@ -11,6 +11,7 @@ from libs.gbp_conf_libs import Gbp_Config
 from libs.gbp_verify_libs import Gbp_Verify
 from libs.gbp_heat_libs import Gbp_Heat
 from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_aci_libs import GbpApic
 from libs.gbp_utils import *
 
 
@@ -52,8 +53,12 @@ class nat_dp_main_config(object):
         self.gbpverify = Gbp_Verify()
         self.gbpnova = Gbp_Nova(self.cntlr_ip)
         self.gbpheat = Gbp_Heat(self.cntlr_ip)
+	self.gbpaci = GbpApic(self.apic_ip)
         self.hostpoolcidrL3OutA = '50.50.50.1/24'
         self.hostpoolcidrL3OutB = '60.60.60.1/24'
+	self.targetvm_list = ['Web-Server', 'Web-Client-1',
+				'Web-Client-2', 'App-Server']
+	self.svc_epg_list = ['APPL2P1','WEBL2P1','WEBL2P2']
 
     def setup(self, nat_type, do_config=0):
         """
@@ -105,8 +110,14 @@ class nat_dp_main_config(object):
                      sys.exit(1)
             if nat_type == 'snat':
                 # Adding host_pool_cidr to the both L3Outs
-                snataddhostpoolcidr(self.cntlr_ip,self.neutronconffile,'Management-Out',self.hostpoolcidrL3OutA)
-                snataddhostpoolcidr(self.cntlr_ip,self.neutronconffile,'Datacenter-Out',self.hostpoolcidrL3OutB)
+                snataddhostpoolcidr(self.cntlr_ip,
+                                    self.neutronconffile,
+                                    'Management-Out',
+				    self.hostpoolcidrL3OutA)
+                snataddhostpoolcidr(self.cntlr_ip,
+				    self.neutronconffile,
+				    'Datacenter-Out',
+				    self.hostpoolcidrL3OutB)
             # Invoking Heat Stack for building up the Openstack Config
             # Expecting if at all there is residual heat-stack it
             # should be of the same name as that of this DP Reg
@@ -126,25 +137,41 @@ class nat_dp_main_config(object):
             sleep(5)  # Sleep 5s assuming that all objects areated in APIC
             self._log.info(
                 "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
-            svc_epg_list = [
-                'APPL2P1',
-                'WEBL2P1',
-                'WEBL2P2'
-                ]
-            create_add_filter(self.apic_ip, svc_epg_list)
+            #create_add_filter(self.apic_ip, svc_epg_list)
+            self.gbpaci.create_add_filter(self.svc_epg_list)
             sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
 
-        #if do_config == 0 or do_config == 1:
         ### <Generate the dict comprising VM-name and its FIPs > ###
-        targetvm_list = ['Web-Server', 'Web-Client-1',
-                             'Web-Client-2', 'App-Server']
-        fipsOftargetVMs = {}
-        for vm in targetvm_list:
-                fipsOftargetVMs[vm] = self.gbpnova.get_any_vm_property(vm)['networks'][
+        self.fipsOftargetVMs = {}
+        for vm in self.targetvm_list:
+                self.fipsOftargetVMs[vm] = self.gbpnova.get_any_vm_property(vm)[
                     0][1:3]
         if nat_type == 'dnat':
-               print 'FIPs of Target VMs == %s' % (fipsOftargetVMs)
-               return fipsOftargetVMs
+               print 'FIPs of Target VMs == %s' % (self.fipsOftargetVMs)
+               return self.fipsOftargetVMs
+
+    def verifySetup(self):
+	"""
+	Verifies the Setup after being brought up
+	"""
+	self._log.info("\nVerify the Orchestration in ACI")
+	try:
+	    operEpgs = self.gbpaci.getEpgOper('admin')
+	    if operEpgs:
+		vmstate = 'learned,vmm'
+		for vm in self.targetvm_list:
+		    for value in operEpgs.iterkeys():
+			if not vm in value['vm'] \
+		           and state in value['status']:
+			       #TODO: Raise SetupException
+		
+	      		 
+	except Exception, e:
+	    self._log.error('Setup Verification Failed, report issues')
+	# Shadow L3Out created
+	# NAT EPs(FIPs and SNAT)
+	# Fetch SNAT EP from Comp
+	# Verify 
 
     def cleanup(self,stack=0,avail=0):
         # Need to call for instance delete if there is an instance

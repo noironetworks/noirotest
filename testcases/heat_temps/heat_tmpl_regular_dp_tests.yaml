@@ -1,7 +1,8 @@
 #!highlight yaml
 
 heat_template_version: 2013-05-23
-
+# DO NOT CHANGE name strings. They have been re-used statically
+# in the setup and traffic classes
 parameters:
     vm_image:
       type: string

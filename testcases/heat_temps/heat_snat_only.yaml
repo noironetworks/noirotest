@@ -1,6 +1,7 @@
 heat_template_version: 2013-05-23
 parameters:
-
+  # DO NOT CHANGE name strings. They have been re-used statically
+  # in the setup and traffic classes 
   mgmt_external_segment_name:
     default: 'Management-Out'
     description: Name of the external segment used for Internet Access

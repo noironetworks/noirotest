@@ -1,7 +1,8 @@
 #!highlight yaml
 
 heat_template_version: 2013-05-23
-
+# DO NOT CHANGE the name strings. They have been statically
+# used in setup and traffic classes
 parameters:
 
   public_external_segment_name:

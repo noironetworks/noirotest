@@ -298,26 +298,33 @@ class Gbp_Nova(object):
            _log.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
            return 0
 
-        
-    def get_any_vm_property(self,vmname):
+    def get_any_vm_property(self,vmname,prop='networks'):
         """
         Returns any VM property
         Pass vmname string & the property name string
         """
-        vm_dict = {}
         try:
-           instance = self.nova.servers.find(name=vmname)
-           vm_dict['name'] = instance.name.encode('ascii')
-           vm_dict['id'] = instance.id.encode('ascii')
-           vm_dict['networks'] = instance.networks.values()
-           # just built-in networks method returns a dict in a list.
-           # Dict's values is again a list of ip addresses
-           vm_dict['hostid'] = instance.hostId.encode('ascii')
+           vm = self.nova.servers.find(name=vmname)
+	   if prop == 'id':
+                vm_prop = vm.id.encode('ascii')
+	   if prop == 'networks':
+                vm_prop = vm.networks.values()
+                # built-in networks method returns a dict in a list.
+                # dict's values is again a list of ip addresses
+	   if prop == 'hostid':
+                vm_prop = vm.hostId.encode('ascii')
+	   if prop == 'port':
+	        vm_prop = {}
+	        for key in vm.addresses.iterkeys():
+	            #key=networkName to which VM port is attached
+		    vm_prop[key.encode()]=[]
+		    vm_prop[key.encode()].append(vm.addresses[key][0]['addr'.encode()].encode())
+		    vm_prop[key.encode()].append(vm.addresses[key][0]['OS-EXT-IPS-MAC:mac_addr']
         except Exception as e:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             _log.error('Exception Type = %s, Exception Object = %s' %(exc_type,exc_traceback))
             return 0
-        return vm_dict
+        return vm_prop
     
     def get_floating_ips(self,ret=0):
         """

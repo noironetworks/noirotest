@@ -214,14 +214,18 @@ class neutronCli(object):
 	   for net in netList:
 		self.runcmd('neutron --os-tenant-name %s net-delete %s' %(tenant,net))
 
-    def spawnVM(self,tenant,vmname,net='',port=''):
+    def spawnVM(self,tenant,vmname,net,port,availzone=''):
         """
         Method for spawning VMs using net-id or port-id
+	availzone:: pass it as <zone-name>|<hostname>
+	hostname as it appears in nova hypervisor-list
         """
         if net:
            cmd = 'nova --os-tenant-name %s boot %s --image ubuntu_multi_nics --flavor m1.large --nic net-id=%s' %(tenant,vmname,net)
         if port:
            cmd = 'nova --os-tenant-name %s boot %s --image ubuntu_multi_nics --flavor m1.large --nic port-id=%s' %(tenant,vmname,port)
+	if availzone:
+	   cmd = cmd+' --availability-zone %s' %(availzone)
         if self.runcmd(cmd):
 	    sleep(10)
 	    vmout = self.runcmd('nova --os-tenant-name %s show %s | grep network' %(tenant,vmname))
