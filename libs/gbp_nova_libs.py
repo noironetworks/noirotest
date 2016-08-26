@@ -319,8 +319,8 @@ class Gbp_Nova(object):
 	            #key=networkName to which VM port is attached
 		    vm_prop[key.encode()]=[]
 		    vm_prop[key.encode()].append(vm.addresses[key][0]['addr'.encode()].encode())
-		    vm_prop[key.encode()].append(vm.addresses[key][0]['OS-EXT-IPS-MAC:mac_addr']
-        except Exception as e:
+		    vm_prop[key.encode()].append(vm.addresses[key][0]['OS-EXT-IPS-MAC:mac_addr'])
+        except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             _log.error('Exception Type = %s, Exception Object = %s' %(exc_type,exc_traceback))
             return 0

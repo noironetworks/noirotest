@@ -3,11 +3,13 @@
 # Mandatory: User must not change the below config params
 dnat_heat_temp: '/root/gbpauto/testcases/heat_temps/heat_dnat_only.yaml'
 snat_heat_temp: '/root/gbpauto/testcases/heat_temps/heat_snat_only.yaml'
+main_setup_heat_temp: '/root/gbpauto/testcases/heat_temps/heat_tmpl_regular_dp_tests.yaml'
 nova_agg_name: 'gbp_agg'
 nova_az_name: 'gbp_zone'
-heat_stack_name: 'nat'
+heat_dp_stack_name: 'dpstack'
+heat_dp_nat_stack_name: 'dpnatstack'
 key_name: 'gbpkey' #Ensure that it is same as mentioned in heat template
-
+apic_system_id: 'noirolab'
 # User editable config params
 num_comp_nodes: 2
 apic_ip: '172.28.184.30'
@@ -21,5 +23,11 @@ fip1_of_extgw: '1.102.1.1'
 fip2_of_extgw: '1.102.2.1'
 #vm_image: '"trusty-multi-if"'
 vm_image: 'ubuntu_multi_nics'
+test_parameters:
+  bd_type: vxlan
+  ip_version: ipv4
+  vpc_type: vpc
+vm_image: ubuntu_multi_nics
 # Enable the below flag inorder to live-debug on Failure of a Testcase
-pausetodebug: True
+pausetodebug: False
+

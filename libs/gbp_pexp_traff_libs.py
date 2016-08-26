@@ -52,11 +52,9 @@ class Gbp_pexp_traff(object):
            ssh_newkey = 'Are you sure you want to continue connecting (yes/no)?'
            i= child.expect([ssh_newkey,'password:',pexpect.EOF])
            if i == 0:
-              #print " JISHNU in NEW KEY"
               child.sendline('yes')
               i=child.expect([ssh_newkey,'password:',pexpect.EOF])
            if i == 1:
-              #print "JISHNU in EXISTING KEY"
               child.sendline('noir0123')
            child.expect('\$')
            break
@@ -106,19 +104,8 @@ class Gbp_pexp_traff(object):
                else:
                   results[dest_ep]['tcp']=0
            else:
-		"""
-                child.sendline(cmd_s)
-                child.expect('#')
-                print "Sent Only TCP SYN to %s" %(dest_ep)
-                result=child.before
-                print result
-                if self.parse_hping(result,self.pkt_cnt) !=0:
-                    results[dest_ep]['tcp']=1
-                else:
-                    results[dest_ep]['tcp']=0
-		"""
 		#Over-riding the label cmd_s,to run simple ncat
-	        cmd_s = "nc -w 1 -v %s -z %s" %(dest_ep,port)
+	        cmd_s = "nc -w 1 -v %s -z 22" %(dest_ep)
                 child.sendline(cmd_s)
                 child.expect('#')
                 print "Sent Only TCP SYN to %s" %(dest_ep)

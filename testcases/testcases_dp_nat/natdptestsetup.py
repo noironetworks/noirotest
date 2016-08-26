@@ -32,6 +32,7 @@ class nat_dp_main_config(object):
         """
         with open(cfg_file, 'rt') as f:
             conf = yaml.load(f)
+	self.apicsystemID = conf['apic_system_id']
         self.nova_agg = conf['nova_agg_name']
         self.nova_az = conf['nova_az_name']
         self.comp_node = conf['az_comp_node']
@@ -42,14 +43,16 @@ class nat_dp_main_config(object):
         self.dnat_heat_temp = conf['dnat_heat_temp']
         self.snat_heat_temp = conf['snat_heat_temp']
         self.num_hosts = conf['num_comp_nodes']
-        self.heat_stack_name = conf['heat_stack_name']
+        self.heat_stack_name = conf['heat_dp_nat_stack_name']
         self.ips_of_extgw = [conf['fip1_of_extgw'],
                              conf['fip2_of_extgw'], self.extgw]
         self.pausetodebug = conf['pausetodebug']
         self.neutronconffile = conf['neutronconffile']
         self.gbpnova = Gbp_Nova(self.cntlr_ip)
         self.gbpheat = Gbp_Heat(self.cntlr_ip)
-	self.gbpaci = GbpApic(self.apic_ip)
+	self.gbpaci = GbpApic(self.apic_ip,
+                              'gbp',
+			      apicsystemID=self.apicsystemID)
         self.hostpoolcidrL3OutA = '50.50.50.1/24'
         self.hostpoolcidrL3OutB = '60.60.60.1/24'
 	#Instead of defining the below static labels/vars
@@ -188,8 +191,8 @@ class nat_dp_main_config(object):
 	    l3p1,l3p2 = self.L3plist
 	    #Since we know there will be ONLY 4 ShdL3Outs
 	    #for this test setup
-	    str1 = '_%s_Shd-%s' %(apicsystemID,l3p1)
-	    str2 = '_%s_Shd-%s' %(apicsystemID,l3p2)
+	    str1 = '_%s_Shd-%s' %(self.apicsystemID,l3p1)
+	    str2 = '_%s_Shd-%s' %(self.apicsystemID,l3p2)
 	    ShdL3Out = [l3out for l3out in L3Outs.keys()\
 		        if str1 in key or str2 in key]
 	    if len(ShdL3Out) == 4:
@@ -207,7 +210,7 @@ class nat_dp_main_config(object):
 	except Exception as e:
 	    self._log.error(
                 '\nSetup Verification Failed because of this issue'+repr(e))
-		return 0
+  	    return 0
 	finally:
 	    return 1
 	# NAT EPs(FIPs and SNAT)

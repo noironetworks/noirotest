@@ -151,7 +151,7 @@ class Gbp_def_traff(object):
           if not isinstance(target_ip,list):
              target_ip = [target_ip]
           for target in target_ip:
-             result = run("nc -w 1 -v %s -z %s" %(target,port))
+             result = run("nc -w 1 -v %s -z 22" %(target))
              if result.return_code == 0:
                  if self.parse_hping(result,pkt_cnt,regular='nc') == 0:
                     ret_results[target]=0

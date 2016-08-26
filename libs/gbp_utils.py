@@ -107,7 +107,7 @@ def gen_test_report(test_results,suite,w_or_a):
     f.close()
 '''
 
-def del_netns(self,net_node_ip,netns=[]):
+def del_netns(net_node_ip,netns=[]):
         """
         Deletes the Network Node's Ntk NameSpace
         Associated with every VM
