@@ -76,11 +76,11 @@ parameters:
     label: l3_policy_name
     type: string
 
-  web_ptg_name:
+  web_clnt_ptg_name:
     type: string
-    label: web_ptg_name
-    description: Name of the web PTG
-    default: 'WEBPTG'
+    label: web_clnt_ptg_name
+    description: Name of the webClient PTG
+    default: 'WEBCLNTPTG'
 
   app_ptg_name:
     type: string
@@ -88,11 +88,11 @@ parameters:
     description: Name of the app PTG
     default: 'APPPTG'
 
-  backup_ptg_name:
+  web_srvr_ptg_name:
     type: string
-    label: backup_ptg_name
-    description: Name of the backup PTG
-    default: 'BACKUPPTG'
+    label: web_srvr_ptg_name
+    description: Name of the webSrvr PTG
+    default: 'WEBSRVRPTG'
 
   vm_image:
     type: string
@@ -284,7 +284,7 @@ resources:
         type: OS::GroupBasedPolicy::L2Policy
         depends_on: l3_policy_1
         properties:
-            name: "WEBL2P1" #Have been used statically inside natdpsetup.py
+            name: "WEBSRVRL2P" #Have been used statically inside natdpsetup.py
             l3_policy_id: { get_resource: l3_policy_1 }
             shared: False
 
@@ -292,7 +292,7 @@ resources:
         type: OS::GroupBasedPolicy::L2Policy
         depends_on: l3_policy_1
         properties:
-            name: "WEBL2P2" #Have been used statically inside natdpsetup.py
+            name: "WEBCLNTL2P" #Have been used statically inside natdpsetup.py
             l3_policy_id: { get_resource: l3_policy_1 }
             shared: False
 
@@ -300,7 +300,7 @@ resources:
         type: OS::GroupBasedPolicy::L2Policy
         depends_on: l3_policy_2
         properties:
-            name: "APPL2P1" #Have been used statically inside natdpsetup.py
+            name: "APPL2P" #Have been used statically inside natdpsetup.py
             l3_policy_id: { get_resource: l3_policy_2 }
             shared: False
 
@@ -317,7 +317,7 @@ resources:
         type: OS::GroupBasedPolicy::PolicyTargetGroup
         depends_on: [websrvr_l2_policy, network_service_policy]
         properties:
-            name: 'web_srvr_ptg'
+            name: {get_param : web_srvr_ptg_name}
             l2_policy_id: { get_resource: websrvr_l2_policy }
             network_service_policy_id: { get_resource: network_service_policy}
             shared: False
@@ -326,7 +326,7 @@ resources:
         type: OS::GroupBasedPolicy::PolicyTargetGroup
         depends_on: [webclnt_l2_policy, network_service_policy]
         properties:
-            name: 'web_clnt_ptg'
+            name: {get_param : web_clnt_ptg_name}
             l2_policy_id: { get_resource: webclnt_l2_policy }
             network_service_policy_id: { get_resource: network_service_policy}
             shared: False
@@ -335,7 +335,7 @@ resources:
         type: OS::GroupBasedPolicy::PolicyTargetGroup
         depends_on: [app_l2_policy, network_service_policy]
         properties:
-            name: 'app_ptg'
+            name: {get_param : app_ptg_name}
             l2_policy_id: { get_resource: app_l2_policy }
             network_service_policy_id: { get_resource: network_service_policy}
             shared: False

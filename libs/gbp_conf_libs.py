@@ -363,26 +363,6 @@ class Gbp_Config(object):
                      break
           return netns
 
-
-    def del_netns(self,net_node_ip,netns=[]):
-        """
-        Deletes the Network Node's Ntk NameSpace
-        Associated with every VM
-        """
-        env.host_string = net_node_ip
-        env.user = 'root'
-        env.password = 'noir0123'
-        run("neutron-netns-cleanup")
-        if netns == []:
-         with settings(warn_only=True):
-                run("neutron-netns-cleanup")
-                result = run("ip netns | grep qdhcp")
-                netns = [x.strip() for x in result.split('\n')]
-        for ns in netns:
-           with settings(warn_only=True):
-               result = run("ip netns delete %s" %(ns))
-
-
     def get_vm_subnet(self,vm_string,ret=''):
         """
         ret = 'ip' : for returning VM-Port's IP
@@ -402,7 +382,6 @@ class Gbp_Config(object):
                return [ip_match.group(1),subn_match.group(1)]
         else:
            return 0
-
 
     def restart_service(self,dev_ip,service_name,action='restart'):
         """

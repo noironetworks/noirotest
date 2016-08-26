@@ -1,7 +1,7 @@
 #!highlight yaml
 
 # Mandatory: User must not change the below config params
-dnat_heat_temp: '/root/gbpauto/testcases/heat_temps/heat_tmpl_nat_dp.yaml'
+dnat_heat_temp: '/root/gbpauto/testcases/heat_temps/heat_dnat_only.yaml'
 snat_heat_temp: '/root/gbpauto/testcases/heat_temps/heat_snat_only.yaml'
 nova_agg_name: 'gbp_agg'
 nova_az_name: 'gbp_zone'

@@ -7,8 +7,6 @@ import datetime
 import yaml
 from commands import *
 from time import sleep
-from libs.gbp_conf_libs import Gbp_Config
-from libs.gbp_verify_libs import Gbp_Verify
 from libs.gbp_heat_libs import Gbp_Heat
 from libs.gbp_nova_libs import Gbp_Nova
 from libs.gbp_aci_libs import GbpApic
@@ -49,16 +47,22 @@ class nat_dp_main_config(object):
                              conf['fip2_of_extgw'], self.extgw]
         self.pausetodebug = conf['pausetodebug']
         self.neutronconffile = conf['neutronconffile']
-        self.gbpcfg = Gbp_Config()
-        self.gbpverify = Gbp_Verify()
         self.gbpnova = Gbp_Nova(self.cntlr_ip)
         self.gbpheat = Gbp_Heat(self.cntlr_ip)
 	self.gbpaci = GbpApic(self.apic_ip)
         self.hostpoolcidrL3OutA = '50.50.50.1/24'
         self.hostpoolcidrL3OutB = '60.60.60.1/24'
+	#Instead of defining the below static labels/vars
+	#could have sourced the heat.yaml file and read it
+	#But since this TestConfig defined in yaml file
+	#WILL NOT change hence being lazy as a mule
 	self.targetvm_list = ['Web-Server', 'Web-Client-1',
 				'Web-Client-2', 'App-Server']
-	self.svc_epg_list = ['APPL2P1','WEBL2P1','WEBL2P2']
+	self.L3plist = ['DCL3P1','DCL3P2']
+	#Note: change the order of list will affect the below dict
+	self.Epglist = ['APPPTG','WEBSRVRPTG','WEBCLNTPTG']
+	self.L2plist = ['APPL2P','WEBSRVRL2P','WEBCLNTL2P']
+	self.EpgL2p = dict(zip(self.Epglist,self.L2plist))
 
     def setup(self, nat_type, do_config=0):
         """
@@ -138,9 +142,7 @@ class nat_dp_main_config(object):
             self._log.info(
                 "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
             #create_add_filter(self.apic_ip, svc_epg_list)
-            self.gbpaci.create_add_filter(self.svc_epg_list)
-            sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
-
+            self.gbpaci.create_add_filter(self.L2plist)
         ### <Generate the dict comprising VM-name and its FIPs > ###
         self.fipsOftargetVMs = {}
         for vm in self.targetvm_list:
@@ -154,24 +156,62 @@ class nat_dp_main_config(object):
 	"""
 	Verifies the Setup after being brought up
 	"""
-	self._log.info("\nVerify the Orchestration in ACI")
+	self._log.info(
+	    "\nVerify the Orchestrated Configuration in ACI")
 	try:
+	    self._log.info(
+		"\n Verify the Operatonal State of EPGs")
 	    operEpgs = self.gbpaci.getEpgOper('admin')
 	    if operEpgs:
 		vmstate = 'learned,vmm'
 		for vm in self.targetvm_list:
-		    for value in operEpgs.iterkeys():
-			if not vm in value['vm'] \
-		           and state in value['status']:
-			       #TODO: Raise SetupException
-		
-	      		 
-	except Exception, e:
-	    self._log.error('Setup Verification Failed, report issues')
-	# Shadow L3Out created
+		    notfound = 0
+		    for epg,value in operEpgs.iteritems():
+			if vm in value['vm']:
+		           if not state in value['status']:
+			       raise VerifyError(
+                                 'vm %s NOT Learned in Epg %s' %(vm,epg)
+				 )
+			else:
+			    notfound += 1
+		    if notfound == len(operEpgs):
+			raise VerifyError(
+			  'vm %s NOT found in APIC' %(vm))
+	    if [epg for epg,bd in operEpgs.iteritems() \
+                if bd['bdname'] != self.EpgL2p[epg] \
+		    or bd['bdstate'] != 'formed']:
+		    raise VerifyError(
+			  'epg %s has Unresolved BD' %(epg))
+	    self._log.info(
+		"\n Verify the Shadow L3Outs")
+	    L3Outs = self.gbpaci.getL3Out('admin')
+	    l3p1,l3p2 = self.L3plist
+	    #Since we know there will be ONLY 4 ShdL3Outs
+	    #for this test setup
+	    str1 = '_%s_Shd-%s' %(apicsystemID,l3p1)
+	    str2 = '_%s_Shd-%s' %(apicsystemID,l3p2)
+	    ShdL3Out = [l3out for l3out in L3Outs.keys()\
+		        if str1 in key or str2 in key]
+	    if len(ShdL3Out) == 4:
+	        for l3out in ShdL3Out:
+	    	    if (L3Outs[l3out]['vrfname'] == l3p1 \
+		        or L3Outs[l3out]['vrfname'] == l3p2):
+			if L3Outs[l3out]['vrfstate'] != 'formed':
+			    raise VerifyError(
+			        'VRF not resolved for %s' %(l3out))
+		    else:
+			raise VerifyError(
+			    'VRF is not associated to %s' %(l3out))
+	    else:
+		raise VerifyError('4 ShdL3Outs are NOT created')
+	except Exception as e:
+	    self._log.error(
+                '\nSetup Verification Failed because of this issue'+repr(e))
+		return 0
+	finally:
+	    return 1
 	# NAT EPs(FIPs and SNAT)
 	# Fetch SNAT EP from Comp
-	# Verify 
 
     def cleanup(self,stack=0,avail=0):
         # Need to call for instance delete if there is an instance
@@ -180,7 +220,7 @@ class nat_dp_main_config(object):
            self.gbpheat.cfg_all_cli(0, self.heat_stack_name)
            # Ntk namespace cleanup in Network-Node.. VM names are static
            # throughout the test-cycle
-           self.gbpcfg.del_netns(self.ntk_node)
+           del_netns(self.ntk_node)
         if avail == 0:
            self.gbpnova.avail_zone('cli', 'removehost',
                                    self.nova_agg, hostname=self.comp_node)

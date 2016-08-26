@@ -10,7 +10,7 @@ from time import sleep
 from libs.raise_exceptions import *
 from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_nova_libs import Gbp_Nova
-from libs.gbp_conf_libs import Gbp_Config
+from libs.gbp_utils_libs import *
 from okeystone import Keystone
 
 for j in range(1, 7):
@@ -93,5 +93,4 @@ for k in range(1, 101):
 
 print 'Done deleting tenants'
 
-gbp_conf = Gbp_Config()
-gbp_conf.del_netns('172.28.184.84')
+del_netns('172.28.184.84')

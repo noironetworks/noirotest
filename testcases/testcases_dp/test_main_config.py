@@ -7,8 +7,6 @@ import datetime
 import yaml
 from time import sleep
 from commands import *
-from libs.gbp_conf_libs import Gbp_Config
-from libs.gbp_verify_libs import Gbp_Verify
 from libs.gbp_heat_libs import Gbp_Heat
 from libs.gbp_nova_libs import Gbp_Nova
 from libs.gbp_utils import *
@@ -48,8 +46,6 @@ class gbp_main_config(object):
         self.num_hosts = conf['num_comp_nodes']
         self.heat_stack_name = conf['heat_stack_name']
         self.test_parameters = conf['test_parameters']
-        self.gbpcfg = Gbp_Config()
-        self.gbpverify = Gbp_Verify()
         self.gbpnova = Gbp_Nova(self.cntlr_ip)
         self.gbpheat = Gbp_Heat(self.cntlr_ip)
 
@@ -131,7 +127,7 @@ class gbp_main_config(object):
            self.gbpheat.cfg_all_cli(0, self.heat_stack_name)
            # Ntk namespace cleanup in Network-Node.. VM names are static
            # throughout the test-cycle
-           self.gbpcfg.del_netns(self.ntk_node)
+           del_netns(self.ntk_node)
         if avail == 0:
            self.gbpnova.avail_zone('cli', 'removehost',
                                    self.nova_agg, hostname=self.comp_node)

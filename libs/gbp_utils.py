@@ -106,18 +106,24 @@ def gen_test_report(test_results,suite,w_or_a):
     f.write('<p>')
     f.close()
 '''
-"""
-def gen_ssh_key(keyname): #TODO
-    key = RSA.generate(2048)
-    with open("~/%s_private.key" %(keyname), 'w') as keyfile:
-         chmod("~/%s_private.key" %(keyname), 0600)
-         keyfile.write(key.exportKey('PEM'))
-    pubkey = key.publickey()
-    with open("~/%s_public.pub" %(keyname), 'w') as keyfile:
-         keyfile.write(pubkey.exportKey('OpenSSH'))
-    pubkeypath="~/%s_public.pub" %(keyname)  
-    return pubkeypath
-"""    
+
+def del_netns(self,net_node_ip,netns=[]):
+        """
+        Deletes the Network Node's Ntk NameSpace
+        Associated with every VM
+        """
+        env.host_string = net_node_ip
+        env.user = 'root'
+        env.password = 'noir0123'
+        run("neutron-netns-cleanup")
+        if netns == []:
+         with settings(warn_only=True):
+                run("neutron-netns-cleanup")
+                result = run("ip netns | grep qdhcp")
+                netns = [x.strip() for x in result.split('\n')]
+        for ns in netns:
+           with settings(warn_only=True):
+               result = run("ip netns delete %s" %(ns))
 
 class Apic(object):
     def __init__(self, addr, user, passwd, ssl=True):

@@ -529,10 +529,9 @@ class NatML2TestSuite(object):
 	LOG.info("\nStep-4-TC-6: VerifyACI: ShadowL3Out's VRF resolves to Routers' VRF #")
 	ShdL3 = self.apic.getL3Out(self.tnt1)
 	if len(ShdL3):
-	    retdict = ShdL3[self.tnt1]
-	    if '_Shd-%s-' %(self.rtrID) in retdict.values()[0]:
-	        if retdict['vrfname'] == '_%s_%s' %(self.apicsystemID, self.rtrID) \
-		and retdict['vrfstate'] == 'formed':
+	    if '_Shd-%s-' %(self.rtrID) in ShdL3.keys()[0]:
+	        if ShdL3['vrfname'] == '_%s_%s' %(self.apicsystemID, self.rtrID) \
+		and ShdL3['vrfstate'] == 'formed':
 		    print "Vrf name and state matched"
 	        else:
 		    LOG.info

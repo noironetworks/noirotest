@@ -46,7 +46,12 @@ def main():
         targetVmFips = testbed_cfg.setup(nat_type, do_config=0)
         # Fetch gbp objects via heat output
         objs_uuid = get_obj_uuids(cfgfile)
-        
+        # Verify the config setup on the ACI
+	print 'Sleeping for the EP learning on ACI Fab'
+	sleep(30)   
+	if not testbed_cfg.verifySetup():
+	    testbed_cfg.cleanup()
+	    print 'DNAT TestSuite Execution Failed due to Setup Issue'
         # Note: Please always maintain the below order of DNAT Test Execution
         # Since the DNAT_VM_to_VM has the final blind cleanup, which helps to
         # avoid the heat stack-delete failure coming from nat_dp_main_config
@@ -71,6 +76,12 @@ def main():
         testbed_cfg.setup('snat', do_config=0)
         # Fetch gbp objects via heat output
         objs_uuid = get_obj_uuids(cfgfile)
+        # Verify the config setup on the ACI
+	print 'Sleeping for the EP learning on ACI Fab'
+	sleep(30)   
+	if not testbed_cfg.verifySetup():
+	    testbed_cfg.cleanup()
+	    print 'SNAT TestSuite Execution Failed due to Setup Issue'
         # Execution of SNAT DP Tests
         from testcases.testcases_dp_nat.testsuite_snat_vm_to_extgw import SNAT_VMs_to_ExtGw
         test_snat_allvms_to_extgw = SNAT_VMs_to_ExtGw(objs_uuid)
