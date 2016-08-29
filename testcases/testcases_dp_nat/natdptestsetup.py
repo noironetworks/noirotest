@@ -170,20 +170,36 @@ class nat_dp_main_config(object):
 		for vm in self.targetvm_list:
 		    notfound = 0
 		    for epg,value in operEpgs.iteritems():
-			if vm in value['vm']:
-		           if not state in value['status']:
-			       raise VerifyError(
+			#since each value is a dict itself,
+                        #with key = vmname
+			if vm in value.keys():
+		           if not vmstate in value[vm]['status']:
+			       raise Exception(
                                  'vm %s NOT Learned in Epg %s' %(vm,epg)
 				 )
-			else:
+		        else:
 			    notfound += 1
-		    if notfound == len(operEpgs):
-			raise VerifyError(
-			  'vm %s NOT found in APIC' %(vm))
+		    if notfound == len(operEpgs.keys()):    
+			raise Exception(
+			     'vm %s NOT found in APIC' %(vm))
+            #Verify the BDs in OperState of Service EPGs
+            #pop them out of the operEpgs
+            for bd in self.L2plist:
+		svcEpg = 'Shd-%s' %(bd)
+		if svcEpg in operEpgs.keys():
+		    svcVal = operEpgs.pop(svcEpg)
+		    if svcVal['bdname'] != bd \
+			or svcVal['bdstate'] != 'formed':
+			    raise Exception(
+			      'epg %s has Unresolved BD' %(svcEpg))
+		else:
+		    raise Exception(
+		       'Svc Epg %s NOT found in APIC' %(svcEpg))
+	    #Verify the BDs in OperState of Regular EPGs
 	    if [epg for epg,bd in operEpgs.iteritems() \
                 if bd['bdname'] != self.EpgL2p[epg] \
 		    or bd['bdstate'] != 'formed']:
-		    raise VerifyError(
+		    raise Exception(
 			  'epg %s has Unresolved BD' %(epg))
 	    self._log.info(
 		"\n Verify the Shadow L3Outs")
@@ -193,23 +209,25 @@ class nat_dp_main_config(object):
 	    #for this test setup
 	    str1 = '_%s_Shd-%s' %(self.apicsystemID,l3p1)
 	    str2 = '_%s_Shd-%s' %(self.apicsystemID,l3p2)
+	    L3p1 = '_%s_%s' %(self.apicsystemID,l3p1)
+	    L3p2 = '_%s_%s' %(self.apicsystemID,l3p2)
 	    ShdL3Out = [l3out for l3out in L3Outs.keys()\
-		        if str1 in key or str2 in key]
+		        if str1 in l3out or str2 in l3out]
 	    if len(ShdL3Out) == 4:
 	        for l3out in ShdL3Out:
-	    	    if (L3Outs[l3out]['vrfname'] == l3p1 \
-		        or L3Outs[l3out]['vrfname'] == l3p2):
+	    	    if (L3Outs[l3out]['vrfname'] == L3p1 \
+		        or L3Outs[l3out]['vrfname'] == L3p2):
 			if L3Outs[l3out]['vrfstate'] != 'formed':
-			    raise VerifyError(
+			    raise Exception(
 			        'VRF not resolved for %s' %(l3out))
 		    else:
-			raise VerifyError(
+			raise Exception(
 			    'VRF is not associated to %s' %(l3out))
 	    else:
-		raise VerifyError('4 ShdL3Outs are NOT created')
+		raise Exception('4 ShdL3Outs are NOT created')
 	except Exception as e:
 	    self._log.error(
-                '\nSetup Verification Failed because of this issue'+repr(e))
+                '\nSetup Verification Failed because of this issue: '+repr(e))
   	    return 0
 	finally:
 	    return 1

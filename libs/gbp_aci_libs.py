@@ -238,23 +238,24 @@ class GbpApic(object):
 		epgDn = item['fvAEPg']['attributes']['dn']
                 tenantepgdict[epgDn] = epgName
 	if len(tenantepgdict):
-	        for dn,name in tenantepgdict.iteritems():
-		    finaldictEpg[name] = {}
+	        for dn,epgname in tenantepgdict.iteritems():
+		    finaldictEpg[epgname] = {}
 	            pathepfromepg = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvCEp' %(dn)
 	            print 'PATH == ',pathepfromepg
 	            reqforeps = self.get(pathepfromepg)
                     epgDetails = reqforeps.json()['imdata']
                     for item in epgDetails:
-			finaldictEpg[name]['status'] = item['fvCEp']['attributes']['lcC'].encode()
-			finaldictEpg[name]['vm'] = item['fvCEp']['attributes']['contName'].encode()
-			finaldictEpg[name]['ip'] = item['fvCEp']['attributes']['ip'].encode()
-			finaldictEpg[name]['encap'] = item['fvCEp']['attributes']['encap'].encode()
-			finaldictEpg[name]['mcastaddr'] = item['fvCEp']['attributes']['mcastAddr'].encode()
+			vmname = item['fvCEp']['attributes']['contName'].encode()
+		        finaldictEpg[epgname][vmname]={}
+			finaldictEpg[epgname][vmname]['status'] = item['fvCEp']['attributes']['lcC'].encode()
+			finaldictEpg[epgname][vmname]['ip'] = item['fvCEp']['attributes']['ip'].encode()
+			finaldictEpg[epgname][vmname]['encap'] = item['fvCEp']['attributes']['encap'].encode()
+			finaldictEpg[epgname][vmname]['mcastaddr'] = item['fvCEp']['attributes']['mcastAddr'].encode()
 		    pathbdfromepg = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvRsBd' %(dn)
 		    reqforbd = self.get(pathbdfromepg)
 		    detail = reqforbd.json()['imdata']
-		    finaldictEpg[name]['bdname'] = detail[0]['fvRsBd']['attributes']['tnFvBDName'].encode()
-		    finaldictEpg[name]['bdstate'] = detail[0]['fvRsBd']['attributes']['state'].encode()
+		    finaldictEpg[epgname]['bdname'] = detail[0]['fvRsBd']['attributes']['tnFvBDName'].encode()
+		    finaldictEpg[epgname]['bdstate'] = detail[0]['fvRsBd']['attributes']['state'].encode()
         print 'EPG Details == \n', finaldictEpg
 	return finaldictEpg
            
