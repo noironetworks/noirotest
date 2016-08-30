@@ -100,9 +100,17 @@ class Compute(object):
                     if not len(epfile["ip-address-mapping"]):
 		        return  0
 		    else: #return the attributes
-		        return epfile["ip-address-mapping"][0]["next-hop-if"],\
-			       epfile["ip-address-mapping"][0]["policy-space-name"],\
-			       epfile["ip-address-mapping"][0]["endpoint-group-name"]		
+		        #epfile["ip-address-mapping"] is a list
+			for item in epfile["ip-address-mapping"]: 
+			    #Incase of SNAT
+			    if "next-hop-if" in item.keys():
+			       return item["next-hop-if"],\
+			       item["policy-space-name"],\
+			       item["endpoint-group-name"]
+			    else: #Incase of DNAT
+			        return item["floating-ip"],\
+				item["policy-space-name"],\
+				item["endpoint-group-name"]		
 	        else:
                     if '_' in key:
                       key = key.replace('_','-')
@@ -122,10 +130,10 @@ class Compute(object):
 	epfile = self.GetReadFiles(remoteFile)
 	if epfile:
 	    return epfile["interface-name"],\
-		   epfile["ip"][0],\
-		   epfile["policy-space-name"],\
-		   epfile["endpoint-group-name"],\
-		   epfile["attributes"]["vm-name"]
+	           epfile["ip"][0],\
+	           epfile["policy-space-name"],\
+	           epfile["endpoint-group-name"].split('|')[1],\
+	           epfile["attributes"]["vm-name"]
 	else:
 	    print "SNAT EP File NOT FOUND"
 	    return 0

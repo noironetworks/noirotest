@@ -49,7 +49,7 @@ def main():
         # Verify the config setup on the ACI
 	print 'Sleeping for the EP learning on ACI Fab'
 	sleep(30)   
-	if not testbed_cfg.verifySetup():
+	if not testbed_cfg.verifySetup(nat_type):
 	    testbed_cfg.cleanup()
 	    print 'DNAT TestSuite Execution Failed due to Setup Issue'
         # Note: Please always maintain the below order of DNAT Test Execution
@@ -73,13 +73,13 @@ def main():
         # RUN ONLY SNAT DP TESTs
         # TestSetup Configuration
         print 'Setting up global config for SNAT DP Testing'
-        testbed_cfg.setup('snat', do_config=0)
+        testbed_cfg.setup(nat_type, do_config=0)
         # Fetch gbp objects via heat output
         objs_uuid = get_obj_uuids(cfgfile)
         # Verify the config setup on the ACI
 	print 'Sleeping for the EP learning on ACI Fab'
 	sleep(30)   
-	if not testbed_cfg.verifySetup():
+	if not testbed_cfg.verifySetup(nat_type):
 	    testbed_cfg.cleanup()
 	    print 'SNAT TestSuite Execution Failed due to Setup Issue'
         # Execution of SNAT DP Tests

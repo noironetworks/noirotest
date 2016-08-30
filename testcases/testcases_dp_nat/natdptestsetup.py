@@ -10,6 +10,7 @@ from time import sleep
 from libs.gbp_heat_libs import Gbp_Heat
 from libs.gbp_nova_libs import Gbp_Nova
 from libs.gbp_aci_libs import GbpApic
+from libs.gbp_compute import Compute
 from libs.gbp_utils import *
 
 
@@ -35,8 +36,9 @@ class nat_dp_main_config(object):
 	self.apicsystemID = conf['apic_system_id']
         self.nova_agg = conf['nova_agg_name']
         self.nova_az = conf['nova_az_name']
-        self.comp_node = conf['az_comp_node']
+        self.az_node = conf['az_comp_node']
         self.ntk_node = conf['ntk_node']
+	self.comp_node = conf['compute_2']
         self.cntlr_ip = conf['controller_ip']
         self.extgw = conf['ext_gw_rtr']
         self.apic_ip = conf['apic_ip']
@@ -66,6 +68,7 @@ class nat_dp_main_config(object):
 	self.Epglist = ['APPPTG','WEBSRVRPTG','WEBCLNTPTG']
 	self.L2plist = ['APPL2P','WEBSRVRL2P','WEBCLNTL2P']
 	self.EpgL2p = dict(zip(self.Epglist,self.L2plist))
+	self.L3Outlist = ['Management-Out', 'Datacenter-Out']
 
     def setup(self, nat_type, do_config=0):
         """
@@ -96,7 +99,7 @@ class nat_dp_main_config(object):
                    cmd = "nova aggregate-list" # Check if Agg already exists then delete
                    if self.nova_agg in getoutput(cmd):
                       self._log.warning("\nResidual Nova Agg exits, hence deleting it")
-                      self.gbpnova.avail_zone('cli', 'removehost', self.nova_agg, hostname=self.comp_node)
+                      self.gbpnova.avail_zone('cli', 'removehost', self.nova_agg, hostname=self.az_node)
                       self.gbpnova.avail_zone('cli', 'delete', self.nova_agg)
                    self._log.info("\nCreating Nova Host-Aggregate & its Availability-zone")
                    self.agg_id = self.gbpnova.avail_zone(
@@ -108,7 +111,7 @@ class nat_dp_main_config(object):
                self._log.info(" Agg %s" % (self.agg_id))
                try:
                  self._log.info("\nAdding Nova host to availability-zone")
-                 self.gbpnova.avail_zone('api', 'addhost', self.agg_id, hostname=self.comp_node)
+                 self.gbpnova.avail_zone('api', 'addhost', self.agg_id, hostname=self.az_node)
                except Exception, e:
                      self._log.info(
                         "\n ABORTING THE TESTSUITE RUN, availability zone creation Failed")
@@ -155,7 +158,7 @@ class nat_dp_main_config(object):
                print 'FIPs of Target VMs == %s' % (self.fipsOftargetVMs)
                return self.fipsOftargetVMs
 
-    def verifySetup(self):
+    def verifySetup(self,nat_type):
 	"""
 	Verifies the Setup after being brought up
 	"""
@@ -201,6 +204,7 @@ class nat_dp_main_config(object):
 		    or bd['bdstate'] != 'formed']:
 		    raise Exception(
 			  'epg %s has Unresolved BD' %(epg))
+	    #Verify the Shadow L3Outs
 	    self._log.info(
 		"\n Verify the Shadow L3Outs")
 	    L3Outs = self.gbpaci.getL3Out('admin')
@@ -225,14 +229,58 @@ class nat_dp_main_config(object):
 			    'VRF is not associated to %s' %(l3out))
 	    else:
 		raise Exception('4 ShdL3Outs are NOT created')
+	    #Verify SNAT EPs and DNAT FIPs
+	    getNatEp = self.gbpaci.getEpgOper('common')
+	    state = 'learned,vmm'
+	    if getNatEp:
+               if nat_type == 'snat':
+	        for node in [self.comp_node,self.ntk_node]:
+		    comp = Compute(node)
+	            for l3out in self.L3Outlist:
+	                 intf,ip,psn,epg,name = \
+	                 comp.getSNATEp(l3out)
+			 if epg in getNatEp.keys():
+			    if name in getNatEp[epg].keys():
+				if ip != getNatEp[epg][name]['ip'] \
+				   or getNatEp[epg][name]['status'] \
+					!= state:
+					raise Exception(
+                                        'SNAT IP %s of SNAT-EP %s NOT learned' \
+					%(ip,name))
+		       	    else:
+				raise Exception(
+                                 'NAT-EP %s is NOT FOUND in APIC' %(name))
+			 else:
+			    raise Exception(
+			    'NAT-EPG %s NOT FOUND in APIC' %(epg))
+	       if nat_type == 'dnat':
+		  #do not know the epg
+                  #hence using values of getEpgOper
+		  epnotfound = 0
+		  for vm,fip in self.fipsOftargetVMs.iteritems():
+		  #Each vm has two fips, so type(fip)=list
+		        for val in getNatEp.values():
+	                    if vm in val.keys():
+                               if val[vm]['ip'] not in fip \
+				  or state != val[vm]['status']:
+				  raise Exception(
+				   'FIP %s NOT learned in ACI'\
+				   %(fip))
+			    else:
+				epnotfound += 1
+			if epnotfound == len(getNatEp.values()):
+			   raise Exception(
+			    'DNAT-EP %s NOT found in APIC' \
+			    %(vm))		       	
+	    else:
+		raise Exception(
+		 'NAT-EPGs NOT found in Common Tenant of APIC')
 	except Exception as e:
 	    self._log.error(
                 '\nSetup Verification Failed because of this issue: '+repr(e))
   	    return 0
 	finally:
 	    return 1
-	# NAT EPs(FIPs and SNAT)
-	# Fetch SNAT EP from Comp
 
     def cleanup(self,stack=0,avail=0):
         # Need to call for instance delete if there is an instance

@@ -18,6 +18,7 @@ controller_ip: '172.28.184.35'
 neutronconffile: '/etc/neutron/neutron.conf' #Ensure it has the VALID apic_external_network config section defined
 ntk_node: '172.28.184.36'
 az_comp_node: 'f2-compute-1.noiro.lab'
+compute_2: '172.28.184.37'
 ext_gw_rtr: '172.28.184.38'
 fip1_of_extgw: '1.102.1.1'
 fip2_of_extgw: '1.102.2.1'
