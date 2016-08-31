@@ -95,10 +95,10 @@ class Compute(object):
 	    for key, value in kwargs.iteritems():
 	        if key == "vm_name":
 	            if value != epfile["attributes"]["vm-name"]:
-		         return 0
+		         return None
 	        elif key == "ip_address_mapping":
                     if not len(epfile["ip-address-mapping"]):
-		        return  0
+		        return  None
 		    else: #return the attributes
 		        #epfile["ip-address-mapping"] is a list
 			for item in epfile["ip-address-mapping"]: 
@@ -117,10 +117,10 @@ class Compute(object):
 	            if value != epfile[key]:
 		       print "Mismatch between user fed and epfile",\
 		              value, epfile[key]
-	               return 0
-	    return 1
+	               return None
+	    return True
         else:
-	    return 0   
+	    return None   
 	
     def getSNATEp(self,L3OutName):
 	"""
@@ -136,4 +136,4 @@ class Compute(object):
 	           epfile["attributes"]["vm-name"]
 	else:
 	    print "SNAT EP File NOT FOUND"
-	    return 0
+	    return None

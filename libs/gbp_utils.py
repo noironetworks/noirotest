@@ -271,14 +271,21 @@ def add_route_in_extrtr(rtrip,route,nexthop,action='add',ostype='ubuntu',user='n
             sudo("ip route add %s via %s" %(route,nexthop))
 
 def snataddhostpoolcidr(controllerIp,
-                        neutronconffile,
-                        L3Outname,
-                        hostpoolcidr,user='root',pwd='noir0123'):
+                        destfile,
+                        section,
+                        pattern,
+			add=True,
+			patternval='',
+		   	user='root',
+			pwd='noir0123'):
     """
     Add host_pool_cidr config flag and restarts neutron-server
-    neutronconffile :: name with location of the neutron config
-               file in which apic_external_network
-               section is defined
+    destfile :: name with location of the file in which
+                section is defined
+    section :: The section to match in a conf file
+    pattern :: The pattern to match under the above section
+    add :: default action is add a pattern, else will remove
+    patternval :: Needs to be provided when add=True
     P.S. If there is an existing host_pool_cidr, then it will
     over-riden
     """
@@ -286,12 +293,17 @@ def snataddhostpoolcidr(controllerIp,
     env.user = user
     env.password = pwd
     with settings(warn_only=True):
-         chk_string = run('grep -r %s %s' %(hostpoolcidr,neutronconffile))
-         if chk_string.failed:
-            cmd = 'sed -i '+"'/apic_external_network:%s" %(L3Outname)+'/a '+"host_pool_cidr=%s' " %(hostpoolcidr)+neutronconffile
-            print cmd
-            run(cmd)
-            run('service neutron-server restart')
+	if add == True:
+        
+             chk_string = run('grep -r %s %s' %(pattern,destfile))
+             if chk_string.failed:
+                cmd = 'sed -i '+\
+                   "'/%s" %(section)+\
+                   '/a '+"%s=%s' " %(pattern,patternval)+\
+                   destfile
+                print cmd
+                run(cmd)
+                run('service neutron-server restart')
 
 def PauseToDebug():
     while True:

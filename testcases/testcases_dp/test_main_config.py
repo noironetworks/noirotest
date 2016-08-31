@@ -9,6 +9,8 @@ from time import sleep
 from commands import *
 from libs.gbp_heat_libs import Gbp_Heat
 from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_aci_libs import GbpApic
+from libs.gbp_compute import Compute
 from libs.gbp_utils import *
 
 
@@ -35,6 +37,7 @@ class gbp_main_config(object):
         """
         with open(cfg_file, 'rt') as f:
             conf = yaml.load(f)
+	self.apicsystemID = conf['apic_system_id']
         self.nova_agg = conf['nova_agg_name']
         self.nova_az = conf['nova_az_name']
         self.comp_node = conf['az_comp_node']
@@ -48,7 +51,13 @@ class gbp_main_config(object):
         self.test_parameters = conf['test_parameters']
         self.gbpnova = Gbp_Nova(self.cntlr_ip)
         self.gbpheat = Gbp_Heat(self.cntlr_ip)
-
+	self.gbpaci = GbpApic(self.apic_ip,
+			       'gbp',
+			       apicsystemID=self.apicsystemID) 
+	self.vmlist = ['VM1','VM2','VM3','VM4',
+		       'VM5','VM6','VM7','VM8',
+		       'VM9','VM10','VM11','VM12'	
+		      ]
     def setup(self):
         """
         Availability Zone creation
@@ -110,15 +119,65 @@ class gbp_main_config(object):
         sleep(5)  # Sleep 5s assuming that all objects are created in APIC
         self._log.info(
             "\n Adding SSH-Filter to Svc_epg created for every dhcp_agent")
-        svc_epg_list = [
+        self.L2plist = [
                         'demo_same_ptg_l2p_l3p_bd',
                         'demo_diff_ptg_same_l2p_l3p_bd',
                         'demo_diff_ptg_l2p_same_l3p_bd_1',
                         'demo_diff_ptg_l2p_same_l3p_bd_2',
                         'demo_srvr_bd', 'demo_clnt_bd'
                        ]
-        create_add_filter(self.apic_ip, svc_epg_list, password=self.apic_passwd)
-        sleep(15)
+	if not self.gbpaci.create_add_filter(self.L2plist):
+	    self._log.error("\nABORTING THE TESTSUITE RUN,\
+adding filter to SvcEpg failed")
+	    self.cleanup()
+	    sys.exit(1)
+
+    def verifySetup(self):
+   	"""
+	Verfies the Setup after being brought up
+	"""
+	self._log.info(
+	    "\nVerify the Orchestrated Configuration in ACI")
+	try:
+	    self._log.info(
+		"\n Verify the Operatonal State of EPGs")
+	    operEpgs = self.gbpaci.getEpgOper('admin')
+	    if operEpgs:
+		vmstate = 'learned,vmm'
+		for vm in self.vmlist:
+		    notfound = 0
+		    for epg,value in operEpgs.iteritems():
+			#since each value is a dict itself,
+                        #with key = vmname
+			if vm in value.keys():
+		           if not vmstate in value[vm]['status']:
+			       raise Exception(
+                                 'vm %s NOT Learned in Epg %s' %(vm,epg)
+				 )
+		        else:
+			    notfound += 1
+		    if notfound == len(operEpgs.keys()):    
+			raise Exception(
+			     'vm %s NOT found in APIC' %(vm))
+            #Verify the BDs in OperState of Service EPGs
+            #pop them out of the operEpgs
+            for bd in self.L2plist:
+		svcEpg = 'Shd-%s' %(bd)
+		if svcEpg in operEpgs.keys():
+		    svcVal = operEpgs.pop(svcEpg)
+		    if svcVal['bdname'] != bd \
+			or svcVal['bdstate'] != 'formed':
+			    raise Exception(
+			    'epg %s has Unresolved BD' %(svcEpg))
+		else:
+		    raise Exception(
+		       'SvcEpg %s NOT found in APIC' %(svcEpg))
+	except Exception as e:
+	    self._log.error(
+                '\nSetup Verification Failed because of this issue: '+repr(e))
+  	    return 0
+	finally:
+	    return 1
 
     def cleanup(self,stack=0,avail=0):
         # Need to call for instance delete if there is an instance

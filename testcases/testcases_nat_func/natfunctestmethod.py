@@ -313,7 +313,7 @@ class NatFuncTestMethods(object):
                                           vm,
                                           extsegname=ExtSegName
                                           )
-            if results == 0:
+            if not results:
                self._log.error("\n Associating FIP to VM %s failed" %(vm))
                self.DeleteOrCleanup('cleanup')
                return 0
@@ -326,11 +326,11 @@ class NatFuncTestMethods(object):
         """
         self._log.info("\nStep: Disassociate FIPs from VMs\n")
         for vm,fip in self.vm_to_fip.iteritems():
-            if self.gbpnova.action_fip_to_vm(
+            if not self.gbpnova.action_fip_to_vm(
                                           'disassociate',
                                           vm,
                                           vmfip = fip
-                                          ) == 0:
+                                          ):
                self._log.error("\n Disassociating FIP from VM %s failed" %(vm))
                self.DeleteOrCleanup('cleanup')
                return 0
@@ -414,6 +414,10 @@ class NatFuncTestMethods(object):
            vmfips = self.vm_to_fip
         else:
            vmfips = self.gbpnova.get_floating_ips(ret=1)
+	   if not vmfips:
+		self._log.error(
+		    "There are no FIPs to test Traffic")
+		return 0
         run_traffic = traff_from_extgwrtr(
                                           extgwrtr,
                                           vmfips,

@@ -31,8 +31,11 @@ def main():
     gbpverify = Gbp_Verify()
     objs_uuid = gbpverify.get_uuid_from_stack(
         super_hdr.heat_temp, super_hdr.stack_name)
-    print "Waiting for IP/MAC learning by Fabric via both VMM & Datapath before we start the test"
+    
+    # Verify the configuration on ACI
+    print "Verification .. sleep 30s, allowing DP learning"
     sleep(30)
+    testbed_cfg.verifySetup()
 
     for val in header_to_suite_map.itervalues():
         # Initialize Testsuite specific config setup/cleanup class

@@ -70,7 +70,7 @@ class nat_dp_main_config(object):
 	self.EpgL2p = dict(zip(self.Epglist,self.L2plist))
 	self.L3Outlist = ['Management-Out', 'Datacenter-Out']
 
-    def setup(self, nat_type, do_config=0):
+    def setup(self, nat_type, do_config=0, pertntnatEpg=False):
         """
         Availability Zone creation
         Heat Stack Creates All Test Config
@@ -120,10 +120,15 @@ class nat_dp_main_config(object):
                      sys.exit(1)
             if nat_type == 'snat':
                 # Adding host_pool_cidr to the both L3Outs
+		section = 'apic_external_network:Managment-Out'
+		pattern = 'host_pool_cidr'
+		patternval = self.hostpoolcidrL3OutA
                 snataddhostpoolcidr(self.cntlr_ip,
                                     self.neutronconffile,
-                                    'Management-Out',
-				    self.hostpoolcidrL3OutA)
+                                    section,
+				    pattern,
+				    patternval\
+                                    =self.hostpoolcidrL3OutA)
                 snataddhostpoolcidr(self.cntlr_ip,
 				    self.neutronconffile,
 				    'Datacenter-Out',
@@ -158,7 +163,7 @@ class nat_dp_main_config(object):
                print 'FIPs of Target VMs == %s' % (self.fipsOftargetVMs)
                return self.fipsOftargetVMs
 
-    def verifySetup(self,nat_type):
+    def verifySetup(self,nat_type,pertntnatEpg=False):
 	"""
 	Verifies the Setup after being brought up
 	"""
@@ -230,6 +235,8 @@ class nat_dp_main_config(object):
 	    else:
 		raise Exception('4 ShdL3Outs are NOT created')
 	    #Verify SNAT EPs and DNAT FIPs
+	    #Irrespective of pertntnatEpg, the SNAT EPs will
+	    #be learned in NAT-EPG in Common
 	    getNatEp = self.gbpaci.getEpgOper('common')
 	    state = 'learned,vmm'
 	    if getNatEp:
@@ -254,6 +261,8 @@ class nat_dp_main_config(object):
 			    raise Exception(
 			    'NAT-EPG %s NOT FOUND in APIC' %(epg))
 	       if nat_type == 'dnat':
+		  if pertntnatEpg:
+		     getNatEp = self.gbpaci.getEpgOper('admin')
 		  #do not know the epg
                   #hence using values of getEpgOper
 		  epnotfound = 0

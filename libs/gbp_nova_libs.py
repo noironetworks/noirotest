@@ -81,16 +81,16 @@ class Gbp_Nova(object):
            if method == 'api':
               agg_str = str(self.nova.aggregates.create(agg_name_id,avail_zone_name)) # By default create() returns a class,to get id converting to str() for regex
               t = re.search('<Aggregate: (\d+)>',agg_str,re.I)
-              if t != None:
+              if t:
                  agg_id = t.group(1)
                  return agg_id
            if method == 'cli':
               cmd='nova aggregate-create '+agg_name_id+' '+avail_zone_name
-              cmd_out = getoutput(cmd_out)
+              cmd_out = getoutput(cmd)
               if self.cmd_error_check(cmd_out) == 0:
                  return 0
-              t = re.search('\\b(\d+)\\b.*\\b%s\\b.*' %(agg-name),cmd_out,re.I)
-              if t != None:
+              t = re.search('\\b(\d+)\\b.*\\b%s\\b.*' %(agg_name_id),cmd_out,re.I)
+              if t:
                  agg_id = t.group(1)
                  return agg_id
         if action == 'delete':
@@ -243,10 +243,10 @@ class Gbp_Nova(object):
            # The above list contains many attributes like fixed_ip,pool_id etc, we can use it to fetch those attribute if need be
            for index in range(0,len(floating_ip_class_list)):
                floating_ips.append(floating_ip_class_list[index].ip.encode('ascii'))
-        except Exception as e:
+        except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             _log.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
-            return 0
+            return None
         return floating_ips
 
     def action_fip_to_vm(self,action,vmname,extsegname=None,vmfip=None):
@@ -268,21 +268,21 @@ class Gbp_Nova(object):
                       try:
                           fip = self.nova.floating_ips.create(pool=pool.name)
                           self.nova.servers.find(name=vmname).add_floating_ip(fip)
-                      except Exception as e:
+                      except Exception:
                           exc_type, exc_value, exc_traceback = sys.exc_info()
                           _log.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
-                          return 0
+                          return None
                       return fip.ip.encode(),fip #Returning the attr of fip(address) and the fip object itself
             else:
                 _log.error('There are NO Floating IP Pools')
-                return 0
+                return None
         if action == 'disassociate':
            try:
               self.nova.servers.find(name=vmname).remove_floating_ip(vmfip)
-           except Exception as e:
+           except Exception:
               exc_type, exc_value, exc_traceback = sys.exc_info()
               _log.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
-              return 0
+              return None
 
     def delete_release_fips(self):
         """
@@ -293,7 +293,7 @@ class Gbp_Nova(object):
            disassociatedFips = self.nova.floating_ips.list()
            for fip in disassociatedFips:
                self.nova.floating_ips.delete(fip)
-        except Exception as e:
+        except Exception:
            exc_type, exc_value, exc_traceback = sys.exc_info()
            _log.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
            return 0
@@ -340,10 +340,10 @@ class Gbp_Nova(object):
                   vm_to_fip[obj.instance_id] = obj.ip
                else:
                   fiplist.append(obj.ip)
-        except Exception as e:
+        except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             _log.error('Exception Type = %s, Exception Object = %s' %(exc_type,exc_traceback))
-            return 0
+            return None
         if ret == 0:
            return vm_to_fip
         else:
@@ -360,7 +360,7 @@ class Gbp_Nova(object):
               with open(os.path.expanduser(keypath)) as publickey:
                  try:
                     self.nova.keypairs.create(name=sshkeyname, public_key=publickey.read())
-                 except Exception as e:
+                 except Exception:
                      return 0 #SSH Key upload failed
          else:
            #keypath=gensshkey(sshkeyname)

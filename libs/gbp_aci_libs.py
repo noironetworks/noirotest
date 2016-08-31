@@ -209,13 +209,32 @@ class GbpApic(object):
         return req
 
     def post(self, path, data):
-        return requests.post(self.url(path), data=data, cookies=self.cookies, verify=False)
+	try:
+            return requests.post(self.url(path),
+					  data=data,
+					  cookies=self.cookies,
+					  verify=False)
+	except requests.exceptions.RequestException as e:
+	    print e
+	    return None
 
     def get(self,path):
-        return requests.get(self.url(path), cookies=self.cookies, verify=False)
+	try:
+            return requests.get(self.url(path),
+			        cookies=self.cookies,
+				verify=False)
+	except requests.exceptions.RequestException as e:
+		print e
+		return None
 
     def delete(self,path):
-        return requests.delete(self.url(path), cookies=self.cookies, verify=False)
+	try:
+            return requests.delete(self.url(path),
+				   cookies=self.cookies,
+				   verify=False)
+	except requests.exceptions.RequestException as e:
+		print e
+		return None
 
     def getEpgOper(self,tnt):
 	"""
@@ -409,14 +428,16 @@ class GbpApic(object):
         apictenant = 'tn-_%s_%s' %(self.apicsystemID,tenant)
         path = '/api/node/mo/uni/%s/flt-noiro-ssh.json' %(apictenant)
         data = '{"vzFilter":{"attributes":{"dn":"uni/%s/flt-noiro-ssh","name":"noiro-ssh","rn":"flt-noiro-ssh","status":"created"},"children":[{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh","name":"ssh","etherT":"ip","prot":"tcp","sFromPort":"22","sToPort":"22","rn":"e-ssh","status":"created"},"children":[]}},{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh-rev","name":"ssh-rev","etherT":"ip","prot":"tcp","dFromPort":"22","dToPort":"22","rn":"e-ssh-rev","status":"created"},"children":[]}}]}}' %(3*(apictenant,))
-        self.post(path, data)
+        if not self.post(path, data):
+	    return None
         # Add the noiro-ssh filter to every svcepg_contract
         if not isinstance(svcepg,list):
-           svcepg = [svcepg]
+               svcepg = [svcepg]
         for epg in svcepg:
-            path = '/api/node/mo/uni/%s/brc-Svc-%s/subj-Svc-%s.json' %(apictenant,epg,epg)
-            data = '{"vzRsSubjFiltAtt":{"attributes":{"tnVzFilterName":"noiro-ssh","status":"created"},"children":[]}}'
-            self.post(path, data)
+                path = '/api/node/mo/uni/%s/brc-Svc-%s/subj-Svc-%s.json' %(apictenant,epg,epg)
+                data = '{"vzRsSubjFiltAtt":{"attributes":{"tnVzFilterName":"noiro-ssh","status":"created"},"children":[]}}'
+		if not self.post(path, data):
+		    return None
 
     def addEnforcedToPtg(self,epg,flag='enforced',tenant='admin'):
         """

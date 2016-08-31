@@ -127,7 +127,7 @@ class Gbp_Heat(object):
             cmd_out = getoutput(cmd)
             #print cmd_out
             if self.cmd_error_check(cmd_out) == 0:
-               return 0
+               return None
             objs_uuid[key] = cmd_out
         return objs_uuid
 
