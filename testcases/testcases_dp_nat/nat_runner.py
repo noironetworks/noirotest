@@ -36,33 +36,54 @@ def main():
     # Build the Test Config to be used for all NAT DataPath Testcases
     cfgfile = sys.argv[1]
     testbed_cfg = nat_dp_main_config(cfgfile)
-    if len(sys.argv) == 3:
-       nat_type = sys.argv[2]
-    
+    if len(sys.argv)>=3:
+	nat_type = sys.argv[2]
     if nat_type == 'dnat':
         # RUN ONLY DNAT DP TESTs
         # TestSetup Configuration
         print 'Setting up global config for all DNAT DP Testing'
-        targetVmFips = testbed_cfg.setup(nat_type, do_config=0)
+	if len(sys.argv) > 3:
+            print 'Test for PER_TENANT_NAT_EPG FOR DNAT'
+            targetVmFips = testbed_cfg.setup(
+					     nat_type,
+                                             do_config=0,
+					     pertntnatEpg=True
+					     )
+	else:
+	    targetVmFips = testbed_cfg.setup(
+					     nat_type,
+					     do_config=0
+					     )
         # Fetch gbp objects via heat output
         objs_uuid = get_obj_uuids(cfgfile)
         # Verify the config setup on the ACI
 	print 'Sleeping for the EP learning on ACI Fab'
 	sleep(30)   
-	if not testbed_cfg.verifySetup(nat_type):
-	    testbed_cfg.cleanup()
-	    print 'DNAT TestSuite Execution Failed due to Setup Issue'
+	if len(sys.argv) > 3:
+	    if not testbed_cfg.verifySetup(nat_type,
+                                           pertntnatEpg=True):
+	        testbed_cfg.cleanup()
+	        print \
+                'DNAT-PerTntNatEpg TestSuite Execution Failed'
+	else:
+	    if not testbed_cfg.verifySetup(nat_type):
+	        testbed_cfg.cleanup()
+	        print \
+                'DNAT-PerTntNatEpg TestSuite Execution Failed'
         # Note: Please always maintain the below order of DNAT Test Execution
         # Since the DNAT_VM_to_VM has the final blind cleanup, which helps to
         # avoid the heat stack-delete failure coming from nat_dp_main_config
         
         # Execution of DNAT DP Tests from ExtRtr to VMs
-        from testcases.testcases_dp_nat.testsuite_dnat_extgw_to_vm import DNAT_ExtGw_to_VMs
-        test_dnat_extgw_to_vm = DNAT_ExtGw_to_VMs(objs_uuid, targetVmFips)
+        from testcases.testcases_dp_nat.testsuite_dnat_extgw_to_vm \
+        import DNAT_ExtGw_to_VMs
+        test_dnat_extgw_to_vm = DNAT_ExtGw_to_VMs(objs_uuid,
+						 targetVmFips)
         test_dnat_extgw_to_vm.test_runner()
        
         # Execution of DNAT DP Test from VM to ExtGW and VM-to-VM    
-        from testcases.testcases_dp_nat.testsuite_dnat_vm_to_vm import DNAT_VMs_to_VMs
+        from testcases.testcases_dp_nat.testsuite_dnat_vm_to_vm \
+        import DNAT_VMs_to_VMs
         test_dnat_vm_to_allvms = DNAT_VMs_to_VMs(objs_uuid, targetVmFips)
         test_dnat_vm_to_allvms.test_runner()
         # Cleanup
@@ -73,7 +94,7 @@ def main():
         # RUN ONLY SNAT DP TESTs
         # TestSetup Configuration
         print 'Setting up global config for SNAT DP Testing'
-        testbed_cfg.setup(nat_type, do_config=0)
+        testbed_cfg.setup('snat', do_config=0)
         # Fetch gbp objects via heat output
         objs_uuid = get_obj_uuids(cfgfile)
         # Verify the config setup on the ACI
@@ -83,7 +104,8 @@ def main():
 	    testbed_cfg.cleanup()
 	    print 'SNAT TestSuite Execution Failed due to Setup Issue'
         # Execution of SNAT DP Tests
-        from testcases.testcases_dp_nat.testsuite_snat_vm_to_extgw import SNAT_VMs_to_ExtGw
+        from testcases.testcases_dp_nat.testsuite_snat_vm_to_extgw \
+        import SNAT_VMs_to_ExtGw
         test_snat_allvms_to_extgw = SNAT_VMs_to_ExtGw(objs_uuid)
         test_snat_allvms_to_extgw.test_runner()
         # Cleanup after the SNAT Testsuite is run

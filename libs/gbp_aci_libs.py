@@ -249,7 +249,7 @@ class GbpApic(object):
 	tenantepgdict = {}
 	pathtenantepg = '/api/node/mo/uni/%s/%s.json?query-target=children&target-subtree-class=fvAEPg'\
                             %(apictenant,self.appProfile)
-	print 'Tenant EPG Path', pathtenantepg
+	#print 'Tenant EPG Path', pathtenantepg
 	reqforepgs = self.get(pathtenantepg)
         tntDetails = reqforepgs.json()['imdata']
   	for item in tntDetails:
@@ -260,7 +260,7 @@ class GbpApic(object):
 	        for dn,epgname in tenantepgdict.iteritems():
 		    finaldictEpg[epgname] = {}
 	            pathepfromepg = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvCEp' %(dn)
-	            print 'PATH == ',pathepfromepg
+	            #print 'PATH == ',pathepfromepg
 	            reqforeps = self.get(pathepfromepg)
                     epgDetails = reqforeps.json()['imdata']
                     for item in epgDetails:
@@ -275,7 +275,7 @@ class GbpApic(object):
 		    detail = reqforbd.json()['imdata']
 		    finaldictEpg[epgname]['bdname'] = detail[0]['fvRsBd']['attributes']['tnFvBDName'].encode()
 		    finaldictEpg[epgname]['bdstate'] = detail[0]['fvRsBd']['attributes']['state'].encode()
-        print 'EPG Details == \n', finaldictEpg
+        #print 'EPG Details == \n', finaldictEpg
 	return finaldictEpg
            
     def getBdOper(self,tnt):
@@ -290,7 +290,7 @@ class GbpApic(object):
 	tenantbddict = {}
 	pathtenantbd = '/api/node/mo/uni/%s.json?query-target=children&target-subtree-class=fvBD'\
 			   %(apictenant)
-	print 'Tenant BD Path', pathtenantbd
+	#print 'Tenant BD Path', pathtenantbd
 	reqforbds = self.get(pathtenantbd)
 	tntDetails = reqforbds.json()['imdata']
 	for item in tntDetails:
@@ -311,7 +311,7 @@ class GbpApic(object):
 			subnetdict['subnet-%s' %(item)]['scope'] = subnetDetails[item]['fvSubnet']['attributes']['scope'].encode()
 		    finaldictBD[name]['subnets']=subnetdict
 		    # Fetch the VRF associated with a given BD
-		    print 'DN for VRF == \n', dn
+		    #print 'DN for VRF == \n', dn
 		    pathforvrf = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvRsCtx' %(dn)
 		    reqforvrf = self.get(pathforvrf)
 		    vrfDetails = reqforvrf.json()['imdata']
@@ -334,7 +334,7 @@ class GbpApic(object):
 		        finaldictBD[name]['l3outoper'] = OperL3OutDetails[0]['l3extOut']['attributes']['name'].encode()
 		    except:
 			finaldictBD[name]['l3outoper'] = ''
-	print 'BD Details == \n', finaldictBD
+	#print 'BD Details == \n', finaldictBD
 	return finaldictBD
 
     
@@ -350,7 +350,7 @@ class GbpApic(object):
 	else:
 	       apictenant = 'tn-_%s_%s' %(self.apicsystemID,tnt)
 	pathtenantL3Outs = '/api/node/mo/uni/%s.json?query-target=children&target-subtree-class=l3extOut' %(apictenant)
-	print 'Tenant L3Out Path', pathtenantL3Outs
+	#print 'Tenant L3Out Path', pathtenantL3Outs
 	reqforL3Outs = self.get(pathtenantL3Outs)
         tntDetails = reqforL3Outs.json()['imdata']
 	for item in tntDetails:
@@ -361,14 +361,14 @@ class GbpApic(object):
 		for dn,name in tenantdictL3Out.iteritems():
 		    finaldictL3Out[name] = {}
 		    #Fetch the VRF associated with the given L3Out
-		    print 'DN for VRF == \n', dn
+		    #print 'DN for VRF == \n', dn
 		    pathforL3Outvrf = '/api/node/mo/%s.json?query-target=children&target-subtree-class=l3extRsEctx' %(dn)
 		    reqforL3Outvrf = self.get(pathforL3Outvrf)
 		    vrfDetails = reqforL3Outvrf.json()['imdata']
 		    if len(vrfDetails):
 			finaldictL3Out[name]['vrfname'] = vrfDetails[0]['l3extRsEctx']['attributes']['tnFvCtxName'].encode()
                         finaldictL3Out[name]['vrfstate'] = vrfDetails[0]['l3extRsEctx']['attributes']['state'].encode()
-	print 'L3 Out Details == \n', finaldictL3Out
+	#print 'L3 Out Details == \n', finaldictL3Out
 	return finaldictL3Out
 
     def getVrfs(self,tnt):

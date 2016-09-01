@@ -270,22 +270,22 @@ def add_route_in_extrtr(rtrip,route,nexthop,action='add',ostype='ubuntu',user='n
             sudo("ip route del %s" %(route))
             sudo("ip route add %s via %s" %(route,nexthop))
 
-def snataddhostpoolcidr(controllerIp,
+def editneutronconf(controllerIp,
                         destfile,
-                        section,
                         pattern,
 			add=True,
-			patternval='',
+			section='ml2_cisco_apic',
 		   	user='root',
 			pwd='noir0123'):
     """
     Add host_pool_cidr config flag and restarts neutron-server
     destfile :: name with location of the file in which
                 section is defined
-    section :: The section to match in a conf file
     pattern :: The pattern to match under the above section
     add :: default action is add a pattern, else will remove
-    patternval :: Needs to be provided when add=True
+           Also if add=True, we need to pass section
+    section :: Needs to be provided when needed
+
     P.S. If there is an existing host_pool_cidr, then it will
     over-riden
     """
@@ -293,17 +293,18 @@ def snataddhostpoolcidr(controllerIp,
     env.user = user
     env.password = pwd
     with settings(warn_only=True):
-	if add == True:
-        
+	if add:
              chk_string = run('grep -r %s %s' %(pattern,destfile))
              if chk_string.failed:
                 cmd = 'sed -i '+\
                    "'/%s" %(section)+\
-                   '/a '+"%s=%s' " %(pattern,patternval)+\
+                   '/a '+"%s' " %(pattern)+\
                    destfile
-                print cmd
-                run(cmd)
-                run('service neutron-server restart')
+        if not add:
+               cmd = 'sed -i '+"'/%s/d' " %(pattern)+destfile
+	print cmd
+        run(cmd)
+        run('service neutron-server restart')
 
 def PauseToDebug():
     while True:

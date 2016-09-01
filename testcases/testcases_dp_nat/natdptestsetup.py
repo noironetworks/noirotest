@@ -98,70 +98,86 @@ class nat_dp_main_config(object):
                try:
                    cmd = "nova aggregate-list" # Check if Agg already exists then delete
                    if self.nova_agg in getoutput(cmd):
-                      self._log.warning("\nResidual Nova Agg exits, hence deleting it")
-                      self.gbpnova.avail_zone('cli', 'removehost', self.nova_agg, hostname=self.az_node)
+                      self._log.warning(
+                      "\nResidual Nova Agg exits, hence deleting it")
+                      self.gbpnova.avail_zone('cli',
+                                              'removehost',
+                                               self.nova_agg,
+                                               hostname=self.az_node)
                       self.gbpnova.avail_zone('cli', 'delete', self.nova_agg)
-                   self._log.info("\nCreating Nova Host-Aggregate & its Availability-zone")
-                   self.agg_id = self.gbpnova.avail_zone(
-                        'api', 'create', self.nova_agg, avail_zone_name=self.nova_az)
-               except Exception, e:
+                   self._log.info(
+                   "\nCreating Nova Host-Aggregate & its Availability-zone")
+                   self.agg_id = self.gbpnova.avail_zone('api',
+                                                         'create',
+                                                          self.nova_agg,
+                                                          avail_zone_name\
+                                                          =self.nova_az)
+               except Exception:
                    self._log.error(
-                         "\n ABORTING THE TESTSUITE RUN,nova host aggregate creation Failed", exc_info=True)
+                   "\n ABORTING THE TESTSUITE RUN,nova host aggregate creation Failed",\
+                   exc_info=True)
                    sys.exit(1)
                self._log.info(" Agg %s" % (self.agg_id))
                try:
                  self._log.info("\nAdding Nova host to availability-zone")
-                 self.gbpnova.avail_zone('api', 'addhost', self.agg_id, hostname=self.az_node)
-               except Exception, e:
+                 self.gbpnova.avail_zone('api', 
+                                         'addhost', 
+                                         self.agg_id, 
+                                         hostname=self.az_node)
+               except Exception:
                      self._log.info(
-                        "\n ABORTING THE TESTSUITE RUN, availability zone creation Failed")
-                     self.gbpnova.avail_zone(
-                        'cli', 'delete', self.agg_id)  # Cleanup Agg_ID
+                     "\n ABORTING THE TESTSUITE RUN, availability zone creation Failed")
+                     self.gbpnova.avail_zone('cli',
+                                             'delete',
+                                              self.agg_id) # Cleanup Agg_ID
                      sys.exit(1)
+            if nat_type == 'dnat':
+                if pertntnatEpg:
+                   pattern = 'per_tenant_nat_epg=True'
+                   editneutronconf(self.cntlr_ip,
+                                   self.neutronconffile,
+                                   pattern)
             if nat_type == 'snat':
                 # Adding host_pool_cidr to the both L3Outs
-		section = 'apic_external_network:Managment-Out'
+		sectionlist = ['apic_external_network:Managment-Out',
+                               'apic_external_network:Datacenter-Out']
+                patvallist = [self.hostpoolcidrL3OutA,
+                              self.hostpoolcidrL3OutB]
 		pattern = 'host_pool_cidr'
-		patternval = self.hostpoolcidrL3OutA
-                snataddhostpoolcidr(self.cntlr_ip,
+	        for section,patval in zip(sectionlist,patvallist):
+                    editneutronconf(self.cntlr_ip,
                                     self.neutronconffile,
-                                    section,
-				    pattern,
-				    patternval\
-                                    =self.hostpoolcidrL3OutA)
-                snataddhostpoolcidr(self.cntlr_ip,
-				    self.neutronconffile,
-				    'Datacenter-Out',
-				    self.hostpoolcidrL3OutB)
+				    '%s=%s' %(pattern,patval),
+                                    section=section)
             # Invoking Heat Stack for building up the Openstack Config
             # Expecting if at all there is residual heat-stack it
             # should be of the same name as that of this DP Reg
             self._log.info("\nCheck and Delete Residual Heat Stack")
             if self.gbpheat.cfg_all_cli(0, self.heat_stack_name) != 1:
                self._log.error(
-                   "\n ABORTING THE TESTSUITE RUN, Delete of Residual Heat-Stack Failed")
+               "\n ABORTING THE TESTSUITE RUN, Delete of Residual Heat-Stack Failed")
                self.cleanup(stack=1) # Because residual stack-delete already failed above
                sys.exit(1)
             self._log.info(
-                "\n Invoking Heat-Temp for Config creation of %s" % (nat_type.upper()))
+            "\n Invoking Heat-Temp for Config creation of %s" % (nat_type.upper()))
             if self.gbpheat.cfg_all_cli(1, self.heat_stack_name, heat_temp=self.heat_temp_test) == 0:
                self._log.error(
-                    "\n ABORTING THE TESTSUITE RUN, Heat-Stack create of %s Failed" % (self.heat_stack_name))
+               "\n ABORTING THE TESTSUITE RUN, Heat-Stack create of %s Failed" % (self.heat_stack_name))
                self.cleanup()
                sys.exit(1)
             sleep(5)  # Sleep 5s assuming that all objects areated in APIC
             self._log.info(
-                "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
+            "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
             #create_add_filter(self.apic_ip, svc_epg_list)
             self.gbpaci.create_add_filter(self.L2plist)
-        ### <Generate the dict comprising VM-name and its FIPs > ###
-        self.fipsOftargetVMs = {}
-        for vm in self.targetvm_list:
-                self.fipsOftargetVMs[vm] = self.gbpnova.get_any_vm_property(vm)[
-                    0][1:3]
         if nat_type == 'dnat':
-               print 'FIPs of Target VMs == %s' % (self.fipsOftargetVMs)
-               return self.fipsOftargetVMs
+                ### <Generate the dict comprising VM-name and its FIPs > ###
+                self.fipsOftargetVMs = {}
+                for vm in self.targetvm_list:
+                    self.fipsOftargetVMs[vm] = \
+                    self.gbpnova.get_any_vm_property(vm)[0][1:3]
+                print 'FIPs of Target VMs == %s' % (self.fipsOftargetVMs)
+                return self.fipsOftargetVMs
 
     def verifySetup(self,nat_type,pertntnatEpg=False):
 	"""
@@ -204,11 +220,19 @@ class nat_dp_main_config(object):
 		    raise Exception(
 		       'Svc Epg %s NOT found in APIC' %(svcEpg))
 	    #Verify the BDs in OperState of Regular EPGs
-	    if [epg for epg,bd in operEpgs.iteritems() \
-                if bd['bdname'] != self.EpgL2p[epg] \
-		    or bd['bdstate'] != 'formed']:
+	    if [epg for epg,bd in self.EpgL2p.iteritems() \
+                if bd != operEpgs[epg]['bdname'] \
+		    or operEpgs[epg]['bdstate'] != 'formed']:
 		    raise Exception(
 			  'epg %s has Unresolved BD' %(epg))
+            #Verify the BDs in Operstate of NAT-EPGs(pertntnatEpg)
+            if pertntnatEpg:
+                for natepg in operEpgs.keys():
+                   if 'NAT-epg-' in natepg:
+                       if not 'NAT-bd' in operEpgs[natepg]['bdname'] \
+                       or operEpgs[natepg]['bdstate'] != 'formed':
+                           raise Exception(
+                            'epg %s has Unresolved BD' %(epg))
 	    #Verify the Shadow L3Outs
 	    self._log.info(
 		"\n Verify the Shadow L3Outs")
@@ -244,43 +268,39 @@ class nat_dp_main_config(object):
 	        for node in [self.comp_node,self.ntk_node]:
 		    comp = Compute(node)
 	            for l3out in self.L3Outlist:
-	                 intf,ip,psn,epg,name = \
+	                 intf,ip,psn,epg,vmname = \
 	                 comp.getSNATEp(l3out)
 			 if epg in getNatEp.keys():
-			    if name in getNatEp[epg].keys():
-				if ip != getNatEp[epg][name]['ip'] \
-				   or getNatEp[epg][name]['status'] \
+			    if vmname in getNatEp[epg].keys():
+				if ip != getNatEp[epg][vmname]['ip'] \
+				   or getNatEp[epg][vmname]['status'] \
 					!= state:
 					raise Exception(
                                         'SNAT IP %s of SNAT-EP %s NOT learned' \
-					%(ip,name))
+					%(ip,vmname))
 		       	    else:
 				raise Exception(
-                                 'NAT-EP %s is NOT FOUND in APIC' %(name))
+                                 'nat-Ep %s is NOT FOUND in Common Tnt APIC' \
+                                 %(vmname))
 			 else:
 			    raise Exception(
-			    'NAT-EPG %s NOT FOUND in APIC' %(epg))
+			    'nat-Epg %s NOT FOUND in APIC' %(epg))
 	       if nat_type == 'dnat':
 		  if pertntnatEpg:
 		     getNatEp = self.gbpaci.getEpgOper('admin')
-		  #do not know the epg
-                  #hence using values of getEpgOper
-		  epnotfound = 0
 		  for vm,fip in self.fipsOftargetVMs.iteritems():
 		  #Each vm has two fips, so type(fip)=list
-		        for val in getNatEp.values():
-	                    if vm in val.keys():
-                               if val[vm]['ip'] not in fip \
-				  or state != val[vm]['status']:
-				  raise Exception(
+		        for epg,val in getNatEp.iteritems():
+                            if 'NAT-epg-' in epg:
+	                        if vm in val.keys():
+                                   if val[vm]['ip'] not in fip \
+				      or state != val[vm]['status']:
+				      raise Exception(
 				   'FIP %s NOT learned in ACI'\
 				   %(fip))
-			    else:
-				epnotfound += 1
-			if epnotfound == len(getNatEp.values()):
-			   raise Exception(
-			    'DNAT-EP %s NOT found in APIC' \
-			    %(vm))		       	
+			        else:
+                                    raise Exception(
+                                     "VM %s NOT Learned in nat-epg %s" %(epg))  
 	    else:
 		raise Exception(
 		 'NAT-EPGs NOT found in Common Tenant of APIC')
@@ -300,7 +320,15 @@ class nat_dp_main_config(object):
            # throughout the test-cycle
            del_netns(self.ntk_node)
         if avail == 0:
-           self.gbpnova.avail_zone('cli', 'removehost',
-                                   self.nova_agg, hostname=self.comp_node)
+           self.gbpnova.avail_zone('cli',
+                                   'removehost',
+                                   self.nova_agg,
+                                   hostname=self.comp_node)
            self.gbpnova.avail_zone('cli', 'delete', self.nova_agg)
+        #Remove the test-added config from neutron conf
+        for pattern in ['host_pool_cidr','per_tenant_nat_epg']:
+            editneutronconf(self.cntlr_ip,
+                            self.neutronconffile,
+                            pattern,
+                            add=False)
                                                                    
