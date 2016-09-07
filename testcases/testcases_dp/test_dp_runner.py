@@ -23,6 +23,8 @@ def main():
  
     # Build the Test Config to be used for all DataPath Testcases
     cfg_file = sys.argv[1]
+    print cfg_file
+    sys.exit(1)
     print "Setting up global config for all DP Testing"
     testbed_cfg = gbp_main_config(cfg_file)
     testbed_cfg.setup()
@@ -47,7 +49,7 @@ def main():
         # Initialize Testsuite class to run its testcases
         testsuite = val[1](objs_uuid)
 
-        for location in ['same_host', 'diff_host_same_leaf']:
+        for location in ['same_host', 'diff_host_diff_leaf']:
             log_string = "%s_%s_%s_%s" % (testbed_cfg.test_parameters['bd_type'],
                                           testbed_cfg.test_parameters['ip_version'],
                                           testbed_cfg.test_parameters['vpc_type'],

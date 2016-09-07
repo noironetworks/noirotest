@@ -13,12 +13,13 @@ from libs.raise_exceptions import *
 
 
 class super_hdr(object):
-    
-    # Expectations:
-    # * Config file name is static = testconfig_def.yaml
-    # * Location of config file is in the same place as this file & testsuites
-
-    with open('testconfig_def.yaml', 'rt') as f:
+    # Name of the config file is static
+    name = 'testconfig.yaml'
+    path = path='../'
+    for root,dirs,files in os.walk(path):
+         if name in files:
+	    result = os.path.join(root, name)
+    with open(result, 'rt') as f:
         conf = yaml.load(f)
     nova_az = conf['nova_az_name']
     cntlr_ip = conf['controller_ip']
@@ -26,7 +27,7 @@ class super_hdr(object):
     apic_passwd = conf['apic_passwd']
     num_host = conf['num_comp_nodes']
     heat_temp = conf['main_setup_heat_temp']
-    stack_name = conf['heat_stack_name']
+    stack_name = conf['heat_dp_stack_name']
     vm_image = conf['vm_image']
     sshkeyname = conf['key_name']
     ntk_node = conf['ntk_node']

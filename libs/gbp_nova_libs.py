@@ -8,7 +8,9 @@ import datetime
 from time import sleep
 from commands import *
 import keystoneclient.v2_0.client as ksclient
-from novaclient import client as nvclient
+#from novaclient import client as nvclient
+from novaclient.client import Client
+
 
 # Initialize logging
 logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)
@@ -19,24 +21,15 @@ _log.setLevel(logging.DEBUG)
 
 class Gbp_Nova(object):
 
-    key_name = "gbpkey"
-    def __init__(self,ostack_controller, os_username='admin', os_password='noir0123', os_tenant='admin'):
-        """ Creating a Nova CLient Instance using keystoneclient API """
-        os_auth_url = "http://%s:5000/v2.0/" %(ostack_controller)
-        keystone = ksclient.Client(
-                                     auth_url = os_auth_url,
-                                     username = os_username,
-                                     password = os_password,
-                                     tenant = os_tenant)
-        ksconn = ksclient.Client(auth_url=os_auth_url, username=os_username,password=os_password,tenant=os_tenant)
-        print ksconn.authenticate()
-        os_token = ksconn.get_token(ksconn.session)
-        print os_token
-        raw_token = ksconn.get_raw_token_from_identity_service(auth_url=os_auth_url, username=os_username,password=os_password,tenant_name=os_tenant)
-        os_tenant_id = raw_token['token']['tenant']['id']
-        self.nova = nvclient.Client('2',auth_url=os_auth_url,username=os_username,auth_token=os_token,tenant_id=os_tenant_id)
+    def __init__(self, ostack_controller, username='admin', password='noir0123', tenant='admin'):
+        cred = {}
+        cred['version'] = '2'
+        cred['username'] = username
+        cred['api_key'] = password
+        cred['project_id'] = tenant
+        cred['auth_url'] = "http://%s:5000/v2.0/" % ostack_controller
+        self.nova = Client(**cred)
         self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown','Exception']
-
 
     def cmd_error_check(self,cmd_out):
         """
@@ -161,20 +154,10 @@ class Gbp_Nova(object):
           status_try +=1
         return 1
 
-    #def vm_create_cli(self,vmname,vm_image,ports,sshkeyname,avail_zone=''): #Jishnu: change on 05/06
     def vm_create_cli(self,vmname,vm_image,ports,avail_zone=''):
         """
         Creates VM and checks for ACTIVE status
         """
-        ## Create and Upload SSH keypair
-
-        #keypath=gensshkey(sshkeyname) TODO
-        #cmd = 'nova keypair-add --pub-key '+'%s ' %(keypath)+ sshkeyname
-        #if self.cmd_error_check(getoutput(cmd)) == 0:
-        #   return 0 #SSH Key upload failed
-        # << Jishnu .. below changes as 05/06 >> #
-        #self.sshkey_for_vm(sshkeyname)
-        #cmd = 'nova boot --image '+vm_image+' --flavor m1.medium --key_name '+sshkeyname
         cmd = 'nova boot --image '+vm_image+' --flavor m1.medium'
         if isinstance(ports,str):
            ports = [ports]
@@ -279,6 +262,7 @@ class Gbp_Nova(object):
         if action == 'disassociate':
            try:
               self.nova.servers.find(name=vmname).remove_floating_ip(vmfip)
+	      return 1
            except Exception:
               exc_type, exc_value, exc_traceback = sys.exc_info()
               _log.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))

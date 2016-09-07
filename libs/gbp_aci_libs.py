@@ -438,6 +438,7 @@ class GbpApic(object):
                 data = '{"vzRsSubjFiltAtt":{"attributes":{"tnVzFilterName":"noiro-ssh","status":"created"},"children":[]}}'
 		if not self.post(path, data):
 		    return None
+        return 1
 
     def addEnforcedToPtg(self,epg,flag='enforced',tenant='admin'):
         """
