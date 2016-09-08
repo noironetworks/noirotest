@@ -68,7 +68,8 @@ class NatFuncTestMethods(object):
         crudcmd = 'crudini --set '+fileloc+\
                   ' apic_external_network:Management-Out'+\
                   ' '+'host_pool_cidr %s' %(self.snatcidr)
-        self._log.info("\nThe cmd to be executed for SNAT conf ==> %s" %(crudcmd))
+        self._log.info(
+        "\nThe cmd to be executed for SNAT conf ==> %s" %(crudcmd))
         getoutput(crudcmd)
         getoutput('service neutron-server restart')
 
@@ -76,14 +77,18 @@ class NatFuncTestMethods(object):
         """
         Create External Segment
         """
-        self._log.info("\nStep: Create External Segment\n")
+        self._log.info(
+        "\nStep: Create External Segment %s\n" %(extsegname))
         self.extsegid = self.gbpcrud.create_gbp_external_segment(
                                        extsegname,
-                                       external_routes = [{'destination':'0.0.0.0/0','nexthop': None}]
+                                       external_routes = [{
+                                           'destination':'0.0.0.0/0',
+                                           'nexthop': None}]
                                        )
         if self.extsegid == 0:
-            self._log.error("\nStep: External Segment Creation %s failed" %(extsegname))
-            self.DeleteOrCleanup('cleanup')
+            self._log.error(
+            "\n///// Step: External Segment Creation %s failed /////"
+            %(extsegname))
             return 0
         else:
             return self.extsegid
@@ -93,7 +98,7 @@ class NatFuncTestMethods(object):
         Create a NAT pool and associate the existing External Segment
         """
         self._log.info(
-            "\nStep: Create a NAT pool and associate the existing External Segment\n")
+        "\nStep: Create a NAT pool and associate the existing External Segment\n")
         if natpool == '':
            natpool = self.natippool1
         if poolname == '':
@@ -106,9 +111,10 @@ class NatFuncTestMethods(object):
                                         external_segment_id = extsegid)
         if self.nat_pool_id == 0:
             self._log.error(
-                "\nCreate the NAT pool with reference to the existing External Segment failed")
-            self.DeleteOrCleanup('cleanup')
+                "\n///// Create the NAT pool with reference to"
+                  " the existing External Segment failed /////")
             return 0
+	return 1
 
     def testUpdateNatPoolAssociateExtSeg(self,extsegid):
         """
@@ -123,9 +129,10 @@ class NatFuncTestMethods(object):
                                         external_segment_id = extsegid
                                         ) == 0:
            self._log.error(
-                "\nUpdate External Segment in existing NAT pool failed")
-           self.DeleteOrCleanup('cleanup')
+                "\n///// Update External Segment in" 
+                " existing NAT pool failed /////")
            return 0
+	return 1
 
     def testCreatePtgDefaultL3p(self):
         """
@@ -137,14 +144,15 @@ class NatFuncTestMethods(object):
         self.ptg1id = self.gbpcrud.create_gbp_policy_target_group(
                                      self.ptg1name)
         if self.ptg1id == 0:
-            self._log.error("\nCreate Policy Target group with Default L3 failed\n")
-            self.DeleteOrCleanup('cleanup')    
+            self._log.error(
+            "\n///// Create Policy Target group with Default L3 failed /////")
+                
             return 0
         self.defaultl3pid = self.gbpcrud.verify_gbp_l3policy('default') 
         if self.defaultl3pid == 0:
-           self._log.error("\nFailed to fetch UUID of Default L3P\n")
-           self.DeleteOrCleanup('cleanup')
+           self._log.error("\n///// Failed to fetch UUID of Default L3P /////")
            return 0
+	return 1
 
     def testCreateNonDefaultL3pAndL2p(self):
         """
@@ -156,16 +164,18 @@ class NatFuncTestMethods(object):
                                                ip_pool=self.l3pippool,
                                                subnet_prefix_length=self.l3ppreflen)
         if self.nondefaultl3pid == 0:
-            self._log.error("\nCreation of non-default L3Policy failed\n")
-            self.DeleteOrCleanup('cleanup')
+            self._log.error(
+            "\n///// Creation of non-default L3Policy failed /////")
+            
             return 0
         self.l2policy_id = self.gbpcrud.create_gbp_l2policy(
                                 self.l2pname,
                                 l3_policy_id=self.nondefaultl3pid)
         if self.l2policy_id == 0:
-            self._log.error("\nCreation of non-default L2Policy failed\n")
-            self.DeleteOrCleanup('cleanup')
+            self._log.error(
+            "\n///// Creation of non-default L2Policy failed /////")
             return 0
+	return 1
 
     def testCreatePtgWithNonDefaultL3p(self):
         """
@@ -177,9 +187,10 @@ class NatFuncTestMethods(object):
                                      l2_policy_id=self.l2policy_id)
         if self.ptg2id == 0:
             self._log.error(
-                "\nCreate Policy Target group with non-default L3Policy failed\n")
-            self.DeleteOrCleanup('cleanup')
+            "\n////// Create Policy Target group "
+            "with non-default L3Policy failed /////")
             return 0
+	return 1
 
     def testAssociateExtSegToBothL3ps(self,extsegid=''):
         """
@@ -191,10 +202,14 @@ class NatFuncTestMethods(object):
         self._log.info(
                      "\nStep: Associate External Segment to both L3Ps\n")
         for l3p in [self.defaultl3pid,self.nondefaultl3pid]:
-            if self.gbpcrud.update_gbp_l3policy(l3p,property_type='uuid',external_segments=extsegid) == 0:
-               self._log.error("\nAssociate External Segment to L3P failed\n")
-               self.DeleteOrCleanup('cleanup')
+            if self.gbpcrud.update_gbp_l3policy(l3p,
+                                                property_type='uuid',
+                                                external_segments=extsegid
+                                                ) == 0:
+               self._log.error(
+               "\n///// Associate External Segment to L3P failed /////")
                return 0
+	return 1
         
     def testCreatePolicyTargetForEachPtg(self):
         """
@@ -204,14 +219,18 @@ class NatFuncTestMethods(object):
                  "\nStep: Create Policy Targets for each of the two PTGs \n")
         self.pt1id = self.gbpcrud.create_gbp_policy_target('pt1', self.ptg1name, 1)
         if self.pt1id == 0:
-            self._log.error("\nCreation of Policy Targe failed for PTG=%s\n" %(self.ptg1name))
-            self.DeleteOrCleanup('cleanup')
+            self._log.error(
+            "\n///// Creation of Policy Targe failed for PTG=%s /////"
+            %(self.ptg1name))
+            
             return 0
         self.pt2id = self.gbpcrud.create_gbp_policy_target('pt2', self.ptg2name, 1)
         if self.pt2id == 0:
-            self._log.error("\nCreation of Policy Targe failed for PTG=%s\n" %(self.ptg2name))
-            self.DeleteOrCleanup('cleanup')
+            self._log.error(
+            "\n///// Creation of Policy Targe failed for PTG=%s /////"
+            %(self.ptg2name))
             return 0
+	return 1
 
     def testCreateUpdateExternalPolicy(self,update=0,delete=0,updextseg=''):
         """
@@ -226,30 +245,31 @@ class NatFuncTestMethods(object):
                            self.extpolid
                            ) == 0:
                self._log.error(
-                    "\nDeletion of External Policy failed")   
+                    "\n///// Deletion of External Policy failed /////")   
                return 0
         elif update == 1:
             self._log.info(
-                 "\nStep: Update ExtPolicy with External Segment")  
+            "\nStep: Update ExtPolicy with External Segment")  
             if self.gbpcrud.update_gbp_external_policy(
                            self.extpolname,
                            external_segments=[updextseg]
                            ) == 0:
                self._log.error(
-                    "\nUpdation of External Policy with ExtSeg failed")   
+               "\n///// Updation of External Policy with ExtSeg failed /////")   
                return 0
         else:
            self._log.info(
-               "\nStep: Create ExtPolicy with ExtSegment and Apply PolicyRuleSets\n")
+           "\nStep: Create ExtPolicy with ExtSegment and Apply PolicyRuleSets\n")
            self.extpolid = self.gbpcrud.create_gbp_external_policy(
                              self.extpolname,
                              external_segments=[self.extsegid]
                                                               )
            if self.extpolid == 0:
-              self._log.error("\nCreation of External Policy failed")
-              self.DeleteOrCleanup('cleanup')
+              self._log.error(
+              "\n ///// Creation of External Policy failed /////")
               return 0
            return self.extpolid
+	return 1
    
     def testVerifyCfgdObjects(self):
         """
@@ -263,24 +283,25 @@ class NatFuncTestMethods(object):
                                                l2_policies = self.l2policy_id,
                                                ip_pool = self.l3pippool
                                               ) == 0:  
-           self.DeleteOrCleanup('cleanup')
+           self._log.error("\n///// Verify for L3Policy Failed /////")
            return 0
         if self.gbpcrud.verify_gbp_any_object('l2_policy',
                                                self.l2policy_id,
                                                l3_policy_id = self.nondefaultl3pid,
                                                policy_target_groups = self.ptg2id
                                               ) == 0:
-           self.DeleteOrCleanup('cleanup')
+           self._log.error("\n///// Verify for L2Policy Failed /////")
            return 0
         if self.gbpcrud.verify_gbp_any_object('external_segment',
                                                self.extsegid,
                                                l3_policies = [self.defaultl3pid,
                                                               self.nondefaultl3pid],
                                                nat_pools = self.nat_pool_id,
-                                               external_policies = self.extpol_uuid
+                                               external_policies = self.extpolid
                                               ) == 0:
-           self.DeleteOrCleanup('cleanup')
+           self._log.error("\n///// Verify for ExtSeg Failed /////")
            return 0
+	return 1
 
     def testLaunchVmsForEachPt(self):
         """
@@ -291,15 +312,16 @@ class NatFuncTestMethods(object):
         if self.gbpnova.vm_create_api(self.vm1name,
                                       'ubuntu_multi_nics',
                                       self.pt1id[1]) == 0:
-           self._log.error("\n VM Create using PTG %s failed" %(self.ptg1name))
-           self.DeleteOrCleanup('cleanup')
+           self._log.error(
+           "\n///// VM Create using PTG %s failed /////" %(self.ptg1name))
            return 0
         if self.gbpnova.vm_create_api(self.vm2name,
                                       'ubuntu_multi_nics',
                                       self.pt2id[1]) == 0:
-           self._log.error("\n VM Create using PTG %s failed" %(self.ptg2name))
-           self.DeleteOrCleanup('cleanup')
+           self._log.error(
+           "\n///// VM Create using PTG %s failed /////" %(self.ptg2name))
            return 0
+	return 1
 
     def testAssociateFipToVMs(self,ExtSegName='Management-Out'):
         """
@@ -314,11 +336,12 @@ class NatFuncTestMethods(object):
                                           extsegname=ExtSegName
                                           )
             if not results:
-               self._log.error("\n Associating FIP to VM %s failed" %(vm))
-               self.DeleteOrCleanup('cleanup')
+               self._log.error(
+               "\n///// Associating FIP to VM %s failed /////" %(vm))
                return 0
             else:
                self.vm_to_fip[vm] = results[0]
+	return 1
 
     def testDisassociateFipFromVMs(self,release_fip=0):
         """
@@ -331,11 +354,12 @@ class NatFuncTestMethods(object):
                                           vm,
                                           vmfip = fip
                                           ):
-               self._log.error("\n Disassociating FIP from VM %s failed" %(vm))
-               self.DeleteOrCleanup('cleanup')
+               self._log.error(
+               "\n///// Disassociating FIP from VM %s failed /////" %(vm))
                return 0
         if release_fip != 0:
            self.gbpnova.delete_release_fips()
+	return 1
 
     def testApplyUpdatePrsToPtg(self,ptgtype,prs):
         """
@@ -351,7 +375,8 @@ class NatFuncTestMethods(object):
                                                  consumed_policy_rulesets=[prs]
                                                  ) == 0:
                self._log.error(
-                     "\nUpdating External Policy %s failed" %(self.extpolid))
+               "\n///// Updating External Policy %s failed /////"
+               %(self.extpolid))
                return 0
         if ptgtype == 'internal':
            self._log.info(
@@ -362,8 +387,9 @@ class NatFuncTestMethods(object):
                                         provided_policy_rulesets=[prs]
                                         ) == 0:
                   self._log.error(
-                     "\nUpdating PTG %s failed" %(ptg))
+                  "\n///// Updating PTG %s failed /////" %(ptg))
                   return 0
+	return 1
 
     def testCreateNsp(self):
         """
@@ -374,6 +400,7 @@ class NatFuncTestMethods(object):
         self.nspuuid = self.gbpcrud.create_gbp_network_service_policy_for_nat('TestNsp')
         if self.nspuuid == 0:
            return 0
+	return 1
 
     def testApplyRemoveNSpFromPtg(self,nspuuid=''):
         """
@@ -393,8 +420,9 @@ class NatFuncTestMethods(object):
                                    network_service_policy=nspuuid,
                                    ) == 0:
                   self._log.error(
-                     "\nUpdating PTG with NSP %s failed" %(ptg))
+                  "\n///// Updating PTG with NSP %s failed /////" %(ptg))
                   return 0
+	return 1
 
     def testDeleteNatPool(self):
         """
@@ -404,6 +432,7 @@ class NatFuncTestMethods(object):
         if len(natpool_list) > 0:
               for natpool in natpool_list:
                  self.gbpcrud.delete_gbp_nat_pool(natpool)
+	return 1
 
     def testTrafficFromExtRtrToVmFip(self,extgwrtr,vmfips=0):
         """
@@ -416,7 +445,7 @@ class NatFuncTestMethods(object):
            vmfips = self.gbpnova.get_floating_ips(ret=1)
 	   if not vmfips:
 		self._log.error(
-		    "There are no FIPs to test Traffic")
+		"\n///// There are no FIPs to test Traffic /////")
 		return 0
         run_traffic = traff_from_extgwrtr(
                                           extgwrtr,
@@ -425,8 +454,10 @@ class NatFuncTestMethods(object):
                                           )
         if isinstance(run_traffic, dict):
             self._log.error(
-                "\nFollowing Traffic Test from External GW Router Failed == %s" % (run_traffic))
+            "\n///// Following Traffic Test from External"
+            " GW Router Failed == %s /////" % (run_traffic))
             return 0
+	return 1
         
     def testTrafficFromVMsToExtRtr(self,extgwips):
         """
@@ -438,7 +469,9 @@ class NatFuncTestMethods(object):
             run_traffic = self.nat_traffic.test_traff_anyvm_to_extgw(
                                                       srcvm, extgwips)
             if run_traffic == 2:
-                   self._log.error("\n Traffic VM %s Unreachable, Test = Aborted" %(srcvm))
+                   self._log.error(
+                   "\n///// Traffic VM %s Unreachable, Test = Aborted /////"
+                   %(srcvm))
                    return 0
             if isinstance(run_traffic, tuple):
                     failed[srcvm] = run_traffic[1]
@@ -446,7 +479,7 @@ class NatFuncTestMethods(object):
                 self._log.info(
                 "\nFollowing Traffic Test Failed After Applying ICMP-TCP-Combo Contract == %s" % (failed))
                 return 0
-
+	return 1
 
     def AddSShContract(self,apicip):
         """
@@ -461,6 +494,7 @@ class NatFuncTestMethods(object):
                 ]
         create_add_filter(apicip, svcepglist)
         sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
+	return 1
 
     def DeleteOrCleanup(self,action,obj=None,uuid=''):
         """

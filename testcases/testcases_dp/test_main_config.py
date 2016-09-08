@@ -48,6 +48,7 @@ class gbp_main_config(object):
         self.heat_temp_test = conf['main_setup_heat_temp']
         self.num_hosts = conf['num_comp_nodes']
         self.heat_stack_name = conf['heat_dp_stack_name']
+	self.pausetodebug = conf['pausetodebug']
         self.test_parameters = conf['test_parameters']
         self.gbpnova = Gbp_Nova(self.cntlr_ip)
         self.gbpheat = Gbp_Heat(self.cntlr_ip)
@@ -127,8 +128,8 @@ class gbp_main_config(object):
                         'demo_srvr_bd', 'demo_clnt_bd'
                        ]
 	if not self.gbpaci.create_add_filter(self.L2plist):
-	    self._log.error("\nABORTING THE TESTSUITE RUN,\
-adding filter to SvcEpg failed")
+	    self._log.error(
+            "\nABORTING THE TESTSUITE RUN,adding filter to SvcEpg failed")
 	    self.cleanup()
 	    sys.exit(1)
 
@@ -174,8 +175,13 @@ adding filter to SvcEpg failed")
 		       'SvcEpg %s NOT found in APIC' %(svcEpg))
 	except Exception as e:
 	    self._log.error(
-                '\nSetup Verification Failed because of this issue: '+repr(e))
-  	    return 0
+            '\nSetup Verification Failed Because of this Issue: '+repr(e))
+            self._log.error(
+            "\nABORTING THE TESTSUITE RUN, on Setup Verification Failure")
+	    if self.pausetodebug:
+	       PauseToDebug()
+  	    self.cleanup() # Calling cleanup on Verify Failure
+            sys.exit(1)
 	finally:
 	    return 1
 

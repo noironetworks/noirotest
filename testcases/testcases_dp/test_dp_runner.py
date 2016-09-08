@@ -23,8 +23,6 @@ def main():
  
     # Build the Test Config to be used for all DataPath Testcases
     cfg_file = sys.argv[1]
-    print cfg_file
-    sys.exit(1)
     print "Setting up global config for all DP Testing"
     testbed_cfg = gbp_main_config(cfg_file)
     testbed_cfg.setup()
