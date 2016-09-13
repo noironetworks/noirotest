@@ -441,7 +441,7 @@ class NatFuncTestMethods(object):
         Deletes all available NAT Pool in the system
         """
         natpool_list = self.gbpcrud.get_gbp_nat_pool_list()
-        if len(natpool_list) > 0:
+        if len(natpool_list) :
               for natpool in natpool_list:
                  self.gbpcrud.delete_gbp_nat_pool(natpool)
 	return 1
@@ -476,21 +476,30 @@ class NatFuncTestMethods(object):
         Ping and TCP traffic from VMs to ExtRtr
         """
         self._log.info("\nStep: Ping and TCP traffic from VMs to ExtRtr\n")
-        failed = {}
-        for srcvm in self.vmlist:
-            run_traffic = self.nat_traffic.test_traff_anyvm_to_extgw(
+        retry = 1
+        while retry:
+            failed = {}
+            for srcvm in self.vmlist:
+                run_traffic = self.nat_traffic.test_traff_anyvm_to_extgw(
                                                       srcvm, extgwips)
-            if run_traffic == 2:
+                if run_traffic == 2:
                    self._log.error(
                    "\n///// Traffic VM %s Unreachable, Test = Aborted /////"
                    %(srcvm))
                    return 0
-            if isinstance(run_traffic, tuple):
+                if isinstance(run_traffic, tuple):
                     failed[srcvm] = run_traffic[1]
-        if len(failed) > 0:
+            if len(failed) and retry == 3:
                 self._log.info(
-                "\nFollowing Traffic Test Failed After Applying ICMP-TCP-Combo Contract == %s" % (failed))
+                "\nFollowing Traffic Test Failed After Applying "
+                "ICMP-TCP-Combo Contract == %s" % (failed))
                 return 0
+            elif len(failed) and retry < 3:
+               self._log.info("Sleep for 10 sec before retrying traffic")
+               sleep(10)
+               retry += 1
+            else:
+               break
 	return 1
 
     def AddSShContract(self,apicip):
@@ -534,39 +543,39 @@ class NatFuncTestMethods(object):
            self.gbpnova.delete_release_fips()
            self._log.info("\nStep: Blind CleanUp: Delete PTs")
            pt_list = self.gbpcrud.get_gbp_policy_target_list()
-           if len(pt_list) > 0:
+           if len(pt_list):
               for pt in pt_list:
                 self.gbpcrud.delete_gbp_policy_target(pt, property_type='uuid')
            self._log.info("\nStep: Blind CleanUp: Delete PTGs")
            ptg_list = self.gbpcrud.get_gbp_policy_target_group_list()
-           if len(ptg_list) > 0:
+           if len(ptg_list):
               for ptg in ptg_list:
                 self.gbpcrud.delete_gbp_policy_target_group(ptg, property_type='uuid')
            self._log.info("\nStep: Blind CleanUp: Delete L2Ps")
            l2p_list = self.gbpcrud.get_gbp_l2policy_list()
-           if len(l2p_list) > 0:
+           if len(l2p_list):
               for l2p in l2p_list:
                  self.gbpcrud.delete_gbp_l2policy(l2p, property_type='uuid')
            self._log.info("\nStep: Blind CleanUp: Delete L3Ps")
            l3p_list = self.gbpcrud.get_gbp_l3policy_list()
-           if len(l3p_list) > 0:
+           if len(l3p_list) :
               for l3p in l3p_list:
                  self.gbpcrud.delete_gbp_l3policy(l3p, property_type='uuid')
            self._log.info("\nStep: Blind CleanUp: Delete NSPs")
            self.gbpcrud.delete_gbp_network_service_policy()
            self._log.info("\nStep: Blind CleanUp: Delete NAT Pools")
            natpool_list = self.gbpcrud.get_gbp_nat_pool_list()
-           if len(natpool_list) > 0:
+           if len(natpool_list) :
               for natpool in natpool_list:
                  self.gbpcrud.delete_gbp_nat_pool(natpool)
            self._log.info("\nStep: Blind CleanUp: Delete External Pols")
            extpol_list = self.gbpcrud.get_gbp_external_policy_list()
-           if len(extpol_list) > 0:
+           if len(extpol_list) :
               for extpol in extpol_list:
                  self.gbpcrud.delete_gbp_external_policy(extpol)
            self._log.info("\nStep: Blind CleanUp: Delete Ext Segs")
            extseg_list = self.gbpcrud.get_gbp_external_segment_list()
-           if len(extseg_list) > 0:
+           if len(extseg_list) :
               for extseg in extseg_list:
                  self.gbpcrud.delete_gbp_external_segment(extseg)
              
