@@ -1020,8 +1020,8 @@ class GBPCrud(object):
     def update_gbp_external_policy(self,
                                    name_uuid,
                                    property_type='name',
-                                   consumed_policy_rulesets=None,
-                                   provided_policy_rulesets=None, 
+                                   consumed_policy_rulesets='',
+                                   provided_policy_rulesets='', 
                                    external_segments=[],
                                    shared=False):
         """
@@ -1053,25 +1053,23 @@ class GBPCrud(object):
                         provided_prs[ruleset] = "scope"
           body = {"external_policy" : {"shared" : shared}}
           while True:
-               if consumed_policy_rulesets is not None and provided_policy_rulesets is not None:
+               if consumed_policy_rulesets and provided_policy_rulesets:
                   body["external_policy"]["provided_policy_rule_sets"] = provided_prs
                   body["external_policy"]["consumed_policy_rule_sets"] = consumed_prs
                   if external_segments != []:
                      body["external_policy"]["external_segments"] = external_segments
                   break
-               elif consumed_policy_rulesets is not None and provided_policy_rulesets is None:
+               elif consumed_policy_rulesets and not provided_policy_rulesets:
                   body["external_policy"]["consumed_policy_rule_sets"] = consumed_prs
                   if external_segments != []:
                      body["external_policy"]["external_segments"] = external_segments
                   break
-               elif provided_policy_rulesets is not None and consumed_policy_rulesets is None:
+               elif not consumed_policy_rulesets and provided_policy_rulesets:
                   body["external_policy"]["provided_policy_rule_sets"] = provided_prs
                   if external_segments != []:
                      body["external_policy"]["external_segments"] = external_segments
                   break
-               elif provided_policy_rulesets is None and consumed_policy_rulesets is None:
-                  body["external_policy"]["provided_policy_rule_sets"] = None
-                  body["external_policy"]["consumed_policy_rule_sets"] = None
+               elif not provided_policy_rulesets  and not consumed_policy_rulesets :
                   if external_segments != []:
                      body["external_policy"]["external_segments"] = external_segments
                   break

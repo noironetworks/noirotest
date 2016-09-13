@@ -300,6 +300,9 @@ def editneutronconf(controllerIp,
                    "'/%s" %(section)+\
                    '/a '+"%s' " %(pattern)+\
                    destfile
+             else: #If the pattern exists, then find and replace
+                 cmd = "sed -i -e 's/"+\
+                       pattern+"/"+pattern+"/g" +" "+destfile
         if not add:
                cmd = 'sed -i '+"'/%s/d' " %(pattern)+destfile
 	print cmd

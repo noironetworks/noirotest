@@ -86,13 +86,13 @@ class NatML2TestSuite(object):
             if test() == 0:
                 test_results[string.upper(
                     test.__name__.lstrip('self.'))] = 'FAIL'
-                LOG.error("\n%s_%s == FAIL" % (
+                LOG.error("\n///// %s_%s == FAIL /////" % (
                     self.__class__.__name__.upper(), string.upper(test.__name__.lstrip('self.'))))
                 sys.exit(1)  # TBD: JISHNU should be removed later
             else:
                 test_results[string.upper(
                     test.__name__.lstrip('self.'))] = 'PASS'
-                LOG.info("\n%s_%s == PASS" % (
+                LOG.info("\n***** %s_%s == PASS *****" % (
                     self.__class__.__name__.upper(), string.upper(test.__name__.lstrip('self.'))))
         pprint.pprint(test_results)
 
@@ -123,14 +123,16 @@ class NatML2TestSuite(object):
         """
         Testcase-1 in VPR-Functionality Workflow
         """
-        LOG.info("\n########  Testcase TEST_VPR_FUNC_1   ###########\n"
-                 "# Add Networks and Subnets for the tenants           #\n"
-                 "# Add Router for each of the tenants 	               #\n"
-                 "# VerifyACI: VRF created for each of this Router     #\n"
-                 "# VerifyACI: BDs and their VRF resolves to *_shared  #\n"
-                 "# Add resp Router Interfaces to Tenants' networks    #\n"
-                 "# VerifyACI: Router's VRF resolves in the Tenant's BDs #\n"
-                 "######################################################\n")
+        LOG.info(
+        "\n########  Testcase TEST_VPR_FUNC_1   ###########\n"
+        "# Add Networks and Subnets for the tenants           #\n"
+        "# Add Router for each of the tenants 	               #\n"
+        "# VerifyACI: VRF created for each of this Router     #\n"
+        "# VerifyACI: BDs and their VRF resolves to *_shared  #\n"
+        "# Add resp Router Interfaces to Tenants' networks    #\n"
+        "# VerifyACI: Router's VRF resolves in the Tenant's BDs #\n"
+        "######################################################\n"
+        )
         LOG.info("\n Execution of Testcase starts #")
 
         LOG.info("\n# Step-1:TC-1: Add Networks and Subnets for the tenants #")
@@ -196,17 +198,19 @@ class NatML2TestSuite(object):
         """
         Testcase-2 in VPR-Functionality Workflow
         """
-        LOG.info("\n########  Testcase TEST_VPR_FUNC_2   ############\n"
-                 "# Remove each tenant's Router from the attached ntks  #\n"
-                 "# VerifyACI: VRF for each BD VRF resolves to *_shared #\n"
-                 "# Add new subnet to the respective tenants's ntks     #\n"
-                 "# Add back the Routers's interfaces to the above new subnets  #\n"
-                 "# VerifyACI: Router's VRF resolves in the Tenant's BDs #\n"
-                 "# Add back the Routers's interfaces to existing Old subnets of tenants'  #\n"
-                 "# Verify: Routers' have interfaces attached to multiple subnets #\n"
-                 "# Remove the router interface from all but one subnet in each ntk #\n"
-                 "# VerifyACI: The BDs are STILL connected to Router's VRF #\n"
-                 "#####################################################\n")
+        LOG.info(
+        "\n########  Testcase TEST_VPR_FUNC_2   ############\n"
+        "# Remove each tenant's Router from the attached ntks  #\n"
+        "# VerifyACI: VRF for each BD VRF resolves to *_shared #\n"
+        "# Add new subnet to the respective tenants's ntks     #\n"
+        "# Add back the Routers's interfaces to the above new subnets #\n"
+        "# VerifyACI: Router's VRF resolves in the Tenant's BDs #\n"
+        "# Add back Routers's interfaces to existing Old subnets of tnts'#\n"
+        "# Verify: Routers' have interfaces attached to multiple subnets #\n"
+        "# Remove router interface from all but one subnet in each ntk #\n"
+        "# VerifyACI: The BDs are STILL connected to Router's VRF #\n"
+        "#####################################################\n"
+        )
         LOG.info("\n Execution of Testcase starts #")
 
         LOG.info(
@@ -278,23 +282,25 @@ class NatML2TestSuite(object):
         """
         Testcase-3 in VPR-Functionality Workflow
         """
-        LOG.info("\n########  Testcase TEST_VPR_FUNC_3   ############\n"
-                 "# Remove the router interfaces to keep it attached to only One Ntk  #\n"
-                 "# VerifyACI: VRF for all but one BD's VRF resolves to *_shared   #\n"
-                 "# Add new addtional Router in Tenant, attach to its unrouted BDs #n"
-                 "# VerifyACI: VRF got created for the new router in ACI           #\n"
-                 "# VerifyACI: Resp new Router's VRF resolves in the Tenant's BDs  #\n"
-                 "#####################################################\n")
+        LOG.info(
+        "\n############  Testcase TEST_VPR_FUNC_3   ############\n"
+        "# Remove the router interfaces but attached to only One Ntk #\n"
+        "# VerifyACI: VRF for all but one BD's VRF resolves to *_shared #\n"
+        "# Add new addtional Router in Tenant, attach to its unrouted BDs #n"
+        "# VerifyACI: VRF got created for the new router in ACI         #\n"
+        "# VerifyACI: Resp new Router's VRF resolves in the Tenant's BDs #\n"
+        "#######################################################\n"
+        )
 
         LOG.info("\n Execution of Testcase starts #")
         LOG.info(
-            "\n# Step-1-TC-3: Remove the router interfaces to keep it attached to only One Ntk #")
+        "\n# Step-1-TC-3: Remove the router interfaces but attached to only One Ntk #")
         for tnt in self.tenant_list:
             [self.neutron.rtrcrud(self.rtrIDs[tnt], 'delete', rtrprop='interface',
                                   subnet=subnetName, tenant=tnt) for subnetName in self.subNames[tnt][1:]]
 
         LOG.info(
-            "\nStep-2-TC-3: VerifyACI: VRF for all but one BD's VRF resolves to *_shared #")
+        "\nStep-2-TC-3: VerifyACI: VRF for all but one BD's VRF resolves to *_shared #")
         unmatched = {}
         #bdcheck = self.apic.getBdOper(self.tenant_list)
         for tnt in self.tenant_list:
@@ -355,13 +361,15 @@ class NatML2TestSuite(object):
         """
         Testcase-4 in VPR-Functionality Workflow
         """
-        LOG.info("\n########  Testcase TEST_VPR_FUNC_4   ###################\n"
-                 "# Remove the routers' interfaces from all attached networks  #\n"
-                 "# Verify the RouterVRFs rdConfig files removed from Net-Node #\n"
-                 "# VerifyACI: VRF for all BD's VRF resolves to *_shared       #\n"
-                 "# Delete all the routers                                     #\n"
-                 "# VerifyACI: VRFs of the deleted routers are deleted also    #\n"
-                 "##############################################################\n")
+        LOG.info(
+        "\n############  Testcase TEST_VPR_FUNC_4   ###################\n"
+        "# Remove the routers' interfaces from all attached networks  #\n"
+        "# Verify the RouterVRFs rdConfig files removed from Net-Node #\n"
+        "# VerifyACI: VRF for all BD's VRF resolves to *_shared       #\n"
+        "# Delete all the routers                                     #\n"
+        "# VerifyACI: VRFs of the deleted routers are deleted also    #\n"
+        "##############################################################\n"
+        )
         LOG.info("\n Execution of Testcase starts #")
         LOG.info(
             "\n Step-1-TC-4: Remove the routers' interfaces from all attached networks #")
@@ -416,16 +424,18 @@ class NatML2TestSuite(object):
         """
         Testcase-5 in VPR-Functionality Workflow
         """
-        LOG.info("\n########  Testcase TEST_VPR_FUNC_5 #####################\n"
-                 "# Add Router in a given tenant			       #\n"
-                 "# Attach router to multiple networks in a given tenant       #\n"
-                 "# VerifyACI: VRF for attached BDs resolves to Routers' VRF   #\n"
-                 "# Bring up VMs on each of the network of a given tenant      #\n"
-                 "# VerifyACI: Verify the Endpoint Learnings 		       #\n"
-                 "# Verify: EP files of VMs refers domain-name to Routers' VRF #\n"
-                 "# Verify: rdConfig of the tenant refers to Routers's VRF     #\n"
-                 "# Verify: Traffic between the VMs across networks in the tenant #\n"
-                 "##############################################################\n")
+        LOG.info(
+        "\n############  Testcase TEST_VPR_FUNC_5 #####################\n"
+        "# Add Router in a given tenant			       #\n"
+        "# Attach router to multiple networks in a given tenant       #\n"
+        "# VerifyACI: VRF for attached BDs resolves to Routers' VRF   #\n"
+        "# Bring up VMs on each of the network of a given tenant      #\n"
+        "# VerifyACI: Verify the Endpoint Learnings 		       #\n"
+        "# Verify: EP files of VMs refers domain-name to Routers' VRF #\n"
+        "# Verify: rdConfig of the tenant refers to Routers's VRF     #\n"
+        "# Verify: Traffic between the VMs across networks in the tenant #\n"
+        "##############################################################\n"
+        )
         LOG.info("\n Execution of Testcase starts #")
 
         LOG.info("\n# Step-1-TC-5: Add Router for the tenant %s #" %
@@ -439,7 +449,8 @@ class NatML2TestSuite(object):
                                  subnet=subnetId, tenant=self.tnt1)
 
         LOG.info(
-            "\n# Step-3-TC-5:VerifyACI: VRF for attached BDs resolves to Routers' VRF #")
+        "\n# Step-3-TC-5:VerifyACI: VRF for attached BDs resolves to Routers' VRF #"
+        )
         unmatchedvrfs = self.verifyAciBDtoVRF({self.tnt1: self.rtrID})
         if unmatchedvrfs:
             LOG.error("\nStep-3-TC-5:Fail: Unresolved VRF for following BDs >> %s"
@@ -544,20 +555,22 @@ class NatML2TestSuite(object):
         """
         Testcase-6 in VPR-SNAT-Functionality Workflow
         """
-        LOG.info("\n########  Testcase TEST_VPR_NAT_FUNC_6 #####################\n"
-                 "# Attach TC-5's Router in a given tenant to the ExtNetwork   #\n"
-                 "# Attach router to multiple networks in a given tenant       #\n"
-                 "# Verify: EP Files has SNAT mapping set correctly	       #\n"
-                 "# VerifyACI: ShadowL3Out's VRF resolves to Routers' VRF      #\n"
-                 "# VerifyACI: SNAT EPs are learned in the NAT-EPGs	       #\n"
-                 "# Verify: Traffic between the VMs across networks in the tenant #\n"
-                 "# Verify: Traffic between the VMs and External Router	       #\n"
-                 "##############################################################\n")
+        LOG.info(
+       "\n##############  Testcase TEST_VPR_NAT_FUNC_6 ###############\n"
+       "# Attach TC-5's Router in a given tenant to the ExtNetwork   #\n"
+       "# Attach router to multiple networks in a given tenant       #\n"
+       "# Verify: EP Files has SNAT mapping set correctly	       #\n"
+       "# VerifyACI: ShadowL3Out's VRF resolves to Routers' VRF      #\n"
+       "# VerifyACI: SNAT EPs are learned in the NAT-EPGs	       #\n"
+       "# Verify: Traffic between the VMs across networks in the tenant #\n"
+       "# Verify: Traffic between the VMs and External Router	       #\n"
+       "##############################################################\n"
+        )
         LOG.info("\n Execution of Testcase starts #")
 
         LOG.info(
             "\nStep-1-TC-6: Attach TC-5's Router in a given tenant to the ExtNetwork   #")
-        self.neutron.rtrcrud(self.rtrID, 'set', rtrprop='gateway', tenant=tnt)
+        self.neutron.rtrcrud(self.rtrID, 'set', rtrprop='gateway', tenant=self.tnt1)
 
         LOG.info(
             "\nStep-2-TC-6: Attach router to multiple networks in a given tenant #")
@@ -611,9 +624,158 @@ class NatML2TestSuite(object):
                 LOG.error("\nStep-6-TC-6:Fail: SNAT-EPG not available on APIC")
                 return 0
 
-        LOG.info("\nVerify: Traffic between the VMs across networks in the tenant #")
+        LOG.info("\nStep-7-TC-6:Verify: Traffic between the VMs across networks in the tenant #")
 
-        LOG.info("\nVerify: Traffic between the VMs and External Router #")
+        LOG.info("\nStep-8-TC-6: Verify: Traffic between the VMs and External Router #")
+
+    def test_vpr_snat_func_7(self):
+        """
+        Testcase-7 in VPR-SNAT-Functionality Workflow
+        """
+        LOG.info(
+        "\n##############  Testcase TEST_VPR_NAT_FUNC_7 ###############\n"
+        "# Clear TC-5's Router GW in a given tenant to the ExtNetwork #\n"
+        "# Attach TC-5's Tenant's Router to ExtNetwork GW             #\n"
+        "# VerifyACI: ShadowL3Out's VRF resolves to Routers' VRF      #\n"
+        "# VerifyACI: SNAT EPs are learned in the NAT-EPGs	       #\n"
+        "# Verify: Traffic between the VMs and External Router	       #\n"
+        "##############################################################\n"
+        )
+        LOG.info("\n Execution of Testcase starts #")
+
+        LOG.info(
+            "\nStep-1-TC-7: Clear TC-5's Router GW in a given tenant to the ExtNetwork #")
+        self.neutron.rtrcrud(self.rtrID, 'clear', rtrprop='gateway', tenant=self.tnt1)
+        sleep(2) #Just to let the change percolate to ACI
+        LOG.info(
+            "\nStep-2-TC-7: Attach TC-5's Tenant's Router to ExtNetwork GW #")
+        self.neutron.rtrcrud(self.rtrID, 'set', rtrprop='gateway', tenant=self.tnt1)
+
+        LOG.info(
+            "\nStep-3-TC-7: VerifyACI: ShadowL3Out's VRF resolves to Routers' VRF #")
+        ShdL3 = self.apic.getL3Out(self.tnt1)
+        if len(ShdL3):
+            if '_Shd-%s-' % (self.rtrID) in ShdL3.keys()[0]:
+                if ShdL3['vrfname'] == '_%s_%s' % (self.apicsystemID, self.rtrID) \
+                        and ShdL3['vrfstate'] == 'formed':
+                    print "Vrf name and state matched"
+                else:
+                    LOG.info
+                    ("\nStep-3-TC-7: Fail: VRfname or VRfState one or both did not match")
+                    return 0
+            else:
+                LOG.info("\nStep-3-TC-7: Fail: Shadow L3Out VRF not Found")
+                return 0
+        else:
+            LOG.info("\nStep-3-TC-7: Fail: L3Outs not found in this tenant")
+            return 0
+
+        LOG.info("\nStep-4-TC-7:VerifyACI: SNAT EPs are learned in the NAT-EPGs #")
+        getEp = self.apic.getEpgOper('common')
+        if getEp:
+            if nn_snatepg in getEp.keys():
+                for ip in [nn_snatip, cn_snatip]:
+                    if getEp[nn_snatepg][nn_snatep]['ip'] != ip \
+                       and getEp[nn_snatepg][nn_snatep]['status'] \
+                            == 'learned,vmm':
+                        LOG.error(
+                            "\nStep-4-TC-7:Fail: SNATEP %s Learning failed on APIC" % (ip))
+                        return 0
+            else:
+                LOG.error("\nStep-4-TC-7:Fail: SNAT-EPG not available on APIC")
+                return 0
+
+        LOG.info("\nStep-5-TC-7: Verify: Traffic between the VMs and External Router #")
+
+    def test_vpr_snat_func_8(self):
+        """
+        Testcase-7 in VPR-SNAT-Functionality Workflow
+        """
+        LOG.info(
+        "\n########  Testcase TEST_VPR_NAT_FUNC_8 #####################\n"
+        "# Clear TC-5's Router GW in a given tenant to the ExtNetwork #\n"
+        "# Remove TC-5's Router from all attached private networks    #\n"
+        "# Attach TC-5's Tenant's Router to ExtNetwork GW             #\n"
+        "# Attach TC-5's Tenants Router to the private networks	      #\n"
+        "# VerifyACI: VRF for attached BDs resolves to Routers' VRF   #\n"
+        "# VerifyACI: ShadowL3Out's VRF resolves to Routers' VRF      #\n"
+        "# VerifyACI: SNAT EPs are learned in the NAT-EPGs            #\n"
+        "# Verify: Traffic between the VMs and External Router        #\n"
+        "##############################################################\n")
+        LOG.info("\n Execution of Testcase starts #")
+
+        LOG.info(
+        "\nStep-1-TC-8: Clear TC-6's Router GW in a given tenant to the ExtNetwork #")
+        self.neutron.rtrcrud(self.rtrID, 'clear', rtrprop='gateway', tenant=self.tnt1)
+
+        LOG.info(
+        "\nStep-2-TC-8: Remove TC-5's Router from all attached private networks #"
+        )
+        for subnetId in self.subnetIDs[self.tnt1]:
+            self.neutron.rtrcrud(self.rtrID, 'add', rtrprop='interface',
+                                 subnet=subnetId, tenant=self.tnt1)
+        sleep(2) #Just to let the change percolate to ACI
+        LOG.info(
+        "\nStep-3-TC-8: Attach TC-6's Tenant's Router to ExtNetwork GW #")
+        self.neutron.rtrcrud(self.rtrID,
+                            'set',
+                            rtrprop='gateway',
+                            tenant=self.tnt1)
+
+        LOG.info(
+        "\n# Step-4-TC-8: Attach router to multiple networks in a given tenant #")
+        for subnetId in self.subnetIDs[self.tnt1]:
+            self.neutron.rtrcrud(self.rtrID, 'add', rtrprop='interface',
+                                 subnet=subnetId, tenant=self.tnt1)
+
+        LOG.info(
+        "\nStep-5-TC-8: VerifyACI: VRF for attached BDs resolves to Routers' VRF #"
+        )
+        unmatchedvrfs = self.verifyAciBDtoVRF({self.tnt1: self.rtrID})
+        if unmatchedvrfs:
+            LOG.error("\nStep-5-TC-8:Fail: Unresolved VRF for following BDs >> %s"
+                      % (unmatchedvrfs))
+            return 0
+        
+        LOG.info(
+        "\nStep-6-TC-8: VerifyACI: ShadowL3Out's VRF resolves to Routers' VRF #"
+        )
+        ShdL3 = self.apic.getL3Out(self.tnt1)
+        if len(ShdL3):
+            if '_Shd-%s-' % (self.rtrID) in ShdL3.keys()[0]:
+                if ShdL3['vrfname'] == '_%s_%s' % (self.apicsystemID, self.rtrID) \
+                        and ShdL3['vrfstate'] == 'formed':
+                    print "Vrf name and state matched"
+                else:
+                    LOG.info(
+                    "\nStep-6-TC-8: Fail: VRfname or VRfState one or both did not match"
+                    )
+                    return 0
+            else:
+                LOG.info("\nStep-6-TC-8: Fail: Shadow L3Out VRF not Found")
+                return 0
+        else:
+            LOG.info("\nStep-6-TC-8: Fail: L3Outs not found in this tenant")
+            return 0
+
+        LOG.info(
+        "\nStep-7-TC-8:VerifyACI: SNAT EPs are learned in the NAT-EPGs #"
+        )
+        getEp = self.apic.getEpgOper('common')
+        if getEp:
+            if nn_snatepg in getEp.keys():
+                for ip in [nn_snatip, cn_snatip]:
+                    if getEp[nn_snatepg][nn_snatep]['ip'] != ip \
+                       and getEp[nn_snatepg][nn_snatep]['status'] \
+                            == 'learned,vmm':
+                        LOG.error(
+                            "\nStep-7-TC-8:Fail: SNATEP %s Learning failed on APIC" % (ip))
+                        return 0
+            else:
+                LOG.error("\nStep-7-TC-8:Fail: SNAT-EPG not available on APIC")
+                return 0
+
+        LOG.info("\nStep-8-TC-8: Verify: Traffic between the VMs and External Router #")
 
 if __name__ == "__main__":
     main()

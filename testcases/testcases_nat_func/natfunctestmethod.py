@@ -6,7 +6,7 @@ import logging
 import sys
 from time import sleep
 
-from libs.gbp_aci_libs import Gbp_Aci
+from libs.gbp_aci_libs import GbpApic
 from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_nova_libs import Gbp_Nova
 from libs.raise_exceptions import *
@@ -37,6 +37,7 @@ class NatFuncTestMethods(object):
 
         self.gbpcrud = GBPCrud(cntlrip)
         self.gbpnova = Gbp_Nova(cntlrip)
+        #self.gbpaci = GbpApic(self.apic_ip,'gbp')
         self.extsegname = 'Management-Out'
         self.natpoolname1 = 'GbpNatPoolTest1'
         self.natpoolname2 = 'GbpNatPoolTest2'
@@ -271,7 +272,7 @@ class NatFuncTestMethods(object):
            return self.extpolid
 	return 1
    
-    def testVerifyCfgdObjects(self):
+    def testVerifyCfgdObjects(self,nat_type='dnat'):
         """
         Verify all the configured objects and their atts
         """
@@ -292,15 +293,26 @@ class NatFuncTestMethods(object):
                                               ) == 0:
            self._log.error("\n///// Verify for L2Policy Failed /////")
            return 0
-        if self.gbpcrud.verify_gbp_any_object('external_segment',
+        if nat_type == 'dnat':
+            if self.gbpcrud.verify_gbp_any_object('external_segment',
                                                self.extsegid,
                                                l3_policies = [self.defaultl3pid,
                                                               self.nondefaultl3pid],
                                                nat_pools = self.nat_pool_id,
                                                external_policies = self.extpolid
                                               ) == 0:
-           self._log.error("\n///// Verify for ExtSeg Failed /////")
-           return 0
+                self._log.error("\n///// Verify for DNAT ExtSeg Failed /////")
+                return 0
+        else:
+            if self.gbpcrud.verify_gbp_any_object('external_segment',
+                                               self.extsegid,
+                                               l3_policies = [self.defaultl3pid,
+                                                              self.nondefaultl3pid],
+                                               external_policies = self.extpolid
+                                              ) == 0:
+               
+                self._log.error("\n///// Verify for SNAT ExtSeg Failed /////")
+                return 0
 	return 1
 
     def testLaunchVmsForEachPt(self):
@@ -486,13 +498,14 @@ class NatFuncTestMethods(object):
         Adds SSH contract between NS and EPG
         Needed for SNAT Tests
         """
+        aci=GbpApic(apicip,'gbp')
         self._log.info(
             "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
         svcepglist = [
                 'TestPtg1',
                 'L2PNat'
                 ]
-        create_add_filter(apicip, svcepglist)
+        aci.create_add_filter(svcepglist)
         sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
 	return 1
 
