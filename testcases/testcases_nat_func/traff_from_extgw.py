@@ -17,13 +17,14 @@ def traff_from_extgwrtr(extgwrtr_ip, fipsOftargetVMs, proto='all', jumbo=0):
     Traffic from ExternalGW Router to Tenant VMs
     """
     traff = Gbp_def_traff()
-    targetvm_list = ['TestVM1','TestVM2']
     print 'FIPs of Target VMs == %s' % (fipsOftargetVMs)
-    # List of FIPs ExtGWRtr will ping:
+    # List of FIPs ExtGWRtr will ping, ping_fips should be type List
     if isinstance(fipsOftargetVMs,dict):
-       ping_fips = fipsOftargetVMs.values()
+        ping_fips = fipsOftargetVMs.values() 
     if isinstance(fipsOftargetVMs,list):
-       ping_fips = fipsOftargetVMs
+        ping_fips = fipsOftargetVMs
+    if not isinstance(fipsOftargetVMs,list):
+        ping_fips = [fipsOftargetVMs]
     attemptall = 1
     if proto == 'all':
         while attemptall < 4:

@@ -254,33 +254,41 @@ class Gbp_Nova(object):
                       except Exception:
                           exc_type, exc_value, exc_traceback = sys.exc_info()
                           _log.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
-                          return None
+                          return 0
                       return fip.ip.encode(),fip #Returning the attr of fip(address) and the fip object itself
             else:
                 _log.error('There are NO Floating IP Pools')
-                return None
+                return 0
         if action == 'disassociate':
            try:
               self.nova.servers.find(name=vmname).remove_floating_ip(vmfip)
-	      return 1
            except Exception:
               exc_type, exc_value, exc_traceback = sys.exc_info()
               _log.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
-              return None
+              return 0
+        return 1
 
-    def delete_release_fips(self):
+    def delete_release_fips(self,fip=''):
         """
         Run this method ONLY when fips
         are disassociated from VMs
+        fip:: pass specific FIP
         """
         try:
            disassociatedFips = self.nova.floating_ips.list()
-           for fip in disassociatedFips:
-               self.nova.floating_ips.delete(fip)
+           if fip:
+               for _fip in disassociatedFips:
+                   if _fip.ip == fip:
+                       self.nova.floating_ips.delete(_fip)
+                       break
+           else:
+               for fip in disassociatedFips:
+                   self.nova.floating_ips.delete(fip)
         except Exception:
            exc_type, exc_value, exc_traceback = sys.exc_info()
            _log.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
            return 0
+        return 1
 
     def get_any_vm_property(self,vmname,prop='networks'):
         """

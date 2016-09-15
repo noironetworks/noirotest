@@ -166,6 +166,7 @@ class GbpNatFuncGlobalCfg(object):
 
     def cleanup(self):
         # cleanup the resources created by a testcase(Blind Cleanup)
+        self._log.info("\nGlobal Config Clean-Up Initiated")
         prs_list = self.gbpcrud.get_gbp_policy_rule_set_list()
         if len(prs_list) > 0:
            for prs in prs_list:
@@ -182,5 +183,6 @@ class GbpNatFuncGlobalCfg(object):
         if len(act_list) > 0:
            for act in act_list:
                self.gbpcrud.delete_gbp_policy_action(act, property_type='uuid')
+        self._log.info("\nGlobal Config Clean-Up Completed")
 
     

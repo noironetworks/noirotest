@@ -34,7 +34,7 @@ class NatFuncTestMethods(object):
     _log.setLevel(logging.INFO)
 
     def __init__(self,cntlrip,ntknode):
-
+        self.cntlrip = cntlrip
         self.gbpcrud = GBPCrud(cntlrip)
         self.gbpnova = Gbp_Nova(cntlrip)
         #self.gbpaci = GbpApic(self.apic_ip,'gbp')
@@ -51,28 +51,38 @@ class NatFuncTestMethods(object):
         self.l2pname = 'L2PNat'
         self.ptg1name = 'TestPtg1'
         self.ptg2name = 'TestPtg2'
-        self.extpolname = 'ExtPolTest'
+        self.MgmtOutExtPol = 'MgmtExtPol'
+        self.DcOutExtPol = 'DcExtPol'
         self.vm1name = 'TestVM1'
         self.vm2name = 'TestVM2'
         self.vmlist = [self.vm1name, self.vm2name]
         self.nat_traffic = NatTraffic(
             cntlrip, self.vmlist, ntknode)
      
-    def addhostpoolcidr(self,fileloc='/etc/neutron/neutron.conf'):
+    def addhostpoolcidr(self,fileloc='/etc/neutron/neutron.conf',
+                        l3out='Management-Out',delete=False):
         """
         Add host_pool_cidr config flag and restarts neutron-server
         fileloc :: location of the neutron config
                    file in which apic_external_network
                    section is defined
         """
-        self._log.info("\nAdding host_pool_cidr to neutron conf")
-        crudcmd = 'crudini --set '+fileloc+\
-                  ' apic_external_network:Management-Out'+\
-                  ' '+'host_pool_cidr %s' %(self.snatcidr)
-        self._log.info(
-        "\nThe cmd to be executed for SNAT conf ==> %s" %(crudcmd))
-        getoutput(crudcmd)
-        getoutput('service neutron-server restart')
+        patternchk = 'host_pool_cidr'
+        pattern = 'host_pool_cidr=%s' %(self.snatcidr)
+        section = 'apic_external_network:%s' %(l3out)
+        if not delete:
+            self._log.info("\nAdding host_pool_cidr to neutron conf")
+            editneutronconf(self.cntlrip,
+                            fileloc,
+                            pattern,
+                            section=section
+                           )
+        if delete:
+            self._log.info("\nDeleting host_pool_cidr from neutron conf")
+            editneutronconf(self.cntlrip,
+                            fileloc,
+                            patternchk,
+                            add=False) 
 
     def testCreateExtSegWithDefault(self,extsegname):
         """
@@ -193,23 +203,40 @@ class NatFuncTestMethods(object):
             return 0
 	return 1
 
-    def testAssociateExtSegToBothL3ps(self,extsegid=''):
+    def testAssociateExtSegToBothL3ps(self,extsegid='',both=True,l3ptype=''):
         """
         Step to Associate External Segment to 
         both default & non-default L3Ps
+        both: True/False, defaulted to use both L3Ps
+              else(False) user should pass the l3ptype
+        l3ptype: valid strings are 'default' or 'nondefault'
         """
         if extsegid == '':
            extsegid = self.extsegid
-        self._log.info(
+        if both:
+            self._log.info(
                      "\nStep: Associate External Segment to both L3Ps\n")
-        for l3p in [self.defaultl3pid,self.nondefaultl3pid]:
+            for l3p in [self.defaultl3pid,self.nondefaultl3pid]:
+                if self.gbpcrud.update_gbp_l3policy(l3p,
+                                                property_type='uuid',
+                                                external_segments=extsegid
+                                                ) == 0:
+                    self._log.error(
+                    "\n///// Associate External Segment to L3P failed /////")
+                    return 0
+        else:
+            if l3ptype == 'default':
+                l3p = self.defaultl3pid
+            else:
+                l3p = self.nondefaultl3pid
+            self._log.info("\nStep:Associate External Segment to Single L3P")
             if self.gbpcrud.update_gbp_l3policy(l3p,
                                                 property_type='uuid',
                                                 external_segments=extsegid
                                                 ) == 0:
                self._log.error(
-               "\n///// Associate External Segment to L3P failed /////")
-               return 0
+               "\n///// Associate External Segment to Single L3P failed /////")
+               return 0 
 	return 1
         
     def testCreatePolicyTargetForEachPtg(self):
@@ -233,13 +260,18 @@ class NatFuncTestMethods(object):
             return 0
 	return 1
 
-    def testCreateUpdateExternalPolicy(self,update=0,delete=0,updextseg=''):
+    def testCreateUpdateExternalPolicy(self,update=0,delete=0,
+                                       extseg='',extpol='default'):
         """
         Create ExtPolicy with ExtSegment
         Apply Policy RuleSets
-        update:: 1, then MUST pass updextseg(the new extsegid to which
+        update:: 1, then MUST pass extseg(the new extsegid to which
                     this existing ExtPol should now associate to
         """
+        if extpol == 'default':
+           self.extpolname = self.MgmtOutExtPol
+        else:
+           self.extpolname = self.DcOutExtPol
         if delete == 1:
             self._log.info("\nStep: Delete ExtPolicy")  
             if self.gbpcrud.delete_gbp_external_policy(
@@ -253,7 +285,7 @@ class NatFuncTestMethods(object):
             "\nStep: Update ExtPolicy with External Segment")  
             if self.gbpcrud.update_gbp_external_policy(
                            self.extpolname,
-                           external_segments=[updextseg]
+                           external_segments=[extseg]
                            ) == 0:
                self._log.error(
                "\n///// Updation of External Policy with ExtSeg failed /////")   
@@ -261,9 +293,11 @@ class NatFuncTestMethods(object):
         else:
            self._log.info(
            "\nStep: Create ExtPolicy with ExtSegment and Apply PolicyRuleSets\n")
+           if extseg == '':
+              extseg = self.extsegid    
            self.extpolid = self.gbpcrud.create_gbp_external_policy(
                              self.extpolname,
-                             external_segments=[self.extsegid]
+                             external_segments=[extseg]
                                                               )
            if self.extpolid == 0:
               self._log.error(
@@ -315,7 +349,7 @@ class NatFuncTestMethods(object):
                 return 0
 	return 1
 
-    def testLaunchVmsForEachPt(self):
+    def testLaunchVmsForEachPt(self,az=''):
         """
         Lanuch VMs
         """
@@ -323,13 +357,15 @@ class NatFuncTestMethods(object):
         # launch Nova VMs
         if self.gbpnova.vm_create_api(self.vm1name,
                                       'ubuntu_multi_nics',
-                                      self.pt1id[1]) == 0:
+                                      self.pt1id[1],
+                                      avail_zone=az) == 0:
            self._log.error(
            "\n///// VM Create using PTG %s failed /////" %(self.ptg1name))
            return 0
         if self.gbpnova.vm_create_api(self.vm2name,
                                       'ubuntu_multi_nics',
-                                      self.pt2id[1]) == 0:
+                                      self.pt2id[1],
+                                      avail_zone=az) == 0:
            self._log.error(
            "\n///// VM Create using PTG %s failed /////" %(self.ptg2name))
            return 0
@@ -355,21 +391,34 @@ class NatFuncTestMethods(object):
                self.vm_to_fip[vm] = results[0]
 	return 1
 
-    def testDisassociateFipFromVMs(self,release_fip=0):
+    def testDisassociateFipFromVMs(self,release_fip=True,vmname=False):
         """
         Disassociate FIPs from VMs
+        vmname:: Pass specific VM name string to disassociate FIP
         """
-        self._log.info("\nStep: Disassociate FIPs from VMs\n")
-        for vm,fip in self.vm_to_fip.iteritems():
+        if vmname:
+            vmname = self.vm2name
+            self._log.info("\nStep: Disassociate FIP from VM %s\n" %(vmname))
             if not self.gbpnova.action_fip_to_vm(
                                           'disassociate',
-                                          vm,
-                                          vmfip = fip
+                                          vmname,
+                                          vmfip = self.vm_to_fip[vmname]
                                           ):
                self._log.error(
                "\n///// Disassociating FIP from VM %s failed /////" %(vm))
                return 0
-        if release_fip != 0:
+        else:
+            self._log.info("\nStep: Disassociate FIPs from all VMs\n")
+            for vm,fip in self.vm_to_fip.iteritems():
+                if not self.gbpnova.action_fip_to_vm(
+                                          'disassociate',
+                                          vm,
+                                          vmfip = fip
+                                          ):
+                    self._log.error(
+                    "\n//// Disassociating FIP from VM %s failed ////" %(vm))
+                    return 0
+        if release_fip:
            self.gbpnova.delete_release_fips()
 	return 1
 
@@ -446,23 +495,22 @@ class NatFuncTestMethods(object):
                  self.gbpcrud.delete_gbp_nat_pool(natpool)
 	return 1
 
-    def testTrafficFromExtRtrToVmFip(self,extgwrtr,vmfips=0):
+    def testTrafficFromExtRtrToVmFip(self,extgwrtr,fip=False):
         """
         Ping and TCP test from external router to VMs
         """
         self._log.info("\nStep: Ping and TCP test from external router\n")
-        if vmfips == 0:
-           vmfips = self.vm_to_fip
+        if fip:
+           vmfips = self.vm_to_fip[self.vm1name]
         else:
            vmfips = self.gbpnova.get_floating_ips(ret=1)
-	   if not vmfips:
+	if not vmfips:
 		self._log.error(
 		"\n///// There are no FIPs to test Traffic /////")
 		return 0
         run_traffic = traff_from_extgwrtr(
                                           extgwrtr,
-                                          vmfips,
-                                          proto='all'
+                                          vmfips
                                           )
         if isinstance(run_traffic, dict):
             self._log.error(
@@ -471,15 +519,19 @@ class NatFuncTestMethods(object):
             return 0
 	return 1
         
-    def testTrafficFromVMsToExtRtr(self,extgwips):
+    def testTrafficFromVMsToExtRtr(self,extgwips,vmname=True):
         """
         Ping and TCP traffic from VMs to ExtRtr
         """
+        if vmname:
+            vmlist = [self.vm2name]
+        else:
+            vmlist = self.vmlist
         self._log.info("\nStep: Ping and TCP traffic from VMs to ExtRtr\n")
         retry = 1
         while retry:
             failed = {}
-            for srcvm in self.vmlist:
+            for srcvm in vmlist:
                 run_traffic = self.nat_traffic.test_traff_anyvm_to_extgw(
                                                       srcvm, extgwips)
                 if run_traffic == 2:
@@ -535,7 +587,7 @@ class NatFuncTestMethods(object):
            else:
               self._log.info("\n Incorrect params passed for delete action")
         if action == 'cleanup':
-           self._log.info("\nStep: Blind CleanUp to be executed")
+           self._log.info("\nStep: Blind CleanUp of Resources initiated")
            self._log.info("\nStep: Blind CleanUp: VMs Delete")
            for vm in [self.vm1name, self.vm2name]:
                self.gbpnova.vm_delete(vm)
@@ -578,4 +630,4 @@ class NatFuncTestMethods(object):
            if len(extseg_list) :
               for extseg in extseg_list:
                  self.gbpcrud.delete_gbp_external_segment(extseg)
-             
+           self._log.info("\nStep: Blind CleanUp of Resources: Completed")

@@ -62,9 +62,13 @@ class NatTraffic(object):
                     failed[key]['icmp'] = 'FAIL'
                 if val['tcp'] != 1:
                     failed[key]['tcp'] = 'FAIL'
-            if failed[key] == {}:
-               failed = {}
-        if len(failed) > 1:
+        for key in results.keys():
+            #Now remove the keys with empty dict
+            #so that Failed dict ONLY has the Keys/Target IPs
+            #with FAIL protos
+            if not len(failed[key]):
+               failed.pop(key)
+        if len(failed):
            print "Verify Failed Traffic == ", failed
            if isinstance(target_vm_ip,dict):
               for key in failed.keys():

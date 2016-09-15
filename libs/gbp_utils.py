@@ -307,6 +307,7 @@ def editneutronconf(controllerIp,
                cmd = 'sed -i '+"'/%s/d' " %(pattern)+destfile
 	print cmd
         run(cmd)
+        print "Neutron Conf edited, hence restarting neutron-server"
         run('service neutron-server restart')
 
 def PauseToDebug():
