@@ -295,20 +295,20 @@ def editneutronconf(controllerIp,
     with settings(warn_only=True):
 	if add:
              chk_string = run('grep -r %s %s' %(pattern,destfile))
-             if chk_string.failed:
-                cmd = 'sed -i '+\
+             if chk_string.succeeded: #pattern exists, then delete it
+                cmd = 'sed -i '+"'/%s/d' " %(pattern)+destfile #delete
+                run(cmd)
+             cmd = 'sed -i '+\
                    "'/%s" %(section)+\
                    '/a '+"%s' " %(pattern)+\
                    destfile
-             else: #If the pattern exists, then find and replace
-                 cmd = "sed -i -e 's/"+\
-                       pattern+"/"+pattern+"/g" +" "+destfile
         if not add:
                cmd = 'sed -i '+"'/%s/d' " %(pattern)+destfile
 	print cmd
         run(cmd)
-        print "Neutron Conf edited, hence restarting neutron-server"
-        run('service neutron-server restart')
+	if 'neutron' in destfile:
+            print "Neutron Conf edited, hence restarting neutron-server"
+            run('service neutron-server restart')
 
 def PauseToDebug():
     while True:

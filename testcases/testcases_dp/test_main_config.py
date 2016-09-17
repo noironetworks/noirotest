@@ -44,6 +44,9 @@ class gbp_main_config(object):
         self.ntk_node = conf['ntk_node']
         self.cntlr_ip = conf['controller_ip']
         self.apic_ip = conf['apic_ip']
+        self.leaf1_ip = conf['leaf1_ip']
+        self.leaf2_ip = conf['leaf2_ip']
+        self.spine_ip = conf['spine_ip']
         self.apic_passwd = conf['apic_passwd']
         self.heat_temp_test = conf['main_setup_heat_temp']
         self.num_hosts = conf['num_comp_nodes']
@@ -87,7 +90,7 @@ class gbp_main_config(object):
                self._log.info("\nCreating Nova Host-aggregate & its Availability-zone")
                self.agg_id = self.gbpnova.avail_zone(
                        'api', 'create', self.nova_agg, avail_zone_name=self.nova_az)
-            except Exception, e:
+            except Exception:
                 self._log.error(
                     "\n ABORTING THE TESTSUITE RUN,nova host aggregate creation Failed", exc_info=True)
                 sys.exit(1)
@@ -95,7 +98,7 @@ class gbp_main_config(object):
             try:
              self._log.info("\nAdding Nova host to availaibility-zone")
              self.gbpnova.avail_zone('api', 'addhost', self.agg_id, hostname=self.comp_node)
-            except Exception, e:
+            except Exception:
                 self._log.error(
                     "\n ABORTING THE TESTSUITE RUN, availability zone creation Failed", exc_info=True)
                 self.gbpnova.avail_zone(
@@ -180,11 +183,21 @@ class gbp_main_config(object):
             "\nABORTING THE TESTSUITE RUN, on Setup Verification Failure")
 	    if self.pausetodebug:
 	       PauseToDebug()
-  	    self.cleanup() # Calling cleanup on Verify Failure
-            sys.exit(1)
+  	    return 0
 	finally:
 	    return 1
 
+    def reloadAci(self,nodetype='borderleaf'):
+        """
+        Reload the leaf or Spine
+        """
+        if nodetype == 'borderleaf':
+           self.gbpaci.reboot_aci(self.leaf1_ip)
+        if nodetype == 'leaf':
+           self.gbpaci.reboot_aci(self.leaf2_ip)
+        if nodetype == 'spine':
+           self.gbpaci.reboot_aci(self.spine_ip)
+           
     def cleanup(self,stack=0,avail=0):
         # Need to call for instance delete if there is an instance
         self._log.info("Cleaning Up The Test Config")

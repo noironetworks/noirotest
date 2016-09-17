@@ -20,13 +20,21 @@ _log = logging.getLogger( __name__ )
 _log.setLevel(logging.INFO)
 _log.setLevel(logging.DEBUG)
 
-class Gbp_Aci(object):
-
-    def __init__( self ):
-      """
-      Init def 
-      """
-      self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown','Exception']
+class GbpApic(object):
+    def __init__(self, addr,mode,apicsystemID='noirolab',username='admin', password='noir0123', ssl=True):
+        self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown','Exception']
+        self.addr = addr
+        self.ssl = ssl
+        self.user = username
+        self.passwd = password
+	self.apicsystemID = apicsystemID
+	self.mode = mode # pass the arg mode as 'gbp' or 'ml2'
+	if self.mode == 'gbp':
+               self.appProfile = 'ap-%s_app' %(self.apicsystemID)
+        elif self.mode == 'ml2':
+               self.appProfile = 'ap-%s' %(self.apicsystemID)
+        self.cookies = None
+        self.login()
       
     def cmd_error_check(self,cmd_output):
         """
@@ -178,22 +186,6 @@ class Gbp_Aci(object):
         if re.search('\d+\s+%s\s+[A-Z0-9]+\s+\d+.\d+.\d+.\d+\/32\s+\\b%s\s+\d\s+\\b%s' %(node,nodetype,status),cmdout,re.I) != None:
            return 1
            
-
-class GbpApic(object):
-    def __init__(self, addr,mode,apicsystemID='noirolab',username='admin', password='noir0123', ssl=True):
-        self.addr = addr
-        self.ssl = ssl
-        self.user = username
-        self.passwd = password
-	self.apicsystemID = apicsystemID
-	self.mode = mode # pass the arg mode as 'gbp' or 'ml2'
-	if self.mode == 'gbp':
-               self.appProfile = 'ap-%s_app' %(self.apicsystemID)
-        elif self.mode == 'ml2':
-               self.appProfile = 'ap-%s' %(self.apicsystemID)
-        self.cookies = None
-        self.login()
-
     def url(self, path):
         if self.ssl:
             return 'https://%s%s' % (self.addr, path)

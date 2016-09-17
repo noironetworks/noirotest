@@ -139,11 +139,16 @@ class nat_dp_main_config(object):
                                    pattern)
             if nat_type == 'snat':
                 # Adding host_pool_cidr to the both L3Outs
-		sectionlist = ['apic_external_network:Managment-Out',
+		sectionlist = ['apic_external_network:Management-Out',
                                'apic_external_network:Datacenter-Out']
                 patvallist = [self.hostpoolcidrL3OutA,
                               self.hostpoolcidrL3OutB]
 		pattern = 'host_pool_cidr'
+                #Remove any exiting host_pool_cidr form neutron config
+                editneutronconf(self.cntlr_ip,
+                                self.neutronconffile,
+                                pattern,
+                                add=False)
 	        for section,patval in zip(sectionlist,patvallist):
                     editneutronconf(self.cntlr_ip,
                                     self.neutronconffile,
@@ -323,7 +328,7 @@ class nat_dp_main_config(object):
            self.gbpnova.avail_zone('cli',
                                    'removehost',
                                    self.nova_agg,
-                                   hostname=self.comp_node)
+                                   hostname=self.az_node)
            self.gbpnova.avail_zone('cli', 'delete', self.nova_agg)
         #Remove the test-added config from neutron conf
         for pattern in ['host_pool_cidr','per_tenant_nat_epg']:

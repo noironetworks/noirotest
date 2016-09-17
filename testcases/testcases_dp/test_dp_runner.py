@@ -34,26 +34,34 @@ def main():
     
     # Verify the configuration on ACI
     print "Verification .. sleep 30s, allowing DP learning"
-    sleep(30)
-    testbed_cfg.verifySetup()
+    sleep(30) 
+    if not testbed_cfg.verifySetup():
+        testbed_cfg.cleanup()
+        sys.exit(1)
+    def run(reboot=''):
+        for val in header_to_suite_map.itervalues():
+            # Initialize Testsuite specific config setup/cleanup class
+            header = val[0]()
+            # Build the Testsuite specific setup/config
+            # header.setup()
 
-    for val in header_to_suite_map.itervalues():
-        # Initialize Testsuite specific config setup/cleanup class
-        header = val[0]()
-
-        # Build the Testsuite specific setup/config
-        # header.setup()
-
-        # Initialize Testsuite class to run its testcases
-        testsuite = val[1](objs_uuid)
-
-        for location in ['same_host', 'diff_host_diff_leaf']:
-            log_string = "%s_%s_%s_%s" % (testbed_cfg.test_parameters['bd_type'],
-                                          testbed_cfg.test_parameters['ip_version'],
-                                          testbed_cfg.test_parameters['vpc_type'],
-                                          location)
-            testsuite.test_runner(log_string, location)
-
+            # Initialize Testsuite class to run its testcases
+            testsuite = val[1](objs_uuid)
+            for location in ['same_host', 'diff_host_diff_leaf']:
+                if reboot:
+                    log_string = "%s_%s_%s_%s_%s" % (
+                              testbed_cfg.test_parameters['bd_type'],
+                              testbed_cfg.test_parameters['ip_version'],
+                              testbed_cfg.test_parameters['vpc_type'],
+                              location,
+                              reboot)
+                else:
+                    log_string = "%s_%s_%s_%s" % (
+                              testbed_cfg.test_parameters['bd_type'],
+                              testbed_cfg.test_parameters['ip_version'],
+                              testbed_cfg.test_parameters['vpc_type'],
+                              location)
+                testsuite.test_runner(log_string, location)
         # now run the loop of test-combos(NOTE: The below forloop is now part of Harness & cfgable)
         """
         for bdtype in ['vxlan', 'vlan']:
@@ -66,7 +74,33 @@ def main():
                             bdtype, ip, vpc, location)
                         testsuite.test_runner(log_string, location)
         """
-    testbed_cfg.cleanup()
+    run()
+    if len(sys.argv) > 2:
+            #With VPC if any of the Leafs reboot, then traffic should be 
+            #able to flow through the other Leaf. Only in case of Spine
+            #we should sleep 7 mins before we send traffic
+            #TODO: Add online status check for the leafs/spines post reload
+            if sys.argv[2] == 'borderleaf':
+                print "////// Run DP-Test Post Reload of BorderLeaf //////"
+                reboot = 'POST_RELOAD_BORDERLEAF'
+                testbed_cfg.reloadAci()
+            if sys.argv[2] == 'leaf':
+                print "////// Run DP-Test Post Reload of Non-BorderLeaf //////"
+                reboot = 'POST_RELOAD_NONBORDERLEAF'
+                testbed_cfg.reloadAci(nodetype='leaf')
+            if sys.argv[2] == 'spine':
+                print "////// Run DP-Test Post Reload of Spine //////"
+                reboot = 'POST_RELOAD_SPINE'
+                testbed_cfg.reloadAci(nodetype='leaf')
+                print " **** Sleeping for Spine toboot up ****"
+                sleep(430)  
+            # After Reboot of ACI node, verifyCfg and send traffic
+            if not testbed_cfg.verifySetup():
+                print "Verification of Test Config Failed, post Reload %s" %(reboot)
+                testbed_cfg.cleanup()
+                sys.exit(1)
+	    run(reboot)
+    testbed_cfg.cleanup() 
     print "\nDataPath TestSuite executed Successfully\n"
 
 if __name__ == "__main__":
