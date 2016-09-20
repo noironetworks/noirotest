@@ -349,46 +349,75 @@ class NatFuncTestMethods(object):
                 return 0
 	return 1
 
-    def testLaunchVmsForEachPt(self,az=''):
+    def testLaunchVmsForEachPt(self,az2='',same=False):
         """
-        Lanuch VMs
+        Launch VMs in two diff avail-zones
+        az2:: second avail-zone, az1=nova(default)
+        same:: True, then VMs launched in same avail-zone
         """
-        self._log.info("\nStep: Launch VMs\n")
+        az1 = 'nova' #default in openstack
+        if same:
+           az2 = az1
+           self._log.info("\nStep: Launch VMs in same avail-zones\n")
+        else:
+            self._log.info("\nStep: Launch VMs in two diff avail-zones\n")
         # launch Nova VMs
         if self.gbpnova.vm_create_api(self.vm1name,
                                       'ubuntu_multi_nics',
                                       self.pt1id[1],
-                                      avail_zone=az) == 0:
+                                      avail_zone=az1) == 0:
            self._log.error(
            "\n///// VM Create using PTG %s failed /////" %(self.ptg1name))
            return 0
         if self.gbpnova.vm_create_api(self.vm2name,
                                       'ubuntu_multi_nics',
                                       self.pt2id[1],
-                                      avail_zone=az) == 0:
+                                      avail_zone=az2) == 0:
            self._log.error(
            "\n///// VM Create using PTG %s failed /////" %(self.ptg2name))
            return 0
 	return 1
 
-    def testAssociateFipToVMs(self,ExtSegName='Management-Out'):
+    def testAssociateFipToVMs(self,ExtSegName='Management-Out',ic=False):
         """
         Associate FIPs to VMs
+        ic:: True, means FIP already exists, user needs
+                to statically interchange the FIP among the VMs
         """
-        self._log.info("\nStep: Associate FIPs to VMs\n")
-        self.vm_to_fip = {}
-        for vm in [self.vm1name,self.vm2name]:
-            results = self.gbpnova.action_fip_to_vm(
+        VMs = [self.vm1name,self.vm2name]
+        if not ic:
+            self._log.info("\nStep: Dynamically Associate FIPs to VMs\n")
+            self.vm_to_fip = {}
+            for vm in VMs:
+                results = self.gbpnova.action_fip_to_vm(
                                           'associate',
                                           vm,
                                           extsegname=ExtSegName
                                           )
-            if not results:
-               self._log.error(
-               "\n///// Associating FIP to VM %s failed /////" %(vm))
-               return 0
+                if not results:
+                   self._log.error(
+                   "\n///// Dynamic Association FIP to VM %s failed /////" %(vm))
+                   return 0
+                else:
+                   self.vm_to_fip[vm] = results[0]
+        if ic:
+            self._log.info(
+            "\nStep: Statically Inter-Changing Association of FIPs to VMs\n")
+            if self.gbpnova.action_fip_to_vm(
+                                            'associate',
+                                            VMs[0],
+                                            vmfip=self.vm_to_fip[VMs[1]]
+                                            ) and \
+               self.gbpnova.action_fip_to_vm(
+                                            'associate',
+                                            VMs[1],
+                                            vmfip=self.vm_to_fip[VMs[0]]
+                                            ):
+               print "Success in Static Assignment of FIP to VMs"
             else:
-               self.vm_to_fip[vm] = results[0]
+               self._log.error(
+               "\n///// Static Association of FIP to VM %s failed /////")
+               return 0
 	return 1
 
     def testDisassociateFipFromVMs(self,release_fip=True,vmname=False):

@@ -198,6 +198,17 @@ class gbp_main_config(object):
         if nodetype == 'spine':
            self.gbpaci.reboot_aci(self.spine_ip)
            
+    def restartAgent(self,compNodeIP):
+        """
+        Restart Agent OVS
+        """
+        state = action_service(compNodeIP)
+        if state:
+           sleep(5)
+           return 1
+        else:
+           return 0
+        
     def cleanup(self,stack=0,avail=0):
         # Need to call for instance delete if there is an instance
         self._log.info("Cleaning Up The Test Config")

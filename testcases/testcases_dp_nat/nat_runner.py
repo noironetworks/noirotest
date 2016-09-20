@@ -1,8 +1,6 @@
 #!/usr/bin/env python
-import os
 import sys
 import optparse
-import platform
 from commands import *
 getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
 from time import sleep
@@ -32,17 +30,37 @@ def get_obj_uuids(cfgfile,nat_type=''):
     return objs_uuid
 
 def main():
+    usage = "usage: %prog [options]"
+    parser = optparse.OptionParser(usage=usage)
+    parser.add_option("-c", "--configfile",
+                      help="Name of the Config File with location",
+                      dest='configfile')
+    parser.add_option("-n", "--nattype",
+                      help="Type of NAT"\
+                      "valid strings: dnat or snat",
+                      dest='nattype')
+    parser.add_option("-p", "--ptnepg",
+                      help="Flag to enable Per Tenant NAT-EPG"\
+                      "valid strings: <yes>",
+                      default=False,
+                      dest='pertenantnatepg')
+    (options, args) = parser.parse_args()
 
+    if not options.configfile:
+        print "Please provide the ConfigFile with location"
+        sys.exit(1)
+    if not options.nattype:
+        print "Please provide the NAT-Type, valid strings <dnat> or <snat>"
+        sys.exit(1)
     # Build the Test Config to be used for all NAT DataPath Testcases
-    cfgfile = sys.argv[1]
+    cfgfile = options.configfile
+    nat_type = options.nattype
     testbed_cfg = nat_dp_main_config(cfgfile)
-    if len(sys.argv)>=3:
-	nat_type = sys.argv[2]
     if nat_type == 'dnat':
         # RUN ONLY DNAT DP TESTs
         # TestSetup Configuration
         print 'Setting up global config for all DNAT DP Testing'
-	if len(sys.argv) > 3:
+	if options.pertenantnatepg:
             print 'Test for PER_TENANT_NAT_EPG FOR DNAT'
             targetVmFips = testbed_cfg.setup(
 					     nat_type,
@@ -59,7 +77,7 @@ def main():
         # Verify the config setup on the ACI
 	print 'Sleeping for the EP learning on ACI Fab'
 	sleep(30)   
-	if len(sys.argv) > 3:
+	if options.pertenantnatepg:
 	    if not testbed_cfg.verifySetup(nat_type,
                                            pertntnatEpg=True):
 	        testbed_cfg.cleanup()

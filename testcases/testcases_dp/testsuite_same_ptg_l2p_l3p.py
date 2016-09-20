@@ -7,7 +7,7 @@ import datetime
 import string
 import pprint
 from libs.gbp_conf_libs import Gbp_Config
-from libs.gbp_verify_libs import Gbp_Verify
+from libs.gbp_aci_libs import GbpApic
 from libs.gbp_fab_traff_libs import Gbp_def_traff
 from libs.gbp_pexp_traff_libs import Gbp_pexp_traff
 from libs.raise_exceptions import *
@@ -38,7 +38,6 @@ class test_same_ptg_same_l2p_same_l3p(object):
     def __init__(self, objs_uuid):
 
         self.gbpcfg = Gbp_Config()
-        self.gbpverify = Gbp_Verify()
         self.gbpdeftraff = Gbp_def_traff()
         stack_name = super_hdr.stack_name
         heat_temp = super_hdr.heat_temp
@@ -46,6 +45,9 @@ class test_same_ptg_same_l2p_same_l3p(object):
         self.apic_ip = super_hdr.apic_ip
         self.apic_passwd = super_hdr.apic_passwd
         self.pausetodebug = super_hdr.pausetodebug
+        self.gbpaci = GbpApic(self.apic_ip,
+                              'gbp',
+                               apicsystemID=self.apicsystemID)
         self.ptg = objs_uuid['demo_same_ptg_l2p_l3p_ptg_id']
         self.test_2_prs = objs_uuid['demo_ruleset_norule_id']
         self.test_3_prs = objs_uuid['demo_ruleset_icmp_id']
@@ -79,16 +81,16 @@ class test_same_ptg_same_l2p_same_l3p(object):
             ptg_name = 'demo_same_ptg_l2p_l3p_ptg' #TBD: JISHNU For now hardcoded, we will improve this
             if flag == 'enforced':
                expectedRetVal = 0
-               addEnforcedToPtg(self.apic_ip,
+               self.gbpaci.addEnforcedToPtg(
                                 ptg_name,
-                                tenant='_noirolab_admin',
-                                password = self.apic_passwd) #Cant use self.ptg as its a UUID instead of namestring
+                                tenant='admin',
+                                ) #Cant use self.ptg as its a UUID instead of namestring
             else:
-               addEnforcedToPtg(self.apic_ip,
+               self.gbpaci.addEnforcedToPtg(
                                 ptg_name,
                                 flag=flag,
-                                tenant='_noirolab_admin',
-                                password = self.apic_passwd)
+                                tenant='admin',
+                                )
                expectedRetVal = 1
             for test in test_list:
                 repeat_test = 1

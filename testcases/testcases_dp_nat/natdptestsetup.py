@@ -42,6 +42,9 @@ class nat_dp_main_config(object):
         self.cntlr_ip = conf['controller_ip']
         self.extgw = conf['ext_gw_rtr']
         self.apic_ip = conf['apic_ip']
+        self.leaf1_ip = conf['leaf1_ip']
+        self.leaf2_ip = conf['leaf2_ip']
+        self.spine_ip = conf['spine_ip']
         self.dnat_heat_temp = conf['dnat_heat_temp']
         self.snat_heat_temp = conf['snat_heat_temp']
         self.num_hosts = conf['num_comp_nodes']
@@ -315,6 +318,29 @@ class nat_dp_main_config(object):
   	    return 0
 	finally:
 	    return 1
+
+    def reloadAci(self,nodetype='borderleaf'):
+        """
+        Reload the leaf or Spine
+        """
+        if nodetype == 'borderleaf':
+           self.gbpaci.reboot_aci(self.leaf1_ip)
+        if nodetype == 'leaf':
+           self.gbpaci.reboot_aci(self.leaf2_ip)
+        if nodetype == 'spine':
+           self.gbpaci.reboot_aci(self.spine_ip)
+           
+    def restartAgent(self):
+        """
+        Restart Agent OVS
+        """
+        for node in [self.ntk_node,self.comp_node]:
+            state = action_service(node)
+            if state:
+               sleep(5)
+               return 1
+            else:
+               return 0
 
     def cleanup(self,stack=0,avail=0):
         # Need to call for instance delete if there is an instance

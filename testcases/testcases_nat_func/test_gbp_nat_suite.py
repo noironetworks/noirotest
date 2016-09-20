@@ -136,9 +136,20 @@ class NatGbpTestSuite(object):
                                           self.gwip1_extrtr,
                                           action='update'
                                           )
+        #Verifying DNATed Traffic from both VMs
+        self.steps._log.info("\n DNATed Traffic from ExtRTR to VMs")
         if not self.steps.testTrafficFromExtRtrToVmFip(self.extrtr):
            return 0
-        if not self.steps.testDisassociateFipFromVMs():
+        if not self.steps.testDisassociateFipFromVMs(release_fip=False):
+           return 0
+        sleep(10)
+        #Inter-change of FIPs
+        if not self.steps.testAssociateFipToVMs(ic=True):
+           return 0
+        sleep(10)
+        self.steps._log.info(
+        "\n DNATed Traffic from ExtRTR to VMs after Inter-Change of FIPs")
+        if not self.steps.testTrafficFromExtRtrToVmFip(self.extrtr):
            return 0
        
     def test_nat_func_2(self):
@@ -167,7 +178,7 @@ class NatGbpTestSuite(object):
                                    self.globalcfg.prsicmptcp
                                    ):
                return 0
-        if not self.steps.testLaunchVmsForEachPt():
+        if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
         print "Sleeping for VM to come up ..."
         sleep(10)
@@ -184,6 +195,8 @@ class NatGbpTestSuite(object):
                                           self.gwip1_extrtr,
                                           action='update'
                                           )
+        #Verifying DNATed Traffic from both VMs
+        self.steps._log.info("\n DNATed Traffic from ExtRTR to VMs")
         if not self.steps.testTrafficFromExtRtrToVmFip(self.extrtr):
            return 0
         if not self.steps.testDisassociateFipFromVMs():
@@ -203,7 +216,7 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testCreatePolicyTargetForEachPtg():
            return 0
-        if not self.steps.testLaunchVmsForEachPt():
+        if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
         print "Sleeping for VM to come up ..."
         sleep(10)
@@ -232,6 +245,8 @@ class NatGbpTestSuite(object):
                                           self.gwip1_extrtr,
                                           action='update'
                                           )
+        #Verifying DNATed Traffic from both VMs
+        self.steps._log.info("\n DNATed Traffic from ExtRTR to VMs")
         if not self.steps.testTrafficFromExtRtrToVmFip(self.extrtr):
            return 0
         if not self.steps.testDisassociateFipFromVMs():
@@ -252,7 +267,7 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testCreatePolicyTargetForEachPtg():
            return 0
-        if not self.steps.testLaunchVmsForEachPt():
+        if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
         print "Sleeping for VM to come up ..."
         sleep(10)
@@ -286,6 +301,8 @@ class NatGbpTestSuite(object):
                                           )
         if not self.steps.testVerifyCfgdObjects():
            return 0
+        #Verifying DNATed Traffic from both VMs
+        self.steps._log.info("\n DNATed Traffic from ExtRTR to VMs")
         if not self.steps.testTrafficFromExtRtrToVmFip(self.extrtr):
            return 0
         if not self.steps.testDisassociateFipFromVMs():
@@ -315,7 +332,7 @@ class NatGbpTestSuite(object):
                                    self.globalcfg.prsicmptcp
                                    ):
                return 0
-        if not self.steps.testLaunchVmsForEachPt():
+        if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
         print "Sleeping for VM to come up ..."
         sleep(10)
@@ -357,6 +374,8 @@ class NatGbpTestSuite(object):
                                           self.gwip2_extrtr,
                                           action='update'
                                           )
+        #Verifying DNATed Traffic from both VMs
+        self.steps._log.info("\n DNATed Traffic from ExtRTR to VMs")
         if not self.steps.testTrafficFromExtRtrToVmFip(self.extrtr):
            return 0
         if not self.steps.testDisassociateFipFromVMs():
@@ -376,6 +395,7 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testCreatePolicyTargetForEachPtg():
            return 0
+        #Intentionally launching VMs in same avail-zone/comp-node
         if not self.steps.testLaunchVmsForEachPt():
            return 0
         print "Sleeping for VM to come up ..."
@@ -469,7 +489,7 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testVerifyCfgdObjects():
            return 0
-        if not self.steps.testLaunchVmsForEachPt():
+        if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
         print "Sleeping for VM to come up ..."
         sleep(40)
@@ -511,7 +531,7 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testCreatePolicyTargetForEachPtg():
            return 0
-        if not self.steps.testLaunchVmsForEachPt():
+        if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
         print "Sleeping for VM to come up ..."
         sleep(10)
@@ -707,7 +727,7 @@ class NatGbpTestSuite(object):
                                    ):
                return 0
         self.steps.AddSShContract(self.apicip) ## Adding SSH contract
-        if not self.steps.testLaunchVmsForEachPt(az=self.avail_zone):
+        if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
         print "Sleeping for VM to come up ..."
         sleep(10)

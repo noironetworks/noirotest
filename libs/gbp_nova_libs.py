@@ -55,7 +55,7 @@ class Gbp_Nova(object):
             sleep(2)
             cmd_verify = 'systemctl status %s' %(service)
             out = getoutput(cmd_verify)
-            if len(re.findall('Active: active \(running\)',out)) > 0:
+            if len(re.findall('Active: active \(running\)',out)):
                return 1
             else:
                 _log.error('This service %s did not restart' %(service))
@@ -238,27 +238,52 @@ class Gbp_Nova(object):
         Can associate or disassociate a FIP
         action:: valid strings are 'associate' or 'disassociate'
         extsegname:: Must be passed ONLY in case of 'associate'
-        vmfip:: Must be passed ONLY in case of 'disassociate'
+        vmfip:: In case of 'disassociate', vmfip MUST be passed
+                In case of 'associate', default = None, for method to
+                create FIP-pool and dynamically allocate FIPs to VM
         """
         if action == 'associate':
-            fip_pools = self.nova.floating_ip_pools.list()
-            if len(fip_pools) > 0:
-               print 'FIP POOLS', fip_pools
-               for pool in fip_pools:
-                   print pool.name
-                   if extsegname in pool.name:
-                      print 'MATCH'
-                      try:
-                          fip = self.nova.floating_ips.create(pool=pool.name)
-                          self.nova.servers.find(name=vmname).add_floating_ip(fip)
-                      except Exception:
-                          exc_type, exc_value, exc_traceback = sys.exc_info()
-                          _log.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
-                          return 0
-                      return fip.ip.encode(),fip #Returning the attr of fip(address) and the fip object itself
-            else:
-                _log.error('There are NO Floating IP Pools')
-                return 0
+            if not vmfip:
+                fip_pools = self.nova.floating_ip_pools.list()
+                if len(fip_pools):
+                   print 'FIP POOLS', fip_pools
+                   for pool in fip_pools:
+                       print pool.name
+                       if extsegname in pool.name:
+                          print 'MATCH'
+                          try:
+                              fip = self.nova.floating_ips\
+                                    .create(pool=pool.name)
+                              self.nova.servers.find(name=vmname)\
+                              .add_floating_ip(fip)
+                          except Exception:
+                              exc_type, exc_value, exc_traceback = sys.exc_info()
+                              _log.error(
+                              'Dynamic FIP Exception Type = %s' %(exc_type)\
+                              'Exception Traceback = %s' %(exc_traceback))
+                              return 0
+                          # Returning the attr of fip(address)
+                          # and the fip object itself
+                          return fip.ip.encode(),fip
+                else:
+                    _log.error('There are NO Floating IP Pools')
+                    return 0
+            else: #statically associate FIP to VM
+                try:
+                    fips = self.nova.floating_ips.list()
+                    if len(fips):
+                        for item in fips:
+                            if item.ip == vmfip:
+                                self.nova.servers.find(name=vmname)\
+                                .add_floating_ip(item)
+                                return 1
+                except Exception:
+                   exc_type, exc_value, exc_traceback = sys.exc_info()
+                   _log.error(
+                   'Static FIP Exception Type = %s' %(exc_type)\
+                   'Exception Traceback = %s' %(exc_traceback))
+                   return 0
+                   
         if action == 'disassociate':
            try:
               self.nova.servers.find(name=vmname).remove_floating_ip(vmfip)

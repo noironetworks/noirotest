@@ -42,7 +42,7 @@ class NatML2TestSuite(object):
         self.extrtr_ip2 = conf['extrtr_ip2']
         self.gwiplist = [self.extrtr_ip1, self.extrtr_ip2]
         self.avzone = conf['nova_az_name']
-        self.azhost = conf['f3-compute-2.noiro.lab']
+        self.avhost = conf['az_comp_node']
         self.novahost = conf['az_nova_comp_node']
         self.netnode = conf['network_node']
         self.comp1 = Compute(conf['compute-1'])
