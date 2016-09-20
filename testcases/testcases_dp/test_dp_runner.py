@@ -2,7 +2,6 @@
 import os
 import sys
 import optparse
-import platform
 from commands import *
 getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
 from time import sleep
@@ -22,8 +21,8 @@ def main():
                       help="Name of the Config File with location",
                       dest='configfile')
     parser.add_option("-i", "--integ",
-                      help="integrated ACI tests"\
-                      "valid strings: borderleaf or leaf or spine or agent",
+                      help="integrated ACI Tests. "\
+                      "Valid strings: borderleaf or leaf or spine or agent",
                       default=False,
                       dest='integ')
     (options, args) = parser.parse_args()

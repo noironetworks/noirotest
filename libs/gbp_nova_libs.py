@@ -259,8 +259,8 @@ class Gbp_Nova(object):
                           except Exception:
                               exc_type, exc_value, exc_traceback = sys.exc_info()
                               _log.error(
-                              'Dynamic FIP Exception Type = %s' %(exc_type)\
-                              'Exception Traceback = %s' %(exc_traceback))
+                              'Dynamic FIP Exception & Traceback = %s\n %s'\
+                              %(exc_type,exc_traceback))
                               return 0
                           # Returning the attr of fip(address)
                           # and the fip object itself
@@ -280,8 +280,8 @@ class Gbp_Nova(object):
                 except Exception:
                    exc_type, exc_value, exc_traceback = sys.exc_info()
                    _log.error(
-                   'Static FIP Exception Type = %s' %(exc_type)\
-                   'Exception Traceback = %s' %(exc_traceback))
+                   'Static FIP Exception & Traceback = %s\n %s' \
+                   %(exc_type,exc_traceback))
                    return 0
                    
         if action == 'disassociate':
