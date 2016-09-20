@@ -5,6 +5,7 @@ from commands import *
 getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
 from time import sleep
 from libs.gbp_verify_libs import Gbp_Verify
+from libs.gbp_utils import *
 from natdptestsetup import nat_dp_main_config
 
 def get_obj_uuids(cfgfile,nat_type=''):
@@ -35,9 +36,12 @@ def main():
     parser.add_option("-c", "--configfile",
                       help="Name of the Config File with location",
                       dest='configfile')
+    parser.add_option("-i", "--controllerIp",
+                      help="IP Address of the Ostack Controller",
+                      dest='cntlrIp')
     parser.add_option("-n", "--nattype",
                       help="Type of NAT"\
-                      "valid strings: dnat or snat",
+                      " Valid strings: dnat or snat or edgenat",
                       dest='nattype')
     parser.add_option("-p", "--ptnepg",
                       help="Flag to enable Per Tenant NAT-EPG"\
@@ -47,14 +51,27 @@ def main():
     (options, args) = parser.parse_args()
 
     if not options.configfile:
-        print "Please provide the ConfigFile with location"
+        print ("Please provide the ConfigFile with location")
+        sys.exit(1)
+    if not options.cntlrIp:
+        print ("Please provide the Ostack Controller IP")
         sys.exit(1)
     if not options.nattype:
-        print "Please provide the NAT-Type, valid strings <dnat> or <snat>"
+        print ("Please provide the NAT-Type, "\
+               "Valid strings <dnat> or <snat> or <edgenat>")
         sys.exit(1)
     # Build the Test Config to be used for all NAT DataPath Testcases
     cfgfile = options.configfile
     nat_type = options.nattype
+    if nat_type == 'dnat' or nat_type == 'snat':
+        preExistingL3Out(options.cntlrIp,
+                         '/etc/neutron/neutron.conf'
+                         )
+    if nat_type == 'edgenat':
+        preExistingL3Out(options.cntlrIp,
+                         '/etc/neutron/neutron.conf',
+                         edgenat=True
+                         )
     testbed_cfg = nat_dp_main_config(cfgfile)
     if nat_type == 'dnat':
         # RUN ONLY DNAT DP TESTs
@@ -129,6 +146,11 @@ def main():
         # Cleanup after the SNAT Testsuite is run
         testbed_cfg.cleanup()
         print "\nSNAT TestSuite executed Successfully\n"
+    #Revert Back the L3Out Config
+    preExistingL3Out(options.cntlrIp,
+                    '/etc/neutron/neutron.conf',
+                    revert=True
+                         )
 
 if __name__ == "__main__":
     main()

@@ -228,6 +228,83 @@ def editneutronconf(controllerIp,
             print "Neutron Conf edited, hence restarting neutron-server"
             run('service neutron-server restart')
 
+def preExistingL3Out(controllerIp,
+                     destfile,
+                     edgenat=False,
+                     nonat=False,
+                     revert=False,
+                     l3out=['Management-Out','Datacenter-Out'],
+                     user='root',
+                     pwd='noir0123'):
+    """
+    This function is primarily for NAT-Test
+    Creates L3Out
+    Comments out Existing Config in L3Out Section
+    Adds pre-existing config flags
+    Restarts neutron-server
+    Deletes the L3Out
+    Deletes the Pre-existing config flags
+    Reverts the Commented out Config in L3OUt Section
+    Restarts the neutron-server
+    """
+    env.host_string = controllerIp
+    env.user = user
+    env.password = pwd
+    def runcmd(cmd):
+        results = run(cmd)
+        if not results.succeeded:
+           print "Cmd Execution Failed, bailing out"
+           sys.exit(1)
+    with settings(warn_only=True):
+        if not isinstance(l3out,list):
+            l3out = [l3out]
+        if not revert: #Not reverting the config back
+            # Commenting Out existing(comes with install)
+            # config params for L3Out 
+            for extnet in l3out:
+                print "Commenting-Out the existing config-flags in %s" %(extnet)
+                cmd = "sed -i "+\
+                "'/%(L)s/,+6 {/%(L)s/n; /%(L)s/ ! {s/^/#/}}'" %{'L': extnet}+\
+                " %s" %(destfile)
+                runcmd(cmd)
+                # Convert L3Out into pre-existing by adding necessary config options
+                print "Adding preexisting config options into the L3Out"
+                if extnet == 'Management-Out':
+                    extEpg = 'MgmtExtPol'
+                if extnet == 'Datacenter-Out':
+                    extEpg = 'DcExtPol'
+                l3outpatterns = [
+                             "external_epg=extEpg",
+                             "preexisting=True"
+                            ]
+                if edgenat:
+                    #TBD: 'vlan_range' cannot be static defined here
+                    l3outpatterns.append("edge_nat=True")
+                    l3outpatterns.append("vlan_range = 1091:1099")
+                if nonat:
+                    l3outpatterns.append("enable_nat = False")
+                for config in l3outpatterns:
+                    cmd = "sed -i "+"'/%s/a %s'" %(extnet,config)+" %s" %(destfile)
+                    runcmd(cmd)
+            run('service neutron-server restart') #Restart Neutron-Server
+        if revert:
+            print "Reverting to Initial Config of L3Out Section"
+            # Removing pre-exixting config options
+            for config in ["preexisting",
+                           "external_epg",
+                           "enable_nat",
+                           "edge_nat",
+                          ]:
+                cmd = "sed -i "+"'/%s/d'" %(config)+" %s" %(destfile)
+                run(cmd) #Ignoring what it returns
+            # Uncommenting the config options, reverting to Initial Conf
+            for extnet in l3out:
+                cmdtoUncomment = "sed -i "+\
+                "'/%(L)s/,+6 {/%(L)s/n; /%(L)s/ ! {s/#//}}'" %{'L': extnet}+\
+                " %s" %(destfile)
+                run(cmdtoUncomment)
+            run('service neutron-server restart') #Restart Neutron-Server
+
 def PauseToDebug():
     while True:
           try:
