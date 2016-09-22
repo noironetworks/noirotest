@@ -357,7 +357,9 @@ class nat_dp_main_config(object):
                                    hostname=self.az_node)
            self.gbpnova.avail_zone('cli', 'delete', self.nova_agg)
         #Remove the test-added config from neutron conf
-        for pattern in ['host_pool_cidr','per_tenant_nat_epg']:
+        for pattern in ['host_pool_cidr',
+                        'per_tenant_nat_epg',
+                         ]:
             editneutronconf(self.cntlr_ip,
                             self.neutronconffile,
                             pattern,

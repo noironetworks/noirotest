@@ -1208,14 +1208,20 @@ class GBPCrud(object):
         TBD: To be enhanced
         """
         if extseg_name == 'Datacenter-Out':
-              cmd = 'crudini --get /etc/neutron/neutron.conf apic_external_network:%s cidr_exposed' %(extseg_name)
+              #cmd = 'crudini --get /etc/neutron/neutron.conf apic_external_network:%s cidr_exposed' %(extseg_name)
+              cmd = 'grep %s -A 6 /etc/neutron/neutron.conf' %(extseg_name)\
+                    +' | grep cidr_exposed'
               out = re.search('\\b(\d+.\d+.\d+).\d+.*' '', getoutput(cmd), re.I)
               rte = out.group(1)+'.0/24'
-        cmd = 'crudini --get /etc/neutron/neutron.conf apic_external_network:%s gateway_ip' %(extseg_name)
-        route_gw = getoutput(cmd)
+        #cmd = 'crudini --get /etc/neutron/neutron.conf apic_external_network:%s gateway_ip' %(extseg_name)
+        cmd = 'grep %s -A 9 /etc/neutron/neutron.conf' %(extseg_name)\
+              +' | grep gateway_ip'
+        out = re.search('\\b(\d+.\d+.\d+.\d+).*' '', getoutput(cmd), re.I)
+        route_gw = out.group(1)
         if nattype == 'dnat' and route != '':
-            _log.info("\nRoutes added to ShadowL3Out corresponding to External Segment\
-                       %s for DNAT VM2VM Traffic are %s & %s with GW %s" %(extseg_name,route,rte,route_gw))
+            _log.info("\nRoutes added to ShadowL3Out corresponding to External Segment"
+                      " %s for DNAT VM2VM Traffic are %s & %s with GW %s"
+                      %(extseg_name,route,rte,route_gw))
             self.update_gbp_external_segment(
              extseg_id,external_routes=[{'destination' : route, 'nexthop' : route_gw},
                                         {'destination' : rte, 'nexthop' : route_gw}])

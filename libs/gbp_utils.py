@@ -142,21 +142,6 @@ def action_service(hostIp,service='agent-ovs',
                       return 0
         return 1   
 
-def enable_disable_switch_port(port,leaf_id,action,apicIp,username='admin',password='noir0123'):
-    """
-    Enable/disable port on the Leaf
-     action = 'enable' or 'disable'
-    """
-    apic = Apic(apicIp,username,password)
-    path = '/api/node/mo/uni/fabric/outofsvc.json'
-    if action == 'disable':
-       data = '{"fabricRsOosPath":{"attributes":{"tDn":"topology/pod-1/paths-%s/pathep-[%s]","lc":"blacklist"},"children":[]}}' %(leaf_id,port)
-    if action == 'enable':
-       data = '{"fabricRsOosPath":{"attributes":{"dn":"uni/fabric/outofsvc/rsoosPath-[topology/pod-1/paths-%s/pathep-[%s]]","status":"deleted"},"children":[]}}' %(leaf_id,port)
-    print data
-    req = apic.post(path,data)
-    print req.text
-
 def add_route_in_extrtr(rtrip,route,nexthop,action='add',ostype='ubuntu',user='noiro',pwd='noir0123'):
     """
     Adding Routes in ExtRtr(Ubuntu)
@@ -274,7 +259,7 @@ def preExistingL3Out(controllerIp,
                 if extnet == 'Datacenter-Out':
                     extEpg = 'DcExtPol'
                 l3outpatterns = [
-                             "external_epg=extEpg",
+                             "external_epg=%s" %(extEpg) ,
                              "preexisting=True"
                             ]
                 if edgenat:

@@ -18,11 +18,11 @@ def main():
     usage = "usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
     parser.add_option("-c", "--configfile",
-                      help="Name of the Config File with location",
+                      help="Mandatory Arg: Name of Config File with location",
                       dest='configfile')
     parser.add_option("-i", "--integ",
                       help="integrated ACI Tests. "\
-                      "Valid strings: borderleaf or leaf or spine or agent",
+                      "Valid strings: borderleaf or leaf or spine",
                       default=False,
                       dest='integ')
     (options, args) = parser.parse_args()
@@ -108,7 +108,7 @@ def main():
         if options.integ == 'spine':
                 print "////// Run DP-Test Post Reload of Spine //////"
                 reboot = 'POST_RELOAD_SPINE'
-                testbed_cfg.reloadAci(nodetype='leaf')
+                testbed_cfg.reloadAci(nodetype='spine')
                 print " **** Sleeping for Spine toboot up ****"
                 sleep(430)  
         # After Reboot of ACI node, verifyCfg and send traffic

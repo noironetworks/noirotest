@@ -47,7 +47,7 @@ class test_same_ptg_same_l2p_same_l3p(object):
         self.pausetodebug = super_hdr.pausetodebug
         self.gbpaci = GbpApic(self.apic_ip,
                               'gbp',
-                               apicsystemID=self.apicsystemID)
+                               apicsystemID=super_hdr.apicsystemID)
         self.ptg = objs_uuid['demo_same_ptg_l2p_l3p_ptg_id']
         self.test_2_prs = objs_uuid['demo_ruleset_norule_id']
         self.test_3_prs = objs_uuid['demo_ruleset_icmp_id']

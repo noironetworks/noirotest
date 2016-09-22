@@ -31,6 +31,7 @@ class super_hdr(object):
     vm_image = conf['vm_image']
     sshkeyname = conf['key_name']
     ntk_node = conf['ntk_node']
+    apicsystemID = conf['apic_system_id']
     pausetodebug = conf['pausetodebug']
     gbpcfg = Gbp_Config()
     gbpverify = Gbp_Verify()

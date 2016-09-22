@@ -34,44 +34,81 @@ def main():
     usage = "usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
     parser.add_option("-c", "--configfile",
-                      help="Name of the Config File with location",
+                      help="Mandatory Arg: Name of the Config File with location",
                       dest='configfile')
-    parser.add_option("-i", "--controllerIp",
-                      help="IP Address of the Ostack Controller",
+    parser.add_option("-o", "--controllerIp",
+                      help="Mandatory Arg: IP Address of the Ostack Controller",
                       dest='cntlrIp')
     parser.add_option("-n", "--nattype",
-                      help="Type of NAT"\
+                      help="Mandatory Arg: Type of NAT"\
                       " Valid strings: dnat or snat or edgenat",
                       dest='nattype')
     parser.add_option("-p", "--ptnepg",
                       help="Flag to enable Per Tenant NAT-EPG"\
-                      "valid strings: <yes>",
+                      " Valid string: <yes>",
                       default=False,
                       dest='pertenantnatepg')
+    parser.add_option("-i", "--integ",
+                      help="integrated ACI Tests. "\
+                      "Valid strings: borderleaf or leaf or spine or agent",
+                      default=False,
+                      dest='integ')
     (options, args) = parser.parse_args()
 
     if not options.configfile:
-        print ("Please provide the ConfigFile with location")
+        print ("Mandatory: Please provide the ConfigFile with location")
         sys.exit(1)
     if not options.cntlrIp:
-        print ("Please provide the Ostack Controller IP")
+        print ("Mandatory: Please provide the Ostack Controller IP")
         sys.exit(1)
     if not options.nattype:
-        print ("Please provide the NAT-Type, "\
+        print ("Mandatory: Please provide the NAT-Type, "\
                "Valid strings <dnat> or <snat> or <edgenat>")
         sys.exit(1)
-    # Build the Test Config to be used for all NAT DataPath Testcases
-    cfgfile = options.configfile
-    nat_type = options.nattype
-    if nat_type == 'dnat' or nat_type == 'snat':
-        preExistingL3Out(options.cntlrIp,
-                         '/etc/neutron/neutron.conf'
-                         )
-    if nat_type == 'edgenat':
-        preExistingL3Out(options.cntlrIp,
+    def runinteg(node):
+        if node == 'borderleaf':
+                print "////// Run DP-Test Post Reload of BorderLeaf //////"
+                reboot = 'POST_RELOAD_BORDERLEAF'
+                testbed_cfg.reloadAci()
+        if node == 'leaf':
+                print "////// Run DP-Test Post Reload of Non-BorderLeaf //////"
+                reboot = 'POST_RELOAD_NONBORDERLEAF'
+                testbed_cfg.reloadAci(nodetype='leaf')
+        if node == 'spine':
+                print "////// Run DP-Test Post Reload of Spine //////"
+                reboot = 'POST_RELOAD_SPINE'
+                testbed_cfg.reloadAci(nodetype='leaf')
+                print " **** Sleeping for Spine toboot up ****"
+                sleep(430)  
+        if node == 'agent':
+                print "////// Run DP-Test Post Reload of Agent //////"
+                reboot = 'AGENT_RESTART'
+                testbed_cfg.restartAgent()
+                print " **** Sleeping for 5s after Agent Restart ****"
+                sleep(5)
+       
+    def preExistcfg(controller,nat_type='',revert=False):
+        if not revert:
+            if nat_type == 'edgenat':
+                preExistingL3Out(controller,
                          '/etc/neutron/neutron.conf',
                          edgenat=True
                          )
+            else:
+                preExistingL3Out(controller,
+                         '/etc/neutron/neutron.conf'
+                         )
+        else:
+            preExistingL3Out(controller,
+                    '/etc/neutron/neutron.conf',
+                    revert=True
+                         )
+                
+    # Setup the PreExitingL3Out Config in neutron conf
+    preExistcfg(options.cntlrIp)
+    # Build the Test Config to be used for all NAT DataPath Testcases
+    cfgfile = options.configfile
+    nat_type = options.nattype
     testbed_cfg = nat_dp_main_config(cfgfile)
     if nat_type == 'dnat':
         # RUN ONLY DNAT DP TESTs
@@ -98,13 +135,17 @@ def main():
 	    if not testbed_cfg.verifySetup(nat_type,
                                            pertntnatEpg=True):
 	        testbed_cfg.cleanup()
+                preExistcfg(options.cntlrIp,revert=True)
 	        print \
                 'DNAT-PerTntNatEpg TestSuite Execution Failed'
+                sys.exit(1)
 	else:
 	    if not testbed_cfg.verifySetup(nat_type):
 	        testbed_cfg.cleanup()
+                preExistcfg(options.cntlrIp,revert=True)
 	        print \
-                'DNAT-PerTntNatEpg TestSuite Execution Failed'
+                'DNAT TestSuite Execution Failed'
+                sys.exit(1)
         # Note: Please always maintain the below order of DNAT Test Execution
         # Since the DNAT_VM_to_VM has the final blind cleanup, which helps to
         # avoid the heat stack-delete failure coming from nat_dp_main_config
@@ -115,7 +156,23 @@ def main():
         test_dnat_extgw_to_vm = DNAT_ExtGw_to_VMs(objs_uuid,
 						 targetVmFips)
         test_dnat_extgw_to_vm.test_runner()
-       
+        if options.integ:
+           #Only run ExtRtr-VM Tests, no need for VM-to-VM, will enable
+           #if needed later
+           runinteg(options.integ)
+           if testbed_cfg.verifySetup(nat_type):
+              testbed_cfg.cleanup()
+              #Revert Back the L3Out Config
+              preExistcfg(options.cntlrIp,revert=True)
+              print \
+                  'DNAT-Integ TestSuite Execution Failed after Reload %s'\
+                  %(options.integ)
+              sys.exit(1)
+           test_dnat_extgw_to_vm.test_runner()
+           # Cleanup
+           testbed_cfg.cleanup()
+           print "\nDNAT-Integ TestSuite executed Successfully\n"
+           sys.exit(1) # No need to run VM-toVM with ACI-Integ
         # Execution of DNAT DP Test from VM to ExtGW and VM-to-VM    
         from testcases.testcases_dp_nat.testsuite_dnat_vm_to_vm \
         import DNAT_VMs_to_VMs
@@ -137,20 +194,31 @@ def main():
 	sleep(30)   
 	if not testbed_cfg.verifySetup(nat_type):
 	    testbed_cfg.cleanup()
+            preExistcfg(options.cntlrIp,revert=True)
 	    print 'SNAT TestSuite Execution Failed due to Setup Issue'
+            sys.exit(1)
         # Execution of SNAT DP Tests
         from testcases.testcases_dp_nat.testsuite_snat_vm_to_extgw \
         import SNAT_VMs_to_ExtGw
         test_snat_allvms_to_extgw = SNAT_VMs_to_ExtGw(objs_uuid)
         test_snat_allvms_to_extgw.test_runner()
+        if options.integ:
+           #Only Run ExtRtr-VM Tests, no need for VM-to-VM, will enable
+           #if needed later
+           runinteg(options.integ)
+           if testbed_cfg.verifySetup(nat_type):
+              testbed_cfg.cleanup()
+              preExistcfg(options.cntlrIp,revert=True)
+              print \
+                  'SNAT-Integ TestSuite Execution Failed after Reload %s'\
+                  %(options.integ)
+              sys.exit(1)
+           test_dnat_extgw_to_vm.test_runner()
         # Cleanup after the SNAT Testsuite is run
         testbed_cfg.cleanup()
         print "\nSNAT TestSuite executed Successfully\n"
     #Revert Back the L3Out Config
-    preExistingL3Out(options.cntlrIp,
-                    '/etc/neutron/neutron.conf',
-                    revert=True
-                         )
+    preExistcfg(options.cntlrIp,revert=True)
 
 if __name__ == "__main__":
     main()
