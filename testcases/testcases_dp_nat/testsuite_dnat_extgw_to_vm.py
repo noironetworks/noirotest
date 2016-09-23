@@ -52,14 +52,15 @@ class DNAT_ExtGw_to_VMs(object):
         self.gbp_crud = GBPCrud(self.ostack_controller)
 
 
-    def test_runner(self, vpc=0):
+    def test_runner(self,preexist):
         """
         Method to run all testcases
         """
         # Add external routes to the Shadow L3Out(only for Datacenter-Out)
         self.gbp_crud.AddRouteInShadowL3Out(self.ext_seg_2,
                                                        'Datacenter-Out',
-                                                       'dnat')
+                                                       'dnat',
+                                                       preexist=preexist)
 
         # Note: Cleanup per testcases is not required,since every testcase
         # updates the PTG, hence over-writing previous attr vals

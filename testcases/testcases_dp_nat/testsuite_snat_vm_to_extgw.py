@@ -55,14 +55,15 @@ class SNAT_VMs_to_ExtGw(object):
         self.nat_traffic = NatTraffic(
             self.ostack_controller, self.vm_list, self.ntk_node)
 
-    def test_runner(self, vpc=0):
+    def test_runner(self,preexist):
         """
-        Method to run all testcases
+        Method to run 
         """
         # Add external routes to the Shadow L3Out(only for Datacenter-Out)
         self.gbp_crud.AddRouteInShadowL3Out(self.ext_seg_2,
                                                       'Datacenter-Out',
-                                                      'snat')
+                                                      'snat',
+                                                       preexist=preexist)
 
         # Note: Cleanup per testcases is not required,since every testcase
         # updates the PTG, hence over-writing previous attr vals

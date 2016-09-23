@@ -429,6 +429,23 @@ class GbpApic(object):
                 data = '{"vzRsSubjFiltAtt":{"attributes":{"tnVzFilterName":"noiro-ssh","status":"created"},"children":[]}}'
 	        self.post(path, data)
         return 1
+    
+    def addRouteInShadowL3Out(self,l3p,l3out,extPol,subnet,tenant='admin'):
+        
+        apictenant = 'tn-_%s_%s' %(self.apicsystemID,tenant)
+        shdL3out = '%s_Shd-%s-%s' %(self.apicsystemID,l3p,l3out)
+        shdExtPol = '%s_Shd-%s-%s' %(self.apicsystemID,l3p,extPol)
+        path = '/api/node/mo/uni/%s/'%(apictenant)+\
+               'out-_%s/' %(shdL3out)+'instP-_%s/extsubnet-[%s].json'\
+               %(shdExtPol,subnet)
+        dn = path.lstrip('/api/node/mo').rstrip('.json')
+        print 'DN for Adding Route in ShdL3Out == ',dn
+        data = '{"l3extSubnet":{"attributes":{"dn":"%s","ip":"%s",' %(dn,subnet)+\
+               '"aggregate":"","rn":"extsubnet-[%s]",' %(subnet)+\
+               '"status":"created"},"children":[]}}'
+        print 'DATA for Adding Route in ShdL3Out == \n', data
+        req = self.post(path,data)
+        print req
 
     def addEnforcedToPtg(self,epg,flag='enforced',tenant='admin'):
         """
@@ -438,7 +455,7 @@ class GbpApic(object):
         path = '/api/node/mo/uni/%s/%s/epg-%s.json' %(apictenant,self.appProfile,epg)
         data = '{"fvAEPg":{"attributes":{"dn":"uni/%s/%s/epg-%s","pcEnfPref":"%s"},"children":[]}}' %(apictenant,self.appProfile,epg,flag)
         req = self.post(path, data)
-        print req.text
+        print req
 
     def enable_disable_switch_port(self,port,leaf_id,action):
         """
@@ -452,6 +469,6 @@ class GbpApic(object):
            data = '{"fabricRsOosPath":{"attributes":{"dn":"uni/fabric/outofsvc/rsoosPath-[topology/pod-1/paths-%s/pathep-[%s]]","status":"deleted"},"children":[]}}' %(leaf_id,port)
         print data
         req = self.post(path,data)
-        print req.text
+        print req
 
 	    

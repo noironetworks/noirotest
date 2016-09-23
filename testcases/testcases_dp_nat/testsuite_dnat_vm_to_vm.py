@@ -67,7 +67,7 @@ class DNAT_VMs_to_VMs(object):
         self.nat_traffic = NatTraffic(
             self.ostack_controller, self.vmfortraff, self.ntk_node)
 
-    def test_runner(self, vpc=0):
+    def test_runner(self, preexist):
         """
         Method to run all testcases
         """
@@ -75,7 +75,8 @@ class DNAT_VMs_to_VMs(object):
         self.gbpcrud.AddRouteInShadowL3Out(self.ext_seg_2,
                                                       'Datacenter-Out',
                                                       'dnat',
-                                                      route='66.66.66.0/24') #Hard-coded reference from yaml file param dc_nat_ip_pool
+                                                      route='66.66.66.0/24',
+                                                      preexist=preexist) #Hard-coded reference from yaml file param dc_nat_ip_pool
 
         # Note: Cleanup per testcases is not required,since every testcase
         # updates the PTG, hence over-writing previous attr vals

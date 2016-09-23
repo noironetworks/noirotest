@@ -33,6 +33,7 @@ class nat_dp_main_config(object):
         """
         with open(cfg_file, 'rt') as f:
             conf = yaml.load(f)
+        self.preexist = conf['preexist']
 	self.apicsystemID = conf['apic_system_id']
         self.nova_agg = conf['nova_agg_name']
         self.nova_az = conf['nova_az_name']
@@ -51,6 +52,8 @@ class nat_dp_main_config(object):
         self.heat_stack_name = conf['heat_dp_nat_stack_name']
         self.ips_of_extgw = [conf['fip1_of_extgw'],
                              conf['fip2_of_extgw'], self.extgw]
+        self.routeforsnat = re.search(
+        '\\b(\d+.\d+.\d+.)\d+' '',conf['fip2_of_extgw'], re.I).group(1)+'0/24'
         self.pausetodebug = conf['pausetodebug']
         self.neutronconffile = conf['neutronconffile']
         self.gbpnova = Gbp_Nova(self.cntlr_ip)

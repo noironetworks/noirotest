@@ -220,7 +220,8 @@ def preExistingL3Out(controllerIp,
                      revert=False,
                      l3out=['Management-Out','Datacenter-Out'],
                      user='root',
-                     pwd='noir0123'):
+                     pwd='noir0123',
+                     restart=True):
     """
     This function is primarily for NAT-Test
     Creates L3Out
@@ -271,7 +272,8 @@ def preExistingL3Out(controllerIp,
                 for config in l3outpatterns:
                     cmd = "sed -i "+"'/%s/a %s'" %(extnet,config)+" %s" %(destfile)
                     runcmd(cmd)
-            run('service neutron-server restart') #Restart Neutron-Server
+            if restart:
+                run('service neutron-server restart') #Restart Neutron-Server
         if revert:
             print "Reverting to Initial Config of L3Out Section"
             # Removing pre-exixting config options
@@ -288,7 +290,8 @@ def preExistingL3Out(controllerIp,
                 "'/%(L)s/,+6 {/%(L)s/n; /%(L)s/ ! {s/#//}}'" %{'L': extnet}+\
                 " %s" %(destfile)
                 run(cmdtoUncomment)
-            run('service neutron-server restart') #Restart Neutron-Server
+            if restart:
+                run('service neutron-server restart') #Restart Neutron-Server
 
 def PauseToDebug():
     while True:

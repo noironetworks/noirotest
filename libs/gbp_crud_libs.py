@@ -1056,22 +1056,26 @@ class GBPCrud(object):
                if consumed_policy_rulesets and provided_policy_rulesets:
                   body["external_policy"]["provided_policy_rule_sets"] = provided_prs
                   body["external_policy"]["consumed_policy_rule_sets"] = consumed_prs
-                  if external_segments != []:
+                  if external_segments:
                      body["external_policy"]["external_segments"] = external_segments
                   break
                elif consumed_policy_rulesets and not provided_policy_rulesets:
                   body["external_policy"]["consumed_policy_rule_sets"] = consumed_prs
-                  if external_segments != []:
+                  if external_segments:
                      body["external_policy"]["external_segments"] = external_segments
                   break
                elif not consumed_policy_rulesets and provided_policy_rulesets:
                   body["external_policy"]["provided_policy_rule_sets"] = provided_prs
-                  if external_segments != []:
+                  if external_segments:
                      body["external_policy"]["external_segments"] = external_segments
                   break
-               elif not provided_policy_rulesets  and not consumed_policy_rulesets :
-                  if external_segments != []:
+               elif not provided_policy_rulesets and not consumed_policy_rulesets :
+                  if external_segments: #only when ExtSeg gets changed, keeping PRS intact
                      body["external_policy"]["external_segments"] = external_segments
+                     break
+                  else:
+                     body["external_policy"]["provided_policy_rule_sets"] = provided_prs
+                     body["external_policy"]["consumed_policy_rule_sets"] = consumed_prs
                   break
                else:
                   break
@@ -1201,7 +1205,7 @@ class GBPCrud(object):
                   _log.error("Attribute %s and its Value %s NOT found in Object %s %s" %(arg,val,obj,obj_uuid))
                   return 0
 
-    def AddRouteInShadowL3Out(self,extseg_id,extseg_name,nattype,route=''):
+    def AddRouteInShadowL3Out(self,extseg_id,extseg_name,nattype,route='',preexist=False):
         """
         Utility Method to add ext_routes to Ext_Seg
         ONLY needed for NAT DP TESTs ONLY USED For Datacenter-Out ExtSeg
@@ -1217,21 +1221,26 @@ class GBPCrud(object):
         cmd = 'grep %s -A 9 /etc/neutron/neutron.conf' %(extseg_name)\
               +' | grep gateway_ip'
         out = re.search('\\b(\d+.\d+.\d+.\d+).*' '', getoutput(cmd), re.I)
-        route_gw = out.group(1)
+        if preexist:
+           route_gw = ''
+        else:
+           route_gw = out.group(1)
         if nattype == 'dnat' and route != '':
-            _log.info("\nRoutes added to ShadowL3Out corresponding to External Segment"
-                      " %s for DNAT VM2VM Traffic are %s & %s with GW %s"
+            _log.info("\nRoute added to ShadowL3Out corresponding to External Segment"
+                      " %s for DNAT VM2VM Traffic are %s & %s with GW %s"\
                       %(extseg_name,route,rte,route_gw))
             self.update_gbp_external_segment(
              extseg_id,external_routes=[{'destination' : route, 'nexthop' : route_gw},
                                         {'destination' : rte, 'nexthop' : route_gw}])
         if nattype == 'dnat' and route == '':
-           _log.info("\nRoutes added to ShadowL3Out corresponding to External Segment %s\
-                     for DNAT ExtRtr2VM Traffic is %s with GW %s" %(extseg_name,rte,route_gw))
+           _log.info("\nRoute added to ShadowL3Out corresponding to External "
+                    "Segment%s for DNAT ExtRtr2VM Traffic is %s with GW %s"\
+                    %(extseg_name,rte,route_gw))
            self.update_gbp_external_segment(
              extseg_id,external_routes=[{'destination' : rte, 'nexthop' : route_gw}])
         if nattype == 'snat':
-           _log.info("\nRoutes added to ShadowL3Out corresponding to External Segment %s\
-                      for SNAT Traffic is %s with GW %s" %(extseg_name,rte,route_gw))
+           _log.info("\nRoute added to ShadowL3Out corresponding to"
+                    " External Segment %s for SNAT Traffic is %s with GW %s"\
+                    %(extseg_name,rte,route_gw))
            self.update_gbp_external_segment(
              extseg_id,external_routes=[{'destination' : rte, 'nexthop' : route_gw}])
