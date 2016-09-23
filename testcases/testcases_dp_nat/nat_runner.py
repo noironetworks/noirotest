@@ -45,7 +45,7 @@ def main():
                       dest='nattype')
     parser.add_option("-p", "--preexist",
                       help="Mandatory Arg: Prexisting L3Out"\
-                      " Valid strings: True or False",
+                      " Valid strings: yes or no",
                       dest='preexist')
     parser.add_option("-f", "--ptnepg",
                       help="Flag to enable Per Tenant NAT-EPG"\
@@ -71,7 +71,7 @@ def main():
         sys.exit(1)
     if not options.preexist:
         print ("Mandatory: Please provide the PreExisting L3Out Flag, "\
-               "Valid strings <True> or <False>")
+               "Valid strings <yes> or <no>")
         sys.exit(1)
     def runinteg(node):
         if node == 'borderleaf':
@@ -114,7 +114,10 @@ def main():
                          )
     cfgfile = options.configfile
     nat_type = options.nattype
-    preexist = options.preexist
+    if options.preexist == 'yes':
+        preexist = True
+    else:
+        preexist = False
     if preexist:            
         # Setup the PreExitingL3Out Config in neutron conf
         preExistcfg(options.cntlrIp)
