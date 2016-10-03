@@ -11,6 +11,7 @@ from libs.gbp_heat_libs import Gbp_Heat
 from libs.gbp_nova_libs import Gbp_Nova
 from libs.gbp_aci_libs import GbpApic
 from libs.gbp_compute import Compute
+from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_utils import *
 
 
@@ -27,13 +28,13 @@ class nat_dp_main_config(object):
     _log.setLevel(logging.INFO)
     _log.setLevel(logging.DEBUG)
 
-    def __init__(self, cfg_file):
+    def __init__(self, cfg_file,preexist):
         """
         Iniatizing the test-cfg variables & classes
         """
         with open(cfg_file, 'rt') as f:
             conf = yaml.load(f)
-        self.preexist = conf['preexist']
+        #self.preexist = conf['preexist'] #TBD: For now fed from commandline
 	self.apicsystemID = conf['apic_system_id']
         self.nova_agg = conf['nova_agg_name']
         self.nova_az = conf['nova_az_name']
@@ -46,8 +47,12 @@ class nat_dp_main_config(object):
         self.leaf1_ip = conf['leaf1_ip']
         self.leaf2_ip = conf['leaf2_ip']
         self.spine_ip = conf['spine_ip']
-        self.dnat_heat_temp = conf['dnat_heat_temp']
-        self.snat_heat_temp = conf['snat_heat_temp']
+        if preexist:
+            self.dnat_heat_temp = conf['preexist_dnat_temp']
+            self.snat_heat_temp = conf['preexist_snat_temp']
+        else:
+            self.dnat_heat_temp = conf['dnat_heat_temp']
+            self.snat_heat_temp = conf['snat_heat_temp']
         self.num_hosts = conf['num_comp_nodes']
         self.heat_stack_name = conf['heat_dp_nat_stack_name']
         self.ips_of_extgw = [conf['fip1_of_extgw'],
@@ -61,6 +66,7 @@ class nat_dp_main_config(object):
 	self.gbpaci = GbpApic(self.apic_ip,
                               'gbp',
 			      apicsystemID=self.apicsystemID)
+        self.gbp_crud = GBPCrud(self.cntlr_ip)
         self.hostpoolcidrL3OutA = '50.50.50.1/24'
         self.hostpoolcidrL3OutB = '60.60.60.1/24'
 	#Instead of defining the below static labels/vars
@@ -217,6 +223,8 @@ class nat_dp_main_config(object):
 		    if notfound == len(operEpgs.keys()):    
 			raise Exception(
 			     'vm %s NOT found in APIC' %(vm))
+	    self._log.info(
+	    "\n Verify relations bw BDs and Regular EPGs association")
             #Verify the BDs in OperState of Service EPGs
             #pop them out of the operEpgs
             for bd in self.L2plist:
@@ -237,13 +245,52 @@ class nat_dp_main_config(object):
 		    raise Exception(
 			  'epg %s has Unresolved BD' %(epg))
             #Verify the BDs in Operstate of NAT-EPGs(pertntnatEpg)
-            if pertntnatEpg:
+            #Tenant-based NAT-EPG is created under either or
+            #both of these two conditions:
+            #1. if per_tenant_nat_epg=True (Sungard)
+            #2. if ExtSeg is created in Openstack with shared=False
+            extsegs=self.gbp_crud.get_gbp_external_segment_list(getdict=True)
+            if not extsegs['Datacenter-Out']['shared'] or pertntnatEpg:
+	        self._log.info(
+	        "\n Verify relations bw NAT-BDs and Regular EPGs association")
+                #When both shared and pertntnatEpg=False, then match string
+                #will be NAT-epg-Datacenter
+                if not pertntnatEpg:
+                    match = 'NAT-epg-Datacenter'
+                else:
+                    match = 'NAT-epg-'
+                match_count = 0
                 for natepg in operEpgs.keys():
-                   if 'NAT-epg-' in natepg:
+                   if match in natepg:
+                       match_count += 1
                        if not 'NAT-bd' in operEpgs[natepg]['bdname'] \
                        or operEpgs[natepg]['bdstate'] != 'formed':
                            raise Exception(
                             'epg %s has Unresolved BD' %(epg))
+                #If pertntnatEpg=True, then per L3Out there will be
+                #one nat-Epg, since this testsuite has two L3Outs
+                #match_count must be 2
+                if pertntnatEpg and match_count < 2:
+                    raise Exception('Inconsistent number of NAT-EPGs')
+                if not match_count :
+                    raise Exception(
+                        'NAT-EPG for Datacenter-Out L3out NOT found')
+                #The NAT-BD will be created as tenant-specific but its
+                #vrf should resolve in common-tenant(Pre-existing case)
+	        self._log.info(
+	        "\n Verify relations bw NAT-BDs and their VRFs")
+                operBDs = self.gbpaci.getBdOper('admin')
+                bdcount = 0
+                for bd in operBDs.keys():
+                    if 'NAT-bd-' in bd:
+                        bdcount += 1
+                        if not 'tn-common' in operBDs[bd]['vrfdn'] \
+                        or operBDs[bd]['vrfstate'] != 'formed':
+                            raise Exception(
+                                'Inconsistent VRF/VRF-state in NAT-BD'
+                                 )
+                if not bdcount:
+                    raise Exception('NAT-BD not created in the tenant-admin')
 	    #Verify the Shadow L3Outs
 	    self._log.info(
 		"\n Verify the Shadow L3Outs")
@@ -272,10 +319,13 @@ class nat_dp_main_config(object):
 	    #Verify SNAT EPs and DNAT FIPs
 	    #Irrespective of pertntnatEpg, the SNAT EPs will
 	    #be learned in NAT-EPG in Common
+            
 	    getNatEp = self.gbpaci.getEpgOper('common')
 	    state = 'learned,vmm'
 	    if getNatEp:
                if nat_type == 'snat':
+	        self._log.info(
+		"\n Verify L3Out EPs created and Learned for SNAT")
 	        for node in [self.comp_node,self.ntk_node]:
 		    comp = Compute(node)
 	            for l3out in self.L3Outlist:
@@ -297,8 +347,19 @@ class nat_dp_main_config(object):
 			    raise Exception(
 			    'nat-Epg %s NOT FOUND in APIC' %(epg))
 	       if nat_type == 'dnat':
+	          self._log.info(
+		  "\n Verify L3Out EPs NOT created for DNAT")
+                  for node in [self.comp_node,self.ntk_node]:
+                      comp = Compute(node)
+                      for l3out in self.L3Outlist:
+                          if comp.getSNATEp(l3out):
+                              raise Exception(
+                                    'In DNAT-Tests, SNAT-EPs are found')
+	          self._log.info(
+		  "\n Verify FIPs Learned in NAT-EPGs for DNAT")
 		  if pertntnatEpg:
-		     getNatEp = self.gbpaci.getEpgOper('admin')
+		     #getNatEp = self.gbpaci.getEpgOper('admin')
+		     getNatEp = operEpgs
 		  for vm,fip in self.fipsOftargetVMs.iteritems():
 		  #Each vm has two fips, so type(fip)=list
 		        for epg,val in getNatEp.iteritems():
@@ -319,8 +380,7 @@ class nat_dp_main_config(object):
 	    self._log.error(
                 '\nSetup Verification Failed because of this issue: '+repr(e))
   	    return 0
-	finally:
-	    return 1
+	return 1
 
     def reloadAci(self,nodetype='borderleaf'):
         """

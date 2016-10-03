@@ -4,8 +4,8 @@ from commands import *
 import datetime
 import logging
 import sys
-from time import sleep
 
+from time import sleep
 from libs.gbp_aci_libs import GbpApic
 from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_nova_libs import Gbp_Nova
@@ -60,7 +60,8 @@ class NatFuncTestMethods(object):
             cntlrip, self.vmlist, ntknode)
      
     def addhostpoolcidr(self,fileloc='/etc/neutron/neutron.conf',
-                        l3out='Management-Out',delete=False):
+                        l3out='Management-Out',delete=False,
+                        restart=True,flag=''):
         """
         Add host_pool_cidr config flag and restarts neutron-server
         fileloc :: location of the neutron config
@@ -71,14 +72,33 @@ class NatFuncTestMethods(object):
         pattern = 'host_pool_cidr=%s' %(self.snatcidr)
         section = 'apic_external_network:%s' %(l3out)
         if not delete:
-            self._log.info("\nAdding host_pool_cidr to neutron conf")
-            editneutronconf(self.cntlrip,
+            if flag == 'default_external_segment_name':
+               self._log.info(
+               "\nAdding default_external_segment_name to neutron conf")
+               pat='default_external_segment_name=Management-Out'
+               sect='group_policy_implicit_policy'
+               editneutronconf(self.cntlrip,
+                            fileloc,
+                            pat,
+                            section=sect
+                           )
+            else:
+                self._log.info("\nAdding host_pool_cidr to neutron conf")
+                editneutronconf(self.cntlrip,
                             fileloc,
                             pattern,
                             section=section
                            )
         if delete:
-            self._log.info("\nDeleting host_pool_cidr from neutron conf")
+            self._log.info(
+            "\nDeleting if any, host_pool_cidr & def_ext_seg_name"
+            "from neutron conf")
+            editneutronconf(self.cntlrip,
+                            fileloc,
+                            'default_external_segment_name',
+                            add=False,
+                            restart=False
+                           )
             editneutronconf(self.cntlrip,
                             fileloc,
                             patternchk,

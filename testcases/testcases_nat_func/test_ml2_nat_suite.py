@@ -393,7 +393,7 @@ class NatML2TestSuite(object):
         if stale:
             LOG.info(
                 "\nStep-2-TC-4:Fail: Following routers rdconfig are stale = %s" % (stale))
-            # return 0 #TBD:JISHNU, need to unchecked once the bug is fixed
+             return 0 
 
         LOG.info(
             "\n# Step-3-TC-4:VerifyACI: VRF for all BD's VRF resolves to *_shared #")

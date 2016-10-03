@@ -1,0 +1,454 @@
+heat_template_version: 2013-05-23
+parameters:
+
+  mgmt_external_segment_name:
+    default: 'Management-Out'
+    description: Name of the external segment used for Internet Access
+    label: mgmt_external_segment_name
+    type: string
+
+  dc_external_segment_name:
+    default: 'Datacenter-Out'
+    description: Name of the external segment used for Inter-DC Mgmt
+    label: dc_external_segment_name
+    type: string
+
+  mgmt_external_policy_name:
+    default: 'MgmtExtPol'
+    description: Name of the external policy used by Mgmt External Seg
+    label: mgmt_external_policy_name
+    type: string
+
+  dc_external_policy_name:
+    default: 'DcExtPol'
+    description: Name of the external policy used by DC External Seg
+    label: dc_external_policy_name
+    type: string
+
+  mgmt_nat_pool_name:
+    default: 'MgmtNATPool'
+    description: Name of the NAT Pool for Mgmt Ext Seg
+    label: mgmt_nat_pool_name
+    type: string
+
+  dc_nat_pool_name:
+    default: 'DcNATPool'
+    description: Name of the NAT Pool for DC Ext Seg
+    label: dc_nat_pool_name
+    type: string
+
+  mgmt_nat_ip_pool:
+    default: "55.55.55.0/24"
+    description: NAT IP-Pool for Mgmt Ext Seg
+    label: mgmt_nat_ip_pool
+    type: string
+  # default value of dc_nat_ip_pool
+  # has been hardcoded insided testsuite_dnat_vmt_to_vm.py
+  # So if you change the value, ensure to change in the
+  # above file too. Sorry :-) bear with my laziness :-( 
+  dc_nat_ip_pool:
+    default: '66.66.66.0/24'
+    description: NAT IP-Pool for DC Ext Seg
+    label: dc_nat_ip_pool
+    type: string
+
+  l3p_ip_pool_1:
+    default: '192.101.0.0/16'
+    description: IP Pool for L3Policy
+    label: l3p_ip_pool_1
+    type: string
+
+  l3p_ip_pool_2:
+    default: '192.102.0.0/16'
+    description: IP Pool for L3Policy
+    label: l3p_ip_pool_2
+    type: string
+
+  l3_policy_name_1:
+    default: 'DCL3P1'
+    description: Name of the L3 policy used by Web and App PTGs
+    label: l3_policy_name
+    type: string
+
+  l3_policy_name_2:
+    default: 'DCL3P2'
+    description: Name of the L3 policy used by Web and App PTGs
+    label: l3_policy_name
+    type: string
+
+  web_clnt_ptg_name:
+    type: string
+    label: web_clnt_ptg_name
+    description: Name of the webClient PTG
+    default: 'WEBCLNTPTG'
+
+  app_ptg_name:
+    type: string
+    label: app_ptg_name
+    description: Name of the app PTG
+    default: 'APPPTG'
+
+  web_srvr_ptg_name:
+    type: string
+    label: web_srvr_ptg_name
+    description: Name of the webSrvr PTG
+    default: 'WEBSRVRPTG'
+
+  vm_image:
+    type: string
+    label: vm_image
+    description: Image for all VMs
+    default: ubuntu_multi_nics
+
+  vm_flavor:
+    type: string
+    label: vm_flavor
+    description: Flavor for all VMs
+    default: m1.medium
+
+  availability_zone:
+    type: string
+    label: availability_zone
+    description: The Availability Zone to Launch Instance
+    default: 'gbp_zone'
+
+resources:
+
+# Creating allow action #
+    shared_act:
+        type: OS::GroupBasedPolicy::PolicyAction
+        properties:
+            name: shared_act
+            action_type: allow
+            shared: True
+
+# Creating Classifiers for ICMP & TCP #
+    shared_class_icmp:
+        type: OS::GroupBasedPolicy::PolicyClassifier
+        properties:
+            name: shared_class_icmp
+            protocol: icmp
+            direction: bi
+            shared: True
+
+    shared_class_tcp:
+        type: OS::GroupBasedPolicy::PolicyClassifier
+        properties:
+            name: shared_class_tcp
+            protocol: tcp
+            direction: bi
+            shared: True
+
+# Creating Rules for ICMP & TCP #
+    shared_rule_icmp:
+        type: OS::GroupBasedPolicy::PolicyRule
+        properties:
+            name: shared_rule_icmp
+            policy_classifier_id: { get_resource: shared_class_icmp }
+            policy_actions: [{ get_resource: shared_act }]
+            shared: True
+
+    shared_rule_tcp:
+        type: OS::GroupBasedPolicy::PolicyRule
+        properties:
+            name: shared_rule_tcp
+            policy_classifier_id: { get_resource: shared_class_tcp }
+            policy_actions: [{ get_resource: shared_act }]
+            shared: True
+
+# Creating Policy RuleSet for ExtGw<->VMs, VM<->VM #
+
+    demo_ruleset_icmp_tcp:
+        type: OS::GroupBasedPolicy::PolicyRuleSet
+        properties:
+            name: demo_ruleset_icmp_tcp
+            policy_rules: [{ get_resource: shared_rule_icmp }, { get_resource: shared_rule_tcp }]
+            child_policy_rule_sets: []
+            shared: False
+
+    shared_ruleset_icmp:
+        type: OS::GroupBasedPolicy::PolicyRuleSet
+        properties:
+            name: shared_ruleset_icmp
+            policy_rules: [{ get_resource: shared_rule_icmp }]
+            child_policy_rule_sets: []
+            shared: True
+
+    shared_ruleset_tcp:
+        type: OS::GroupBasedPolicy::PolicyRuleSet
+        properties:
+            name: shared_ruleset_tcp
+            policy_rules: [{ get_resource: shared_rule_tcp }]
+            child_policy_rule_sets: []
+            shared: True
+
+    shared_ruleset_icmp_tcp:
+        type: OS::GroupBasedPolicy::PolicyRuleSet
+        properties:
+            name: shared_ruleset_icmp_tcp
+            policy_rules: [{ get_resource: shared_rule_icmp }, { get_resource: shared_rule_tcp }]
+            child_policy_rule_sets: []
+            shared: True
+
+    shared_ruleset_norule:
+        type: OS::GroupBasedPolicy::PolicyRuleSet
+        properties:
+            name: shared_ruleset_norule
+            policy_rules: []
+            child_policy_rule_sets: []
+            shared: True
+
+#### Setup External Connectivity Resources ####
+
+    mgmt_external_segment:
+        type: OS::GroupBasedPolicy::ExternalSegment
+        properties:
+            name: { get_param: mgmt_external_segment_name}
+            port_address_translation:
+            external_routes:
+                - destination: '0.0.0.0/0'
+                  nexthop:
+            shared: True
+
+    mgmt_external_policy:
+        type: OS::GroupBasedPolicy::ExternalPolicy
+        properties:
+            name: { get_param: mgmt_external_policy_name}
+            external_segments: [ { get_resource: mgmt_external_segment } ]
+            shared: False
+
+    dc_external_segment:
+        type: OS::GroupBasedPolicy::ExternalSegment
+        properties:
+            name: { get_param: dc_external_segment_name}
+            port_address_translation:
+            external_routes:
+            shared: False
+
+    dc_external_policy:
+        type: OS::GroupBasedPolicy::ExternalPolicy
+        properties:
+            name: { get_param: dc_external_policy_name }
+            external_segments: [ { get_resource: dc_external_segment } ]
+            shared: False
+
+    mgmt_nat_pool:
+        type: OS::GroupBasedPolicy::NATPool
+        depends_on: network_service_policy
+        properties:
+            name: { get_param: mgmt_nat_pool_name}
+            external_segment_id: { get_resource: mgmt_external_segment }
+            ip_pool: { get_param: mgmt_nat_ip_pool }
+            shared: True
+
+    dc_nat_pool:
+        type: OS::GroupBasedPolicy::NATPool
+        depends_on: network_service_policy
+        properties:
+            name: { get_param: dc_nat_pool_name}
+            external_segment_id: { get_resource: dc_external_segment }
+            ip_pool: { get_param: dc_nat_ip_pool }
+            shared: False
+
+#### Setup L3/L2 Resources ####
+
+    l3_policy_1:
+        type: OS::GroupBasedPolicy::L3Policy
+        depends_on: mgmt_external_segment
+        properties:
+            name: { get_param: l3_policy_name_1}
+            ip_pool: { get_param: l3p_ip_pool_1 }
+            subnet_prefix_length: 24
+            external_segments:
+                 - external_segment_id: {get_resource: mgmt_external_segment}
+                   allocated_address: []
+                 - external_segment_id: {get_resource: dc_external_segment}
+                   allocated_address: []
+            shared: False
+
+    l3_policy_2:
+        type: OS::GroupBasedPolicy::L3Policy
+        depends_on: mgmt_external_segment
+        properties:
+            name: { get_param: l3_policy_name_2}
+            ip_pool: { get_param: l3p_ip_pool_2 }
+            subnet_prefix_length: 24
+            external_segments:
+                 - external_segment_id: {get_resource: mgmt_external_segment}
+                   allocated_address: []
+                 - external_segment_id: {get_resource: dc_external_segment}
+                   allocated_address: []
+            shared: False
+
+    websrvr_l2_policy:
+        type: OS::GroupBasedPolicy::L2Policy
+        depends_on: l3_policy_1
+        properties:
+            name: "WEBSRVRL2P" #Have been used statically inside natdpsetup.py
+            l3_policy_id: { get_resource: l3_policy_1 }
+            shared: False
+
+    webclnt_l2_policy:
+        type: OS::GroupBasedPolicy::L2Policy
+        depends_on: l3_policy_1
+        properties:
+            name: "WEBCLNTL2P" #Have been used statically inside natdpsetup.py
+            l3_policy_id: { get_resource: l3_policy_1 }
+            shared: False
+
+    app_l2_policy:
+        type: OS::GroupBasedPolicy::L2Policy
+        depends_on: l3_policy_2
+        properties:
+            name: "APPL2P" #Have been used statically inside natdpsetup.py
+            l3_policy_id: { get_resource: l3_policy_2 }
+            shared: False
+
+#### Setup PTGs and NSP ####
+
+    network_service_policy:
+      type: OS::GroupBasedPolicy::NetworkServicePolicy
+      properties: 
+          name: "test-nsp"
+          network_service_params: [{'type': 'ip_pool', 'name': 'nat', 'value': 'nat_pool'}]
+          shared: True
+
+    web_srvr_ptg:
+        type: OS::GroupBasedPolicy::PolicyTargetGroup
+        depends_on: [websrvr_l2_policy, network_service_policy]
+        properties:
+            name: {get_param : web_srvr_ptg_name}
+            l2_policy_id: { get_resource: websrvr_l2_policy }
+            network_service_policy_id: { get_resource: network_service_policy}
+            shared: False
+
+    web_clnt_ptg:
+        type: OS::GroupBasedPolicy::PolicyTargetGroup
+        depends_on: [webclnt_l2_policy, network_service_policy]
+        properties:
+            name: {get_param : web_clnt_ptg_name}
+            l2_policy_id: { get_resource: webclnt_l2_policy }
+            network_service_policy_id: { get_resource: network_service_policy}
+            shared: False
+
+    app_ptg:
+        type: OS::GroupBasedPolicy::PolicyTargetGroup
+        depends_on: [app_l2_policy, network_service_policy]
+        properties:
+            name: {get_param : app_ptg_name}
+            l2_policy_id: { get_resource: app_l2_policy }
+            network_service_policy_id: { get_resource: network_service_policy}
+            shared: False
+
+
+#### Setup PTs and VMs ####
+
+    web_srvr_pt:
+        type: OS::GroupBasedPolicy::PolicyTarget
+        depends_on: web_srvr_ptg
+        properties:
+            name: "web-srvr-pt"
+            policy_target_group_id: { get_resource: web_srvr_ptg }
+    
+    web_clnt_pt1:
+        type: OS::GroupBasedPolicy::PolicyTarget
+        depends_on: web_clnt_ptg
+        properties:
+            name: "web-clnt-pt-1"
+            policy_target_group_id: { get_resource: web_clnt_ptg }
+
+    web_clnt_pt2:
+        type: OS::GroupBasedPolicy::PolicyTarget
+        depends_on: web_clnt_ptg
+        properties:
+            name: "web-clnt-pt-2"
+            policy_target_group_id: { get_resource: web_clnt_ptg }
+
+    app_pt1:
+        type: OS::GroupBasedPolicy::PolicyTarget
+        depends_on: app_ptg
+        properties:
+            name: "app-pt-1"
+            policy_target_group_id: { get_resource: app_ptg }
+
+    web_srvr_vm:
+        type: OS::Nova::Server
+        depends_on: web_srvr_pt
+        properties:
+            name: "Web-Server"
+            image: { get_param: vm_image }
+            flavor: { get_param: vm_flavor }
+            availability_zone: { get_param: availability_zone }
+            networks:
+                - port: {get_attr: [web_srvr_pt, port_id]}
+
+    web_clnt_vm_1:
+        type: OS::Nova::Server
+        depends_on: web_clnt_pt1
+        properties:
+            name: "Web-Client-1"
+            image: { get_param: vm_image }
+            flavor: { get_param: vm_flavor }
+            availability_zone: { get_param: availability_zone }
+            networks:
+                - port: {get_attr: [web_clnt_pt1, port_id]}
+
+    web_clnt_vm_2:
+        type: OS::Nova::Server
+        depends_on: web_clnt_pt2
+        properties:
+            name: "Web-Client-2"
+            image: { get_param: vm_image }
+            flavor: { get_param: vm_flavor }
+            availability_zone: 'nova'
+            networks:
+                - port: {get_attr: [web_clnt_pt2, port_id]}
+
+    app_vm:
+        type: OS::Nova::Server
+        depends_on: app_pt1
+        properties:
+            name: "App-Server"
+            image: { get_param: vm_image }
+            flavor: { get_param: vm_flavor }
+            availability_zone: 'nova'
+            networks:
+                - port: {get_attr: [app_pt1, port_id]}
+
+outputs:
+
+    demo_ruleset_icmp_tcp_id:
+        value: { get_resource: demo_ruleset_icmp_tcp }
+
+    shared_ruleset_icmp_tcp_id:
+        value: { get_resource: shared_ruleset_icmp_tcp }
+
+    shared_ruleset_icmp_id:
+        value: { get_resource: shared_ruleset_icmp }
+
+    shared_ruleset_tcp_id:
+        value: { get_resource: shared_ruleset_tcp }
+
+    shared_ruleset_norule_id:
+        value: { get_resource: shared_ruleset_norule }
+
+    mgmt_external_segment_id:
+        value: { get_resource: mgmt_external_segment }
+
+    mgmt_external_policy_id:
+        value: { get_resource: mgmt_external_policy }
+
+    dc_external_segment_id:
+        value: { get_resource: dc_external_segment }
+
+    dc_external_policy_id:
+        value: { get_resource: dc_external_policy }
+
+    web_srvr_ptg_id:
+        value: { get_resource: web_srvr_ptg}
+
+    web_clnt_ptg_id:
+        value: { get_resource: web_clnt_ptg }
+
+    app_ptg_id:
+        value: { get_resource: app_ptg }

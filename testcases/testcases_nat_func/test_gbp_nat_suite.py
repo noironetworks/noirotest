@@ -2,6 +2,7 @@
 
 import datetime
 import logging
+import optparse
 import pprint
 import string
 import sys
@@ -14,13 +15,30 @@ from natfuncglobalcfg import GbpNatFuncGlobalCfg
 from natfunctestmethod import NatFuncTestMethods
 
 def main():
-    cfgfile = sys.argv[1]
-    suite=NatGbpTestSuite(cfgfile)
+    usage = "usage: %prog [options]"
+    parser = optparse.OptionParser(usage=usage)
+    parser.add_option("-c", "--configfile",
+                      help="Mandatory Arg: Name of Config File with location",
+                      dest='configfile')
+    parser.add_option("-d", "--defextsegname",
+                      help="default_ext_seg_name "\
+                      "Valid strings: yes or no",
+                      dest='defextsegname')
+    (options, args) = parser.parse_args()
+
+    if options.configfile == None:
+        print "Please provide the ConfigFile with location"
+        sys.exit(1)
+    if options.defextsegname == 'yes'
+       flag = 'default_external_segment_name'
+       suite=NatGbpTestSuite(cfgfile,flag=flag)
+    else:
+       suite=NatGbpTestSuite(cfgfile)
     suite.test_runner()
 
 class NatGbpTestSuite(object):
     
-    def __init__(self,cfgfile):
+    def __init__(self,cfgfile,flag=''):
         with open(cfgfile, 'rt') as f:
             conf = yaml.load(f)
         self.cntlrip = conf['controller_ip']
@@ -40,6 +58,7 @@ class NatGbpTestSuite(object):
         self.fipsubnet1 = self.steps.natippool1
         self.fipsubnet2 = self.steps.natippool2
         self.forextrtr = Gbp_def_traff()
+        self.flag=flag
         
     def test_runner(self):
         """
@@ -66,6 +85,8 @@ class NatGbpTestSuite(object):
 		     self.test_snat_func_11,
                      self.test_snat_func_12
                      ]
+        if self.flag:
+           self.steps.addhostpoolcidr(flag=self.flag)
         matchsnat = 0
         for test in test_list:
                 # Below clean-up needed to remove any stale from prev tests

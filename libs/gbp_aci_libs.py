@@ -1,10 +1,7 @@
 #!/usr/bin/env python
-import sys
 import logging
 import os
 import re
-import datetime
-import pexpect
 import json
 import requests
 from time import sleep
@@ -126,11 +123,10 @@ class GbpApic(object):
                  return 0
         return 1
 
-    def dev_conn_disconn(self,local_ip,rem_ip,action):
+    def dev_conn_disconn(self,rem_ip,action):
         """
         Function to connect/disconnect any device from the local device
         Primarily we are using for disconnecting APIC from Ostack Controller
-        local_ip = the ip of the local device from which removte device will be disconn
         rem_ip = the ip of the remote device
         action = 'disconnect' or 'reconnect' are the valid strings
         """
@@ -310,6 +306,7 @@ class GbpApic(object):
 		    if len(vrfDetails):
 			finaldictBD[name]['vrfname'] = vrfDetails[0]['fvRsCtx']['attributes']['tnFvCtxName'].encode()
 			finaldictBD[name]['vrfstate'] = vrfDetails[0]['fvRsCtx']['attributes']['state'].encode()
+			finaldictBD[name]['vrfdn'] = vrfDetails[0]['fvRsCtx']['attributes']['tDn'].encode()
 		    #Fetch L3Out Association for a given BD
 		    pathL3OutLink = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvRsBDToOut' %(dn)
 		    reqforL3Out = self.get(pathL3OutLink)

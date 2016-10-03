@@ -8,28 +8,6 @@ from libs.gbp_verify_libs import Gbp_Verify
 from libs.gbp_utils import *
 from natdptestsetup import nat_dp_main_config
 
-def get_obj_uuids(cfgfile,nat_type=''):
-
-    gbpverify = Gbp_Verify()
-    testbed_cfg = nat_dp_main_config(cfgfile)
-    if nat_type == '' or nat_type == 'dnat':
-       objs_uuid = gbpverify.get_uuid_from_stack(
-                    testbed_cfg.dnat_heat_temp,
-                    testbed_cfg.heat_stack_name
-                    )
-    if nat_type == 'snat':
-       objs_uuid = gbpverify.get_uuid_from_stack(
-                    testbed_cfg.snat_heat_temp,
-                    testbed_cfg.heat_stack_name
-                    )
-    objs_uuid['external_gw'] = testbed_cfg.extgw
-    objs_uuid['ostack_controller'] = testbed_cfg.cntlr_ip
-    objs_uuid['ipsofextgw'] = testbed_cfg.ips_of_extgw
-    objs_uuid['ntk_node'] = testbed_cfg.ntk_node
-    objs_uuid['pausetodebug'] = testbed_cfg.pausetodebug
-    print 'OBJS_UUID == \n', objs_uuid
-    return objs_uuid
-
 def main():
     usage = "usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
@@ -112,6 +90,7 @@ def main():
                     revert=True,
                     restart=restart
                          )
+
     cfgfile = options.configfile
     nat_type = options.nattype
     if options.preexist == 'yes':
@@ -122,7 +101,9 @@ def main():
         # Setup the PreExitingL3Out Config in neutron conf
         preExistcfg(options.cntlrIp)
     # Build the Test Config to be used for all NAT DataPath Testcases
-    testbed_cfg = nat_dp_main_config(cfgfile)
+    testbed_cfg = nat_dp_main_config(cfgfile,preexist)
+    gbpverify = Gbp_Verify() #Instantiated to fetch gbp-objects
+
     if nat_type == 'dnat':
         # RUN ONLY DNAT DP TESTs
         # TestSetup Configuration
@@ -140,7 +121,15 @@ def main():
 					     do_config=0
 					     )
         # Fetch gbp objects via heat output
-        objs_uuid = get_obj_uuids(cfgfile)
+        objs_uuid = gbpverify.get_uuid_from_stack(
+                    testbed_cfg.dnat_heat_temp,
+                    testbed_cfg.heat_stack_name
+                    )
+        objs_uuid['external_gw'] = testbed_cfg.extgw
+        objs_uuid['ostack_controller'] = testbed_cfg.cntlr_ip
+        objs_uuid['ipsofextgw'] = testbed_cfg.ips_of_extgw
+        objs_uuid['ntk_node'] = testbed_cfg.ntk_node
+        objs_uuid['pausetodebug'] = testbed_cfg.pausetodebug
         # Verify the config setup on the ACI
 	print 'Sleeping for the EP learning on ACI Fab'
 	sleep(30)   
@@ -201,7 +190,15 @@ def main():
         print 'Setting up global config for SNAT DP Testing'
         testbed_cfg.setup('snat', do_config=0)
         # Fetch gbp objects via heat output
-        objs_uuid = get_obj_uuids(cfgfile)
+        objs_uuid = gbpverify.get_uuid_from_stack(
+                    testbed_cfg.snat_heat_temp,
+                    testbed_cfg.heat_stack_name
+                    )
+        objs_uuid['external_gw'] = testbed_cfg.extgw
+        objs_uuid['ostack_controller'] = testbed_cfg.cntlr_ip
+        objs_uuid['ipsofextgw'] = testbed_cfg.ips_of_extgw
+        objs_uuid['ntk_node'] = testbed_cfg.ntk_node
+        objs_uuid['pausetodebug'] = testbed_cfg.pausetodebug
         # Verify the config setup on the ACI
 	print 'Sleeping for the EP learning on ACI Fab'
 	sleep(30)   

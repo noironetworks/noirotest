@@ -179,7 +179,8 @@ def editneutronconf(controllerIp,
 			add=True,
 			section='ml2_cisco_apic',
 		   	user='root',
-			pwd='noir0123'):
+			pwd='noir0123',
+                        restart=True):
     """
     Add host_pool_cidr config flag and restarts neutron-server
     destfile :: name with location of the file in which
@@ -211,7 +212,8 @@ def editneutronconf(controllerIp,
         run(cmd)
 	if 'neutron' in destfile:
             print "Neutron Conf edited, hence restarting neutron-server"
-            run('service neutron-server restart')
+            if restart:
+               run('service neutron-server restart')
 
 def preExistingL3Out(controllerIp,
                      destfile,

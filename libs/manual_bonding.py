@@ -71,6 +71,8 @@ class Bonding(object):
                run('ifdown %s' %(nic))
             if nic_state == 'up':
                run('ifup %s' %(nic))
+        #JISHNU: static add
+        run('ifdown opflex1.4093')
 
     def create_bond_intf(self):
         """

@@ -184,8 +184,7 @@ class gbp_main_config(object):
 	    if self.pausetodebug:
 	       PauseToDebug()
   	    return 0
-	finally:
-	    return 1
+	return 1
 
     def reloadAci(self,nodetype='borderleaf'):
         """

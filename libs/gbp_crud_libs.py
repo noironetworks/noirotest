@@ -883,7 +883,11 @@ class GBPCrud(object):
            if getdict == True:
               name_uuid = {}
               for extseg in self.client.list_external_segments()['external_segments']:
-                  name_uuid[extseg['name'].encode('ascii')]= extseg['id'].encode('ascii')
+                  name_uuid[extseg['name'].encode('ascii')]= {}
+                  name_uuid[extseg['name']]['id']=extseg['id'].encode('ascii')
+                  name_uuid[extseg['name']]['shared']=extseg['shared']
+                  name_uuid[extseg['name']]['l3_policies']=extseg['l3_policies']
+                  name_uuid[extseg['name']]['external_policies']=extseg['external_policies']
            else: # Return list of ids
                extseg_list = [item['id'] for item in self.client.list_external_segments()['external_segments']]
         except Exception as e:
