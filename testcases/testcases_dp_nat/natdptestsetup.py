@@ -49,10 +49,13 @@ class nat_dp_main_config(object):
         self.spine_ip = conf['spine_ip']
         if preexist:
             self.dnat_heat_temp = conf['preexist_dnat_temp']
-            self.snat_heat_temp = conf['preexist_snat_temp']
         else:
             self.dnat_heat_temp = conf['dnat_heat_temp']
-            self.snat_heat_temp = conf['snat_heat_temp']
+        #SNAT: Prexisting L3Out in Common, Ext-Seg being tenant-specific
+        #will result in tenant-specific NAT-EPG where SNAT EPs will get
+        #learned. Apparently thats will cause inconsistency and we should
+        #not support such config. Discussed with Amit 
+        self.snat_heat_temp = conf['snat_heat_temp']
         self.num_hosts = conf['num_comp_nodes']
         self.heat_stack_name = conf['heat_dp_nat_stack_name']
         self.ips_of_extgw = [conf['fip1_of_extgw'],

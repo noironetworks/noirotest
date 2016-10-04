@@ -26,10 +26,11 @@ def main():
                       dest='defextsegname')
     (options, args) = parser.parse_args()
 
-    if options.configfile == None:
+    if not options.configfile:
         print "Please provide the ConfigFile with location"
         sys.exit(1)
-    if options.defextsegname == 'yes'
+    cfgfile = options.configfile
+    if options.defextsegname == 'yes':
        flag = 'default_external_segment_name'
        suite=NatGbpTestSuite(cfgfile,flag=flag)
     else:

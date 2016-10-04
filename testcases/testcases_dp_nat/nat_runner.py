@@ -97,6 +97,8 @@ def main():
         preexist = True
     else:
         preexist = False
+    if options.pertenantnatepg == 'yes':
+       options.pertenantnatepg = True
     if preexist:            
         # Setup the PreExitingL3Out Config in neutron conf
         preExistcfg(options.cntlrIp)

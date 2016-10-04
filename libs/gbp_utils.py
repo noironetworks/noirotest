@@ -207,9 +207,12 @@ def editneutronconf(controllerIp,
                    '/a '+"%s' " %(pattern)+\
                    destfile
         if not add:
-               cmd = 'sed -i '+"'/%s/d' " %(pattern)+destfile
-	print cmd
-        run(cmd)
+            if not isinstance(pattern,list):
+                pattern = [pattern]
+                for pat in pattern:
+                    cmd = 'sed -i '+"'/%s/d' " %(pat)+destfile
+	            print cmd
+                    run(cmd)
 	if 'neutron' in destfile:
             print "Neutron Conf edited, hence restarting neutron-server"
             if restart:
