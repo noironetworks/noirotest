@@ -37,7 +37,6 @@ class NatFuncTestMethods(object):
         self.cntlrip = cntlrip
         self.gbpcrud = GBPCrud(cntlrip)
         self.gbpnova = Gbp_Nova(cntlrip)
-        #self.gbpaci = GbpApic(self.apic_ip,'gbp')
         self.extsegname = 'Management-Out'
         self.natpoolname1 = 'GbpNatPoolTest1'
         self.natpoolname2 = 'GbpNatPoolTest2'
@@ -93,7 +92,8 @@ class NatFuncTestMethods(object):
             self._log.info(
             "\nDeleting if any, host_pool_cidr & def_ext_seg_name"
             "from neutron conf")
-            editneutronconf(self.cntlrip,
+            if not flag:
+                editneutronconf(self.cntlrip,
                             fileloc,
                             'default_external_segment_name',
                             add=False,
@@ -417,6 +417,11 @@ class NatFuncTestMethods(object):
                 if not results:
                    self._log.error(
                    "\n///// Dynamic Association FIP to VM %s failed /////" %(vm))
+                   #if the above function is called for a negative check
+                   #then it may or may not have already created the FIPs
+                   #So ensure to delete those FIPs(apparently this we were
+                   #not doing so TC-4 was failing at Step=Negative Check
+                   self.gbpnova.delete_release_fips()
                    return 0
                 else:
                    self.vm_to_fip[vm] = results[0]

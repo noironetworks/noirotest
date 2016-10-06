@@ -206,6 +206,7 @@ def editneutronconf(controllerIp,
                    "'/%s" %(section)+\
                    '/a '+"%s' " %(pattern)+\
                    destfile
+             run(cmd)
         if not add:
             if not isinstance(pattern,list):
                 pattern = [pattern]

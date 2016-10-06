@@ -309,6 +309,7 @@ class Gbp_Nova(object):
            else:
                for fip in disassociatedFips:
                    self.nova.floating_ips.delete(fip)
+               print "Any Stale FIPs:: ", self.nova.floating_ips.list()
         except Exception:
            exc_type, exc_value, exc_traceback = sys.exc_info()
            _log.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))

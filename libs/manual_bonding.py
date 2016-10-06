@@ -87,6 +87,7 @@ class Bonding(object):
                      'NM_CONTROLLED=no\n',
                      'BOOTPROTO=none\n',
                      'USER_CTL=no\n',
+                     'MTU=1600\n'
                      'BONDING_OPTS="mode=4"\n'
                      ]
         ifcfg_file=open("ifcfg-bond0","w")
@@ -207,11 +208,13 @@ class Bonding(object):
         env.user = self.user
         env.pwd = self.pwd
         path = '/etc/opflex-agent-ovs/conf.d/opflex-agent-ovs.conf'
-        vif_name = 'bond0' #JISHNU:TBD, for vlan now harcoding
         with settings(warn_only=True):
-             result = run("sed -i 's/\"uplink-iface\":.*/\"uplink-iface\": \"%s\",/' %s" %(vif_name,path))
-             if result.succeeded:
                 if opflex_mode == 'vlan':
+                   vif_name = 'bond0' #JISHNU:TBD, for vlan now harcoding
+                   #first remove the below config params(meant for vxlan)
+                   for pat in ['uplink-iface','uplink-vlan',
+                               'remote-ip','remote-port']:
+                       run('sed -i '+"'/%s/d' " %(pat)+destfile)
                    result1 = run("sed -i 's/\"encap-iface\":.*,/\"encap-iface\": \"%s\",/' %s" %(vif_name,path))
                    result2 = run("ovs-vsctl add-port br-int bond0")
                    if result2.succeeded:
@@ -219,15 +222,14 @@ class Bonding(object):
                    else:
                       print "ERROR: Adding bond0 to br-int for VLAN mode == FAILed"
                       sys.exit(1)
-                else:
-                   restart = run("systemctl restart agent-ovs.service")
+                else: #incase vxlan
+        	   vif_name = 'bond0.4093' #JISHNU:TBD, for vxlan now harcoding
+                   run("sed -i 's/\"uplink-iface\":.*/\"uplink-iface\": \"%s\",/' %s" %(vif_name,path))
+                restart = run("systemctl restart agent-ovs.service")
                 if restart.succeeded:
                    if run("systemctl status agent-ovs.service").find("active (running)") < 0:
                       print 'ERROR: OpflexAgent is NOT ACTIVE on Restart after OpflexAgent Conf change == FAILs'
                       sys.exit(1)
-             else:
-                print 'ERROR: OpflexAgent Conf Change == FAILs'
-                sys.exit(1)
 
 def main():
     """

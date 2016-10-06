@@ -20,9 +20,9 @@ def main():
     parser.add_option("-c", "--configfile",
                       help="Mandatory Arg: Name of Config File with location",
                       dest='configfile')
-    parser.add_option("-d", "--defextsegname",
+    parser.add_option("-d", "--flag",
                       help="default_ext_seg_name "\
-                      "Valid strings: yes or no",
+                      "Valid strings: <yes>",
                       dest='defextsegname')
     (options, args) = parser.parse_args()
 
@@ -67,9 +67,9 @@ class NatGbpTestSuite(object):
         """
         # Initiate Blind Cleanup of the testbed config
         # Ignoring this Initial Blind-Cleanup
-        #self.steps.DeleteOrCleanup('cleanup')
-        #self.globalcfg.cleanup()
-
+        self.steps.DeleteOrCleanup('cleanup')
+        self.globalcfg.cleanup()
+        
         # Initiate Global Configuration 
         self.globalcfg.CfgGlobalObjs() 
         test_results = {}
@@ -131,8 +131,12 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testCreatePtgWithNonDefaultL3p():
            return 0
-        if not self.steps.testAssociateExtSegToBothL3ps():
-           return 0
+        #NOTE:The below flag check cannot be applied in test-workflows
+        #where ExtSeg is created after the L3Policies, else L3Ps will not
+        #have ExtSeg association.
+        if self.flag != 'default_external_segment_name':
+            if not self.steps.testAssociateExtSegToBothL3ps():
+               return 0
         if not self.steps.testCreatePolicyTargetForEachPtg():
            return 0
         if not self.steps.testCreateUpdateExternalPolicy():
@@ -188,8 +192,9 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testCreatePtgWithNonDefaultL3p():
            return 0
-        if not self.steps.testAssociateExtSegToBothL3ps():
-           return 0
+        if self.flag != 'default_external_segment_name':
+            if not self.steps.testAssociateExtSegToBothL3ps():
+               return 0
         if not self.steps.testCreatePolicyTargetForEachPtg():
            return 0
         if not self.steps.testCreateUpdateExternalPolicy():
@@ -306,12 +311,12 @@ class NatGbpTestSuite(object):
         if not self.steps.testCreateNatPoolAssociateExtSeg():
            return 0
         if self.steps.testAssociateFipToVMs(): #Negative Check
-	   self.steps._log.error(
-           "\n Expected FIP Association To Fail,"
-           " since L3P is NOT yet associated to ExtSeg")
-           return 0
+	    self.steps._log.error(
+            "\n Expected FIP Association To Fail,"
+            " since L3P is NOT yet associated to ExtSeg")
+            return 0
         if not self.steps.testAssociateExtSegToBothL3ps():
-           return 0
+            return 0
         if not self.steps.testAssociateFipToVMs():
            return 0
         sleep(10)
@@ -358,8 +363,9 @@ class NatGbpTestSuite(object):
            return 0
         print "Sleeping for VM to come up ..."
         sleep(10)
-        if not self.steps.testAssociateExtSegToBothL3ps():
-           return 0
+        if self.flag != 'default_external_segment_name':
+            if not self.steps.testAssociateExtSegToBothL3ps():
+               return 0
         if not self.steps.testCreateNatPoolAssociateExtSeg():
            return 0
         if not self.steps.testVerifyCfgdObjects():
@@ -493,8 +499,9 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testCreatePtgWithNonDefaultL3p():
            return 0
-        if not self.steps.testAssociateExtSegToBothL3ps():
-           return 0
+        if self.flag != 'default_external_segment_name':
+            if not self.steps.testAssociateExtSegToBothL3ps():
+               return 0
         if not self.steps.testCreatePolicyTargetForEachPtg():
            return 0
         if not self.steps.testCreateUpdateExternalPolicy():
@@ -523,7 +530,7 @@ class NatGbpTestSuite(object):
                                           )
         #Verifying DNATed Traffic from both VMs
         self.steps._log.info("\n DNATed Traffic from ExtRTR to VMs")
-        if not self.steps.testTrafficFromExtRtrToVmFip(self.extrtr,fip=True):
+        if not self.steps.testTrafficFromExtRtrToVmFip(self.extrtr):
            return 0
         if not self.steps.testApplyRemoveNSpFromPtg(nspuuid=None):
            return 0
@@ -632,8 +639,9 @@ class NatGbpTestSuite(object):
                                    self.globalcfg.prsicmptcp
                                    ):
                return 0
-        if not self.steps.testAssociateExtSegToBothL3ps():
-           return 0
+        if self.flag != 'default_external_segment_name':
+            if not self.steps.testAssociateExtSegToBothL3ps():
+               return 0
         if not self.steps.testVerifyCfgdObjects(nat_type='snat'):
            return 0
         sleep(15)
@@ -664,8 +672,9 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testCreatePtgWithNonDefaultL3p():
            return 0
-        if not self.steps.testAssociateExtSegToBothL3ps():
-           return 0
+        if self.flag != 'default_external_segment_name':
+            if not self.steps.testAssociateExtSegToBothL3ps():
+               return 0
         if not self.steps.testCreatePolicyTargetForEachPtg():
            return 0
         if not self.steps.testCreateUpdateExternalPolicy():
@@ -728,7 +737,7 @@ class NatGbpTestSuite(object):
         #NOTE: For this TC, want to add host_pool_cidr to Datacenter-Out
         #while remove it from Management-Out(this was already added by
         #test_runner func).Ensure to list this TC as the last TC to run
-        self.steps.addhostpoolcidr(delete=True)
+        self.steps.addhostpoolcidr(delete=True,flag=self.flag)
         self.steps.addhostpoolcidr(l3out='Datacenter-Out')
         if not self.steps.testCreateExtSegWithDefault('Management-Out'):
            return 0
@@ -753,8 +762,9 @@ class NatGbpTestSuite(object):
            return 0
         print "Sleeping for VM to come up ..."
         sleep(10)
-        if not self.steps.testAssociateExtSegToBothL3ps():
-           return 0
+        if self.flag != 'default_external_segment_name':
+            if not self.steps.testAssociateExtSegToBothL3ps():
+               return 0
         if not self.steps.testCreateNatPoolAssociateExtSeg():
            return 0
         if not self.steps.testVerifyCfgdObjects():
