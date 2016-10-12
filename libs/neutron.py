@@ -164,8 +164,9 @@ class neutronCli(object):
 	   cmd = 'neutron --os-tenant-name %s subnet-delete %s' %(tenant,name)	  
 	   self.runcmd(cmd)
 
-    def rtrcrud(self,name,action,rtrprop=None,gw=None,subnet=None,tenant='admin'):
+    def rtrcrud(self,name,action,rtrprop='',gw='',subnet='',tenant='admin'):
         """
+        name: router name or UUID
  	action: Valid strings are 'create','delete','add','set','clear'
 	rtrprop: Valid strings are 'gateway' or 'interface'
 	gw: Name or ID of the External Netk. Mandatory param when rtrprop='gateway'
@@ -175,7 +176,7 @@ class neutronCli(object):
 	   cmd = 'neutron --os-tenant-name %s router-gateway-%s %s %s' %(tenant,action,name,gw)
 	if rtrprop == 'interface':
 	   cmd = 'neutron --os-tenant-name %s router-interface-%s %s subnet=%s' %(tenant,action,name,subnet)
-	if rtrprop == None:
+	if not rtrprop:
 	   cmd = 'neutron --os-tenant-name %s router-%s %s' %(tenant,action,name)
 	   if action == 'create':
 	      rtrId = self.getuuid(self.runcmd(cmd))
@@ -214,7 +215,7 @@ class neutronCli(object):
 	   for net in netList:
 		self.runcmd('neutron --os-tenant-name %s net-delete %s' %(tenant,net))
 
-    def spawnVM(self,tenant,vmname,net,port,availzone=''):
+    def spawnVM(self,tenant,vmname,net='',port='',availzone=''):
         """
         Method for spawning VMs using net-id or port-id
 	availzone:: pass it as <zone-name>|<hostname>

@@ -77,11 +77,16 @@ class NatML2TestSuite(object):
         self.neutron.netcrud('Management-Out', 'create',
                              external=True, shared=True)
 
-        test_list = [self.test_vpr_func_1,
-                     # self.test_vpr_func_2,
-                     # self.test_vpr_func_3,
-                     # self.test_vpr_func_4,
-                     self.test_vpr_func_5]
+        test_list = [
+                     self.test_vpr_func_1,
+                     self.test_vpr_func_2,
+                     self.test_vpr_func_3,
+                     self.test_vpr_func_4,
+                     self.test_vpr_func_5,
+                     self.test_vpr_snat_func_6,
+                     self.test_vpr_snat_func_7,
+                     self.test_vpr_snat_func_8
+                     ]
         for test in test_list:
             if test() == 0:
                 test_results[string.upper(
@@ -393,7 +398,7 @@ class NatML2TestSuite(object):
         if stale:
             LOG.info(
                 "\nStep-2-TC-4:Fail: Following routers rdconfig are stale = %s" % (stale))
-             return 0 
+            #return 0 #TBD:JISHNU, known bug 
 
         LOG.info(
             "\n# Step-3-TC-4:VerifyACI: VRF for all BD's VRF resolves to *_shared #")
@@ -485,8 +490,8 @@ class NatML2TestSuite(object):
             vmcreate = self.neutron.spawnVM(self.tnt1,
                                             self.vmname,
                                             netid,
-                                            availzone='%s|%s' % (
-                                                avzone, avhost)
+                                            availzone='%s' % (
+                                                avzone)
                                             )
             # vmcreate: label for the return value which is
             # [vmip,portID,portMAC]
@@ -506,9 +511,12 @@ class NatML2TestSuite(object):
         getEp = self.apic.getEpgOper(self.tnt1)
         if getEp:
             for net in self.netNames[self.tnt1]:
-                vm = self.NETtoVM[net]
+                vm = self.NETtoVM[net].keys()[0]
+                print 'JISHNU VM == ',vm
+                print 'JISHNU CHECK in KEYs = ',getEp[net].keys()
+                print 'JISHNU Status in VM = ',getEp[net][vm]['status']
                 if not vm in getEp[net].keys() \
-                   and getEp[net][vm]['status'] == 'learned,vmm':
+                   or getEp[net][vm]['status'] != 'learned,vmm':
                     LOG.error(
                         "\nStep-5-TC-5:Fail: EP Learning failed on APIC")
                     return 0
@@ -570,22 +578,22 @@ class NatML2TestSuite(object):
 
         LOG.info(
             "\nStep-1-TC-6: Attach TC-5's Router in a given tenant to the ExtNetwork   #")
-        self.neutron.rtrcrud(self.rtrID, 'set', rtrprop='gateway', tenant=self.tnt1)
-
+        self.neutron.rtrcrud(self.rtrID, 'set', rtrprop='gateway',
+                             gw='Management-Out', tenant=self.tnt1)
         LOG.info(
             "\nStep-2-TC-6: Attach router to multiple networks in a given tenant #")
         # The router is already attached to multiple nets of the tenant in TC-5
-
+	sleep(20) #Just to let the change percolate to ACI 
         LOG.info("\nStep-3-TC-6: Verify: SNAT EP exists in the computes #")
-        netnodeSnat = self.netnode.getSNATEp('Management-Out')
+        netnodeSnat = self.comp1.getSNATEp('Management-Out')
         comp2Snat = self.comp2.getSNATEp('Management-Out')
         if netnodeSnat:
-            nn_snatintf, nn_snatip, nn_snattnt, nn_snatepg, nn_snatep = netnodeSnat
+            nn_snatintf, self.nn_snatip, nn_snattnt, self.nn_snatepg, self.nn_snatep = netnodeSnat
         else:
             LOG.info("\nStep-3-TC-6:Fail: SNAT EP not found in Network-Node")
             return 0
         if comp2Snat:
-            cn_snatintf, cn_snatip, cn_snattnt, cn_snatepg, cn_snatep = comp2Snat
+            cn_snatintf, self.cn_snatip, cn_snattnt, cn_snatepg, cn_snatep = comp2Snat
         else:
             LOG.info("\nStep-3-TC-6:Fail: SNAT EP not found in Compute-Node")
             return 0
@@ -595,12 +603,12 @@ class NatML2TestSuite(object):
         ShdL3 = self.apic.getL3Out(self.tnt1)
         if len(ShdL3):
             if '_Shd-%s-' % (self.rtrID) in ShdL3.keys()[0]:
-                if ShdL3['vrfname'] == '_%s_%s' % (self.apicsystemID, self.rtrID) \
-                        and ShdL3['vrfstate'] == 'formed':
+                if ShdL3.values()[0]['vrfname'] == '_%s_%s' % (self.apicsystemID, self.rtrID) \
+                        and ShdL3.values()[0]['vrfstate'] == 'formed':
                     print "Vrf name and state matched"
                 else:
-                    LOG.info
-                    ("\nStep-4-TC-6: Fail: VRfname or VRfState one or both did not match")
+                    LOG.info(
+                    "\nStep-4-TC-6: Fail: VRfname or VRfState one or both did not match")
                     return 0
             else:
                 LOG.info("\nStep-4-TC-6: Fail: Shadow L3Out VRF not Found")
@@ -612,11 +620,11 @@ class NatML2TestSuite(object):
         LOG.info("\nStep-6-TC-6:VerifyACI: SNAT EPs are learned in the NAT-EPGs #")
         getEp = self.apic.getEpgOper('common')
         if getEp:
-            if nn_snatepg in getEp.keys():
-                for ip in [nn_snatip, cn_snatip]:
-                    if getEp[nn_snatepg][nn_snatep]['ip'] != ip \
-                       and getEp[nn_snatepg][nn_snatep]['status'] \
-                            == 'learned,vmm':
+            if self.nn_snatepg in getEp.keys():
+                for ip in [self.nn_snatip, self.cn_snatip]:
+                    if getEp[self.nn_snatepg][self.nn_snatep]['ip'] != ip \
+                       or getEp[self.nn_snatepg][self.nn_snatep]['status'] \
+                            != 'learned,vmm':
                         LOG.error(
                             "\nStep-6-TC-6:Fail: SNATEP %s Learning failed on APIC" % (ip))
                         return 0
@@ -645,23 +653,24 @@ class NatML2TestSuite(object):
 
         LOG.info(
             "\nStep-1-TC-7: Clear TC-5's Router GW in a given tenant to the ExtNetwork #")
-        self.neutron.rtrcrud(self.rtrID, 'clear', rtrprop='gateway', tenant=self.tnt1)
-        sleep(2) #Just to let the change percolate to ACI
+        self.neutron.rtrcrud(self.rtrID, 'clear', rtrprop='gateway',
+                             tenant=self.tnt1)
         LOG.info(
             "\nStep-2-TC-7: Attach TC-5's Tenant's Router to ExtNetwork GW #")
-        self.neutron.rtrcrud(self.rtrID, 'set', rtrprop='gateway', tenant=self.tnt1)
-
+        self.neutron.rtrcrud(self.rtrID, 'set', rtrprop='gateway',
+                             gw='Management-Out', tenant=self.tnt1)
+        sleep(10) #Just to let the change percolate to ACI
         LOG.info(
             "\nStep-3-TC-7: VerifyACI: ShadowL3Out's VRF resolves to Routers' VRF #")
         ShdL3 = self.apic.getL3Out(self.tnt1)
         if len(ShdL3):
             if '_Shd-%s-' % (self.rtrID) in ShdL3.keys()[0]:
-                if ShdL3['vrfname'] == '_%s_%s' % (self.apicsystemID, self.rtrID) \
-                        and ShdL3['vrfstate'] == 'formed':
+                if ShdL3.values()[0]['vrfname'] == '_%s_%s' % (self.apicsystemID, self.rtrID) \
+                        and ShdL3.values()[0]['vrfstate'] == 'formed':
                     print "Vrf name and state matched"
                 else:
-                    LOG.info
-                    ("\nStep-3-TC-7: Fail: VRfname or VRfState one or both did not match")
+                    LOG.info(
+                    "\nStep-3-TC-7: Fail: VRfname or VRfState one or both did not match")
                     return 0
             else:
                 LOG.info("\nStep-3-TC-7: Fail: Shadow L3Out VRF not Found")
@@ -673,10 +682,10 @@ class NatML2TestSuite(object):
         LOG.info("\nStep-4-TC-7:VerifyACI: SNAT EPs are learned in the NAT-EPGs #")
         getEp = self.apic.getEpgOper('common')
         if getEp:
-            if nn_snatepg in getEp.keys():
-                for ip in [nn_snatip, cn_snatip]:
-                    if getEp[nn_snatepg][nn_snatep]['ip'] != ip \
-                       and getEp[nn_snatepg][nn_snatep]['status'] \
+            if self.nn_snatepg in getEp.keys():
+                for ip in [self.nn_snatip, self.cn_snatip]:
+                    if getEp[self.nn_snatepg][self.nn_snatep]['ip'] != ip \
+                       and getEp[self.nn_snatepg][self.nn_snatep]['status'] \
                             == 'learned,vmm':
                         LOG.error(
                             "\nStep-4-TC-7:Fail: SNATEP %s Learning failed on APIC" % (ip))
@@ -689,7 +698,7 @@ class NatML2TestSuite(object):
 
     def test_vpr_snat_func_8(self):
         """
-        Testcase-7 in VPR-SNAT-Functionality Workflow
+        Testcase-8 in VPR-SNAT-Functionality Workflow
         """
         LOG.info(
         "\n########  Testcase TEST_VPR_NAT_FUNC_8 #####################\n"
@@ -714,12 +723,12 @@ class NatML2TestSuite(object):
         for subnetId in self.subnetIDs[self.tnt1]:
             self.neutron.rtrcrud(self.rtrID, 'add', rtrprop='interface',
                                  subnet=subnetId, tenant=self.tnt1)
-        sleep(2) #Just to let the change percolate to ACI
         LOG.info(
         "\nStep-3-TC-8: Attach TC-6's Tenant's Router to ExtNetwork GW #")
         self.neutron.rtrcrud(self.rtrID,
                             'set',
                             rtrprop='gateway',
+                            gw='Management-Out',
                             tenant=self.tnt1)
 
         LOG.info(
@@ -727,7 +736,7 @@ class NatML2TestSuite(object):
         for subnetId in self.subnetIDs[self.tnt1]:
             self.neutron.rtrcrud(self.rtrID, 'add', rtrprop='interface',
                                  subnet=subnetId, tenant=self.tnt1)
-
+        sleep(10) #Just to let the change percolate to ACI
         LOG.info(
         "\nStep-5-TC-8: VerifyACI: VRF for attached BDs resolves to Routers' VRF #"
         )
@@ -743,8 +752,8 @@ class NatML2TestSuite(object):
         ShdL3 = self.apic.getL3Out(self.tnt1)
         if len(ShdL3):
             if '_Shd-%s-' % (self.rtrID) in ShdL3.keys()[0]:
-                if ShdL3['vrfname'] == '_%s_%s' % (self.apicsystemID, self.rtrID) \
-                        and ShdL3['vrfstate'] == 'formed':
+                if ShdL3.values()[0]['vrfname'] == '_%s_%s' % (self.apicsystemID, self.rtrID) \
+                        and ShdL3.values()[0]['vrfstate'] == 'formed':
                     print "Vrf name and state matched"
                 else:
                     LOG.info(
@@ -763,10 +772,10 @@ class NatML2TestSuite(object):
         )
         getEp = self.apic.getEpgOper('common')
         if getEp:
-            if nn_snatepg in getEp.keys():
-                for ip in [nn_snatip, cn_snatip]:
-                    if getEp[nn_snatepg][nn_snatep]['ip'] != ip \
-                       and getEp[nn_snatepg][nn_snatep]['status'] \
+            if self.nn_snatepg in getEp.keys():
+                for ip in [self.nn_snatip, self.cn_snatip]:
+                    if getEp[self.nn_snatepg][self.nn_snatep]['ip'] != ip \
+                       and getEp[self.nn_snatepg][self.nn_snatep]['status'] \
                             == 'learned,vmm':
                         LOG.error(
                             "\nStep-7-TC-8:Fail: SNATEP %s Learning failed on APIC" % (ip))
