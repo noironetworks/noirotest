@@ -7,11 +7,11 @@ getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
 from time import sleep
 from libs.gbp_verify_libs import Gbp_Verify
 from test_main_config import gbp_main_config
-from testcases.testcases_dp.testsuites_setup_cleanup import super_hdr, header1, header2, header3, header4
-from testcases.testcases_dp.testsuite_same_ptg_l2p_l3p import test_same_ptg_same_l2p_same_l3p
-from testcases.testcases_dp.testsuite_diff_ptg_same_l2p_l3p import test_diff_ptg_same_l2p_l3p
-from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_same_l3p import test_diff_ptg_diff_l2p_same_l3p
-from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_diff_l3p import test_diff_ptg_diff_l2p_diff_l3p
+#from testcases.testcases_dp.testsuites_setup_cleanup import super_hdr, header1, header2, header3, header4
+#from testcases.testcases_dp.testsuite_same_ptg_l2p_l3p import test_same_ptg_same_l2p_same_l3p
+#from testcases.testcases_dp.testsuite_diff_ptg_same_l2p_l3p import test_diff_ptg_same_l2p_l3p
+#from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_same_l3p import test_diff_ptg_diff_l2p_same_l3p
+#from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_diff_l3p import test_diff_ptg_diff_l2p_diff_l3p
 
 
 def main():
@@ -31,6 +31,16 @@ def main():
         print "Please provide the ConfigFile with location"
         sys.exit(1)
     else:
+        from testcases.testcases_dp.testsuites_setup_cleanup import \
+             super_hdr, header1, header2, header3, header4
+        from testcases.testcases_dp.testsuite_same_ptg_l2p_l3p import \
+             test_same_ptg_same_l2p_same_l3p
+        from testcases.testcases_dp.testsuite_diff_ptg_same_l2p_l3p import \
+             test_diff_ptg_same_l2p_l3p
+        from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_same_l3p import \
+             test_diff_ptg_diff_l2p_same_l3p
+        from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_diff_l3p import \
+             test_diff_ptg_diff_l2p_diff_l3p
         # Build the Test Config to be used for all DataPath Testcases
         print "Setting up global config for all DP Testing"
         testbed_cfg = gbp_main_config(options.configfile)
@@ -47,8 +57,7 @@ def main():
         if not testbed_cfg.verifySetup():
             testbed_cfg.cleanup()
             sys.exit(1)
-
-    header_to_suite_map = {'header1': [header1, test_same_ptg_same_l2p_same_l3p],
+        header_to_suite_map = {'header1': [header1, test_same_ptg_same_l2p_same_l3p],
                            'header2': [header2, test_diff_ptg_same_l2p_l3p],
                             'header3': [header3, test_diff_ptg_diff_l2p_same_l3p],
                            'header4': [header4, test_diff_ptg_diff_l2p_diff_l3p]}

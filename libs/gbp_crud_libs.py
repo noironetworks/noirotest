@@ -618,8 +618,15 @@ class GBPCrud(object):
         and their corresponding Neutron Port UUIDs
         """
         pt_nic_id = {}
-        for pt in self.client.list_policy_targets()['policy_targets']:
-            pt_nic_id[pt['id'].encode('ascii')] = pt['port_id'].encode('ascii')
+        ptList = self.client.list_policy_targets()['policy_targets']
+        if len(ptList):
+            for pt in ptList:
+                try:
+                    pt_nic_id[pt['id']] = pt['port_id']
+                except Exception as e:
+                    print Exception
+                    _log.error("\nException Error: %s\n" %(e))
+                    continue
         return pt_nic_id
 
     def delete_gbp_policy_target(self,name_uuid,property_type='name'):

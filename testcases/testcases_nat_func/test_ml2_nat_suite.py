@@ -124,6 +124,27 @@ class NatML2TestSuite(object):
                     unmatched[tnt] = rtrID
                     return unmatched
 
+    def verifySnatEpsOnAPIC(self,hostdn,snatepg,snatepIp):
+        """
+        Verifies the SNAT EPs of Network-Node & Comp-Node
+        under 'common' tenant in APIC
+        hostdn = hostname with domain of the node
+        """
+        getEp = self.apic.getEpgOper('common')
+        if getEp and snatepg in getEp.keys():
+            if getEp[snatepg]\
+            ['snat|%s|Management-Out' %(hostdn)]['ip']\
+            != snatepIp or \
+            getEp[snatepg]\
+            ['snat|%s|Management-Out' %(hostdn)]['status']\
+            != 'learned,vmm':
+                return 0
+            else:
+                return 1
+        else:
+            LOG.error("SNAT-Epg NOT FOUND in APIC")
+            return 0
+
     def test_vpr_func_1(self):
         """
         Testcase-1 in VPR-Functionality Workflow
@@ -449,10 +470,14 @@ class NatML2TestSuite(object):
 
         LOG.info(
             "\n# Step-2-TC-5: Attach router to multiple networks in a given tenant #")
+        #Since there are two subnets per network in 'tnt1', so the router needs to 
+        #be attached to both subnets.
         for subnetId in self.subnetIDs[self.tnt1]:
             self.neutron.rtrcrud(self.rtrID, 'add', rtrprop='interface',
                                  subnet=subnetId, tenant=self.tnt1)
-
+        for subnetId in self.new_subnetIDs[self.tnt1]:
+            self.neutron.rtrcrud(self.rtrID, 'add', rtrprop='interface',
+                                 subnet=subnetId, tenant=self.tnt1)
         LOG.info(
         "\n# Step-3-TC-5:VerifyACI: VRF for attached BDs resolves to Routers' VRF #"
         )
@@ -506,8 +531,8 @@ class NatML2TestSuite(object):
             vm_num = vm_num + 1
 
         LOG.info("\n# Step-5-TC-5:VerifyACI: Verify the Endpoint Learnings #")
-        LOG.info("\nSleeping for 20 secs for the Opflex-Agent to send GARP")
-        sleep(20)
+        LOG.info("\nSleeping for 30 secs for the Opflex-Agent to send GARP")
+        sleep(30)
         getEp = self.apic.getEpgOper(self.tnt1)
         if getEp:
             for net in self.netNames[self.tnt1]:
@@ -616,21 +641,25 @@ class NatML2TestSuite(object):
         else:
             LOG.info("\nStep-4-TC-6: Fail: L3Outs not found in this tenant")
             return 0
-
+        #TBD:JISHNU >>below check is incorrect, Moreover keep a check for ip-mapping,
+        #vrf_per_router_tenant MUST be added /deleted as part of this suite. The suite
+        #should run seamlessly with and without the config_flag
+        #TBD: JISHNU .. also add the router to all subnets for neutron behavior
         LOG.info("\nStep-6-TC-6:VerifyACI: SNAT EPs are learned in the NAT-EPGs #")
-        getEp = self.apic.getEpgOper('common')
-        if getEp:
-            if self.nn_snatepg in getEp.keys():
-                for ip in [self.nn_snatip, self.cn_snatip]:
-                    if getEp[self.nn_snatepg][self.nn_snatep]['ip'] != ip \
-                       or getEp[self.nn_snatepg][self.nn_snatep]['status'] \
-                            != 'learned,vmm':
-                        LOG.error(
-                            "\nStep-6-TC-6:Fail: SNATEP %s Learning failed on APIC" % (ip))
-                        return 0
-            else:
-                LOG.error("\nStep-6-TC-6:Fail: SNAT-EPG not available on APIC")
-                return 0
+        if not self.verifySnatEpsOnAPIC(self.novahost,
+                               self.nn_snatepg,
+                               self.nn_snatip):
+            LOG.error(
+                "\nStep-6-TC-6:Fail: Network-Node's SNATEP"\
+                "%s Learning failed on APIC"\
+                % (self.nn_snatip))
+        if not self.verifySnatEpsOnAPIC(self.avhost,
+                               self.nn_snatepg,
+                               self.cn_snatip):
+            LOG.error(
+                "\nStep-6-TC-6:Fail: Compute-Node-2's SNATEP"\
+                "%s Learning failed on APIC"\
+                % (self.cn_snatip))
 
         LOG.info("\nStep-7-TC-6:Verify: Traffic between the VMs across networks in the tenant #")
 
@@ -680,19 +709,20 @@ class NatML2TestSuite(object):
             return 0
 
         LOG.info("\nStep-4-TC-7:VerifyACI: SNAT EPs are learned in the NAT-EPGs #")
-        getEp = self.apic.getEpgOper('common')
-        if getEp:
-            if self.nn_snatepg in getEp.keys():
-                for ip in [self.nn_snatip, self.cn_snatip]:
-                    if getEp[self.nn_snatepg][self.nn_snatep]['ip'] != ip \
-                       and getEp[self.nn_snatepg][self.nn_snatep]['status'] \
-                            == 'learned,vmm':
-                        LOG.error(
-                            "\nStep-4-TC-7:Fail: SNATEP %s Learning failed on APIC" % (ip))
-                        return 0
-            else:
-                LOG.error("\nStep-4-TC-7:Fail: SNAT-EPG not available on APIC")
-                return 0
+        if not self.verifySnatEpsOnAPIC(self.novahost,
+                               self.nn_snatepg,
+                               self.nn_snatip):
+            LOG.error(
+                "\nStep-4-TC-7:Fail: Network-Node's SNATEP"\
+                "%s Learning failed on APIC"\
+                % (self.nn_snatip))
+        if not self.verifySnatEpsOnAPIC(self.avhost,
+                               self.nn_snatepg,
+                               self.cn_snatip):
+            LOG.error(
+                "\nStep-4-TC-7:Fail: Compute-Node-2's SNATEP"\
+                "%s Learning failed on APIC"\
+                % (self.cn_snatip))
 
         LOG.info("\nStep-5-TC-7: Verify: Traffic between the VMs and External Router #")
 
@@ -723,6 +753,9 @@ class NatML2TestSuite(object):
         for subnetId in self.subnetIDs[self.tnt1]:
             self.neutron.rtrcrud(self.rtrID, 'add', rtrprop='interface',
                                  subnet=subnetId, tenant=self.tnt1)
+        for subnetId in self.new_subnetIDs[self.tnt1]:
+            self.neutron.rtrcrud(self.rtrID, 'add', rtrprop='interface',
+                                 subnet=subnetId, tenant=self.tnt1)
         LOG.info(
         "\nStep-3-TC-8: Attach TC-6's Tenant's Router to ExtNetwork GW #")
         self.neutron.rtrcrud(self.rtrID,
@@ -734,6 +767,9 @@ class NatML2TestSuite(object):
         LOG.info(
         "\n# Step-4-TC-8: Attach router to multiple networks in a given tenant #")
         for subnetId in self.subnetIDs[self.tnt1]:
+            self.neutron.rtrcrud(self.rtrID, 'add', rtrprop='interface',
+                                 subnet=subnetId, tenant=self.tnt1)
+        for subnetId in self.new_subnetIDs[self.tnt1]:
             self.neutron.rtrcrud(self.rtrID, 'add', rtrprop='interface',
                                  subnet=subnetId, tenant=self.tnt1)
         sleep(10) #Just to let the change percolate to ACI
@@ -770,19 +806,21 @@ class NatML2TestSuite(object):
         LOG.info(
         "\nStep-7-TC-8:VerifyACI: SNAT EPs are learned in the NAT-EPGs #"
         )
-        getEp = self.apic.getEpgOper('common')
-        if getEp:
-            if self.nn_snatepg in getEp.keys():
-                for ip in [self.nn_snatip, self.cn_snatip]:
-                    if getEp[self.nn_snatepg][self.nn_snatep]['ip'] != ip \
-                       and getEp[self.nn_snatepg][self.nn_snatep]['status'] \
-                            == 'learned,vmm':
-                        LOG.error(
-                            "\nStep-7-TC-8:Fail: SNATEP %s Learning failed on APIC" % (ip))
-                        return 0
-            else:
-                LOG.error("\nStep-7-TC-8:Fail: SNAT-EPG not available on APIC")
-                return 0
+        if not self.verifySnatEpsOnAPIC(self.novahost,
+                               self.nn_snatepg,
+                               self.nn_snatip):
+            LOG.error(
+                "\nStep-7-TC-8:Fail: Network-Node's SNATEP"\
+                "%s Learning failed on APIC"\
+                % (self.nn_snatip))
+        if not self.verifySnatEpsOnAPIC(self.avhost,
+                               self.nn_snatepg,
+                               self.cn_snatip):
+            LOG.error(
+                "\nStep-7-TC-8:Fail: Compute-Node-2's SNATEP"\
+                "%s Learning failed on APIC"\
+                % (self.cn_snatip))
+            return 0
 
         LOG.info("\nStep-8-TC-8: Verify: Traffic between the VMs and External Router #")
 

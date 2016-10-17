@@ -6,6 +6,7 @@ apic_ip: '172.28.184.30'
 apic_passwd: 'noir0123'
 controller_ip: '172.28.184.35'
 tenant_list: ['ENGG','HRC']
+nova_agg_name: 'gbp_agg'
 nova_az_name: 'gbp_zone'
 az_comp_node: 'f2-compute-2.noiro.lab'
 az_nova_comp_node: 'f2-compute-1.noiro.lab'

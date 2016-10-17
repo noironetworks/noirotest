@@ -69,7 +69,7 @@ class nat_dp_main_config(object):
 	self.gbpaci = GbpApic(self.apic_ip,
                               'gbp',
 			      apicsystemID=self.apicsystemID)
-        self.gbp_crud = GBPCrud(self.cntlr_ip)
+        self.gbpcrud = GBPCrud(self.cntlr_ip)
         self.hostpoolcidrL3OutA = '50.50.50.1/24'
         self.hostpoolcidrL3OutB = '60.60.60.1/24'
 	#Instead of defining the below static labels/vars
@@ -173,17 +173,17 @@ class nat_dp_main_config(object):
             # Expecting if at all there is residual heat-stack it
             # should be of the same name as that of this DP Reg
             self._log.info("\nCheck and Delete Residual Heat Stack")
-            if self.gbpheat.cfg_all_cli(0, self.heat_stack_name) != 1:
+            if not self.gbpheat.cfg_all_cli(0, self.heat_stack_name):
                self._log.error(
                "\n ABORTING THE TESTSUITE RUN, Delete of Residual Heat-Stack Failed")
-               self.cleanup(stack=1) # Because residual stack-delete already failed above
+               self.cleanup() # Because residual stack-delete already failed above
                sys.exit(1)
             self._log.info(
             "\n Invoking Heat-Temp for Config creation of %s" % (nat_type.upper()))
             if self.gbpheat.cfg_all_cli(1, self.heat_stack_name, heat_temp=self.heat_temp_test) == 0:
                self._log.error(
                "\n ABORTING THE TESTSUITE RUN, Heat-Stack create of %s Failed" % (self.heat_stack_name))
-               self.cleanup()
+               self.cleanup(nat_type='dnat')
                sys.exit(1)
             sleep(5)  # Sleep 5s assuming that all objects areated in APIC
             self._log.info(
@@ -252,7 +252,7 @@ class nat_dp_main_config(object):
             #both of these two conditions:
             #1. if per_tenant_nat_epg=True (Sungard)
             #2. if ExtSeg is created in Openstack with shared=False
-            extsegs=self.gbp_crud.get_gbp_external_segment_list(getdict=True)
+            extsegs=self.gbpcrud.get_gbp_external_segment_list(getdict=True)
             if not extsegs['Datacenter-Out']['shared'] or pertntnatEpg:
 	        self._log.info(
 	        "\n Verify relations bw NAT-BDs and Regular EPGs association")
@@ -408,15 +408,33 @@ class nat_dp_main_config(object):
             else:
                return 0
 
-    def cleanup(self,stack=0,avail=0):
+    def cleanup(self,stack=0,avail=0,nat_type=''):
         # Need to call for instance delete if there is an instance
         self._log.info("Cleaning Up The Test Config")
-        if stack == 0:
+        if not stack:
+           if nat_type == 'dnat': #Reason: heat-stack errors out on NSP/NAT-Pool dependency
+               vmlist = ['App-Server', 'Web-Server', 'Web-Client-1', 'Web-Client-2']
+               for vm in vmlist:
+                   self.gbpnova.vm_delete(vm)
+               self._log.info("\nStep: Blind CleanUp: Release FIPs")
+               self.gbpnova.delete_release_fips()
+               self._log.info("\nStep: Blind CleanUp: Delete PTs")
+               pt_list = self.gbpcrud.get_gbp_policy_target_list()
+               if len(pt_list) > 0:
+                  for pt in pt_list:
+                    self.gbpcrud.delete_gbp_policy_target(pt, property_type='uuid')
+               self._log.info("\nStep: Blind CleanUp: Delete PTGs")
+               ptg_list = self.gbpcrud.get_gbp_policy_target_group_list()
+               if len(ptg_list) > 0:
+                  for ptg in ptg_list:
+                    self.gbpcrud.delete_gbp_policy_target_group(ptg, property_type='uuid')
+               self._log.info("\nStep: Blind CleanUp: Delete NSPs")
+               self.gbpcrud.delete_gbp_network_service_policy()
            self.gbpheat.cfg_all_cli(0, self.heat_stack_name)
            # Ntk namespace cleanup in Network-Node.. VM names are static
            # throughout the test-cycle
            del_netns(self.ntk_node)
-        if avail == 0:
+        if not avail:
            self.gbpnova.avail_zone('cli',
                                    'removehost',
                                    self.nova_agg,
