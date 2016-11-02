@@ -7,8 +7,8 @@ import datetime
 import yaml
 from commands import *
 from time import sleep
-from libs.gbp_heat_libs import Gbp_Heat
-from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_heat_libs import gbpHeat
+from libs.gbp_nova_libs import gbpNova
 from libs.gbp_aci_libs import GbpApic
 from libs.gbp_compute import Compute
 from libs.gbp_crud_libs import GBPCrud
@@ -64,8 +64,8 @@ class nat_dp_main_config(object):
         '\\b(\d+.\d+.\d+.)\d+' '',conf['fip2_of_extgw'], re.I).group(1)+'0/24'
         self.pausetodebug = conf['pausetodebug']
         self.neutronconffile = conf['neutronconffile']
-        self.gbpnova = Gbp_Nova(self.cntlr_ip)
-        self.gbpheat = Gbp_Heat(self.cntlr_ip)
+        self.gbpnova = gbpNova(self.cntlr_ip)
+        self.gbpheat = gbpHeat(self.cntlr_ip)
 	self.gbpaci = GbpApic(self.apic_ip,
                               'gbp',
 			      apicsystemID=self.apicsystemID)

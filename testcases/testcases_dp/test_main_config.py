@@ -7,8 +7,8 @@ import datetime
 import yaml
 from time import sleep
 from commands import *
-from libs.gbp_heat_libs import Gbp_Heat
-from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_heat_libs import gbpHeat
+from libs.gbp_nova_libs import gbpNova
 from libs.gbp_aci_libs import GbpApic
 from libs.gbp_compute import Compute
 from libs.gbp_utils import *
@@ -53,8 +53,8 @@ class gbp_main_config(object):
         self.heat_stack_name = conf['heat_dp_stack_name']
 	self.pausetodebug = conf['pausetodebug']
         self.test_parameters = conf['test_parameters']
-        self.gbpnova = Gbp_Nova(self.cntlr_ip)
-        self.gbpheat = Gbp_Heat(self.cntlr_ip)
+        self.gbpnova = gbpNova(self.cntlr_ip)
+        self.gbpheat = gbpHeat(self.cntlr_ip)
 	self.gbpaci = GbpApic(self.apic_ip,
 			       'gbp',
 			       apicsystemID=self.apicsystemID) 
@@ -62,6 +62,14 @@ class gbp_main_config(object):
 		       'VM5','VM6','VM7','VM8',
 		       'VM9','VM10','VM11','VM12'	
 		      ]
+        #Below L2Ps needed for APIC Verification
+        self.L2plist = [
+                        'demo_same_ptg_l2p_l3p_bd',
+                        'demo_diff_ptg_same_l2p_l3p_bd',
+                        'demo_diff_ptg_l2p_same_l3p_bd_1',
+                        'demo_diff_ptg_l2p_same_l3p_bd_2',
+                        'demo_srvr_bd', 'demo_clnt_bd'
+                       ]
     def setup(self):
         """
         Availability Zone creation
@@ -123,13 +131,6 @@ class gbp_main_config(object):
         sleep(5)  # Sleep 5s assuming that all objects are created in APIC
         self._log.info(
             "\n Adding SSH-Filter to Svc_epg created for every dhcp_agent")
-        self.L2plist = [
-                        'demo_same_ptg_l2p_l3p_bd',
-                        'demo_diff_ptg_same_l2p_l3p_bd',
-                        'demo_diff_ptg_l2p_same_l3p_bd_1',
-                        'demo_diff_ptg_l2p_same_l3p_bd_2',
-                        'demo_srvr_bd', 'demo_clnt_bd'
-                       ]
 	if not self.gbpaci.create_add_filter(self.L2plist):
 	    self._log.error(
             "\nABORTING THE TESTSUITE RUN,adding filter to SvcEpg failed")

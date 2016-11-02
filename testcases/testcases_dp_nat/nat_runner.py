@@ -4,7 +4,7 @@ import optparse
 from commands import *
 getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
 from time import sleep
-from libs.gbp_verify_libs import Gbp_Verify
+from libs.gbp_heat_libs import gbpHeat
 from libs.gbp_utils import *
 from natdptestsetup import nat_dp_main_config
 
@@ -104,7 +104,7 @@ def main():
         preExistcfg(options.cntlrIp)
     # Build the Test Config to be used for all NAT DataPath Testcases
     testbed_cfg = nat_dp_main_config(cfgfile,preexist)
-    gbpverify = Gbp_Verify() #Instantiated to fetch gbp-objects
+    gbpheat = gbpHeat(options.cntlrIp) #Instantiated to fetch gbp-objects
 
     if nat_type == 'dnat':
         # RUN ONLY DNAT DP TESTs
@@ -123,7 +123,7 @@ def main():
 					     do_config=0
 					     )
         # Fetch gbp objects via heat output
-        objs_uuid = gbpverify.get_uuid_from_stack(
+        objs_uuid = gbpheat.get_uuid_from_stack(
                     testbed_cfg.dnat_heat_temp,
                     testbed_cfg.heat_stack_name
                     )
@@ -192,7 +192,7 @@ def main():
         print 'Setting up global config for SNAT DP Testing'
         testbed_cfg.setup('snat', do_config=0)
         # Fetch gbp objects via heat output
-        objs_uuid = gbpverify.get_uuid_from_stack(
+        objs_uuid = gbpheat.get_uuid_from_stack(
                     testbed_cfg.snat_heat_temp,
                     testbed_cfg.heat_stack_name
                     )

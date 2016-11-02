@@ -6,8 +6,8 @@ import os
 import datetime
 import string
 from time import sleep
-from libs.gbp_heat_libs import Gbp_Heat
-from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_heat_libs import gbpHeat
+from libs.gbp_nova_libs import gbpNova
 from libs.raise_exceptions import *
 from libs.gbp_aci_libs import Gbp_Aci
 from libs.gbp_utils import *
@@ -35,8 +35,8 @@ class testcase_gbp_aci_intg_leaf_1(object):
       self.heat_stack_name = 'gbpleaf1'
       cntlr_ip = params['cntlr_ip']
       self.heat_temp_test = params['heat_temp_file']
-      self.gbpheat = Gbp_Heat(cntlr_ip)
-      self.gbpnova = Gbp_Nova(cntlr_ip)
+      self.gbpheat = gbpHeat(cntlr_ip)
+      self.gbpnova = gbpNova(cntlr_ip)
       self.leaf_ip = params['leaf1_ip']
       self.apic_ip = params['apic_ip']
       self.ntk_node = params['ntk_node']

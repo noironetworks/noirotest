@@ -6,8 +6,8 @@ import os
 import datetime
 import string
 import re
-from libs.gbp_conf_libs import Gbp_Config
-from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_conf_libs import gbpCfgCli
+from libs.gbp_nova_libs import gbpNova
 from libs.gbp_fab_traff_libs import Gbp_def_traff
 from libs.gbp_pexp_traff_libs import Gbp_pexp_traff
 from libs.raise_exceptions import *
@@ -18,11 +18,11 @@ class NatTraffic(object):
     NAT Traffic Base Class
     """
 
-    def __init__(self, ostack_controller, vm_list, ntk_node):
+    def __init__(self, ostack_cntrlr_ip, vm_list, ntk_node):
 
         self.ntk_node = ntk_node
-        self.gbpcfg = Gbp_Config()
-        self.gbpnova = Gbp_Nova(ostack_controller)
+        self.gbpcfg = gbpCfgCli(ostack_cntrlr_ip)
+        self.gbpnova = gbpNova(ostack_cntrlr_ip)
         self.vm_list = vm_list
         print " List of VMs passed from the testsuite ", vm_list
         self.vm_to_ip_ns = {}

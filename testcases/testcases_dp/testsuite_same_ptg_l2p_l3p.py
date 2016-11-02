@@ -6,7 +6,7 @@ import os
 import datetime
 import string
 import pprint
-from libs.gbp_conf_libs import Gbp_Config
+from libs.gbp_conf_libs import gbpCfgCli
 from libs.gbp_aci_libs import GbpApic
 from libs.gbp_fab_traff_libs import Gbp_def_traff
 from libs.gbp_pexp_traff_libs import Gbp_pexp_traff
@@ -37,7 +37,7 @@ class test_same_ptg_same_l2p_same_l3p(object):
 
     def __init__(self, objs_uuid):
 
-        self.gbpcfg = Gbp_Config()
+        self.gbpcfg = gbpCfgCli(super_hdr.cntlr_ip)
         self.gbpdeftraff = Gbp_def_traff()
         stack_name = super_hdr.stack_name
         heat_temp = super_hdr.heat_temp
@@ -150,14 +150,13 @@ class test_same_ptg_same_l2p_same_l3p(object):
         # Incase of Same PTG all traffic is allowed irrespective what Policy-Ruleset is applied
         # Hence verify_traff will check for all protocols including the
         # implicit ones
-        gbpcfg = Gbp_Config()
         if self.vm_loc == 'diff_host_same_leaf' or self.vm_loc == 'diff_host_diff_leaf':
-            dest_ip = gbpcfg.get_vm_subnet('VM3', ret='ip')
+            dest_ip = self.gbpcfg.get_vm_subnet('VM3', ret='ip')
             self._log.debug("VM1-IP: %s, VM1-subnet: %s, Dest-IP: %s, NetNS: %s" %(self.vm1_ip, self.vm1_subn, dest_ip, self.dhcp_ns))
             gbppexptraff = Gbp_pexp_traff(
                 self.ntk_node, self.dhcp_ns, self.vm1_ip, dest_ip)
         if self.vm_loc == 'same_host':
-            dest_ip = gbpcfg.get_vm_subnet('VM2', ret='ip')
+            dest_ip = self.gbpcfg.get_vm_subnet('VM2', ret='ip')
             self._log.debug("VM1-IP: %s, VM1-subnet: %s, Dest-IP: %s, NetNS: %s" %(self.vm1_ip, self.vm1_subn, dest_ip, self.dhcp_ns))
             gbppexptraff = Gbp_pexp_traff(
                 self.ntk_node, self.dhcp_ns, self.vm1_ip, dest_ip)

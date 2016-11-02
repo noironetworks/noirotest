@@ -7,7 +7,7 @@ import string
 import pdb
 from libs.raise_exceptions import *
 from libs.gbp_crud_libs import GBPCrud
-from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_nova_libs import gbpNova
 
 for j in range(1, 7):                                                                                      
 
@@ -17,7 +17,7 @@ for j in range(1, 7):
     pt_dict = gbp_crud.get_gbp_policy_target_list()
     print '\nPT Dict == \n', pt_dict
 
-    gbp_nova = Gbp_Nova(sys.argv[1], os_tenant=tenantName)
+    gbp_nova = gbpNova(sys.argv[1], os_tenant=tenantName)
     
     i = 1
     for pt in pt_dict.itervalues():

@@ -8,7 +8,7 @@ import sys
 from time import sleep
 from libs.gbp_aci_libs import GbpApic
 from libs.gbp_crud_libs import GBPCrud
-from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_nova_libs import gbpNova
 from libs.raise_exceptions import *
 from libs.gbp_utils import *
 from traff_from_extgw import *
@@ -36,7 +36,7 @@ class NatFuncTestMethods(object):
     def __init__(self,cntlrip,ntknode):
         self.cntlrip = cntlrip
         self.gbpcrud = GBPCrud(cntlrip)
-        self.gbpnova = Gbp_Nova(cntlrip)
+        self.gbpnova = gbpNova(cntlrip)
         self.extsegname = 'Management-Out'
         self.natpoolname1 = 'GbpNatPoolTest1'
         self.natpoolname2 = 'GbpNatPoolTest2'

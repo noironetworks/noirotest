@@ -8,7 +8,7 @@ import pdb
 import time
 from libs.raise_exceptions import *
 from libs.gbp_crud_libs import GBPCrud
-from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_nova_libs import gbpNova
 from okeystone import Keystone
 
 # create shared L3 policy
@@ -101,7 +101,7 @@ for j in range(1, 101):
 
     # launch the VMs
     """
-    gbp_nova = Gbp_Nova(ostack_controller=sys.argv[1], os_tenant=tenantName)
+    gbp_nova = gbpNova(ostack_controller=sys.argv[1], os_tenant=tenantName)
 
     k = 1
     for pt in pt_list:

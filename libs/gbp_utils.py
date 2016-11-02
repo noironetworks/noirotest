@@ -1,21 +1,75 @@
 #!/usr/bin/env python
-import sys, time
-import paramiko
-import subprocess
-import re
-import os
-import sys
-import json
-import requests
 import itertools
-#import HTML
+import os
 from prettytable import PrettyTable
-from Crypto.PublicKey import RSA
-from raise_exceptions import *
-from fabric.api import cd,run,env, hide, get, settings,sudo
+import re
+import subprocess
+import sys
+#import HTML
+from fabric.api import cd,run,env, hide, get, settings,sudo,local
 from fabric.contrib import files
+from fabric.context_managers import *
+from raise_exceptions import *
 from time import sleep
 
+def run_openstack_cli(cmdList,cntrlrip,rc_file='/root/keystonerc_admin',
+                      username='root',passwd='noir0123'):
+    """
+    This function enables the user to
+    run cli-cmds on openstack env
+    cmdList: preferably pass the cmd/set of cmds
+             as a list
+    """
+    env.host_string = cntrlrip
+    env.user = username
+    env.password = passwd
+    if not isinstance(cmdList,list):
+       cmdList = [cmdList]
+    with settings(warn_only=True):
+        run("hostname")
+        cmd_src = 'source %s' %(rc_file)
+        with prefix(cmd_src):
+            for cmd in cmdList:
+                results = run(cmd)
+                if not results.succeeded:
+                    print "Cmd Execution Failed, bailing out"
+   		    return 0
+    return results
+
+def run_remote_cli(cmdList,hostip,username,
+                   password,passOnFailure=True):
+    "Run cmd on a remote machine"
+    env.host_string = hostip
+    env.user = username
+    env.password = password
+    if not isinstance(cmdList,list):
+       cmdList = [cmdList]
+    with settings(warn_only=True):
+        run("hostname")
+        for cmd in cmdList:
+            results = run(cmd)
+            if not results.succeeded:
+                if not passOnFailure:
+                    print "Cmd Execution Failed, continue"
+   	            pass
+                else:
+                    print "Cmd execution Failed, bailing out"
+                    return 0,results
+    return 1
+ 
+def upload_files(hostip,username,
+                 password,filename,destpath):
+    """
+    Upload files on a remote machine
+    filename:: local file
+    destpath:: the path/location in remote m/c
+    where the files should be uploaded
+    """
+    env.host_string = hostip
+    env.user = username
+    env.password = password
+    files.upload_template(filename,destpath) 
+     
 def report_table(suitename):
     ps = subprocess.Popen(['grep', '-r', 'TESTCASE', '/tmp/%s.log' %(suitename)], stdout=subprocess.PIPE)
     outPut = ps.communicate()[0]
@@ -142,7 +196,7 @@ def action_service(hostIp,service='agent-ovs',
                       return 0
         return 1   
 
-def add_route_in_extrtr(rtrip,route,nexthop,action='add',ostype='ubuntu',user='noiro',pwd='noir0123'):
+def add_route_in_extrtr(rtrip,route,nexthop,action='add',user='noiro',pwd='noir0123'):
     """
     Adding Routes in ExtRtr(Ubuntu)
     """

@@ -6,7 +6,7 @@ import os
 import datetime
 import pprint
 import string
-from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_nova_libs import gbpNova
 from libs.gbp_crud_libs import GBPCrud
 from libs.raise_exceptions import *
 from traff_from_allvms import NatTraffic
@@ -63,7 +63,7 @@ class DNAT_VMs_to_VMs(object):
         }
         self.dest_vm_fips = dest_vm_fips
         self.gbpcrud = GBPCrud(self.ostack_controller)
-        self.gbpnova = Gbp_Nova(self.ostack_controller)
+        self.gbpnova = gbpNova(self.ostack_controller)
         self.nat_traffic = NatTraffic(
             self.ostack_controller, self.vmfortraff, self.ntk_node)
 

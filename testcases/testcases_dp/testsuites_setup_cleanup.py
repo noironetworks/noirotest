@@ -5,10 +5,9 @@ import logging
 import os
 import datetime
 import yaml
-from libs.gbp_conf_libs import Gbp_Config
-from libs.gbp_verify_libs import Gbp_Verify
-from libs.gbp_heat_libs import Gbp_Heat
-from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_conf_libs import gbpCfgCli
+from libs.gbp_heat_libs import gbpHeat
+from libs.gbp_nova_libs import gbpNova
 from libs.raise_exceptions import *
 
 
@@ -33,10 +32,9 @@ class super_hdr(object):
     ntk_node = conf['ntk_node']
     apicsystemID = conf['apic_system_id']
     pausetodebug = conf['pausetodebug']
-    gbpcfg = Gbp_Config()
-    gbpverify = Gbp_Verify()
-    gbpnova = Gbp_Nova(cntlr_ip)
-    gbpheat = Gbp_Heat(cntlr_ip)
+    gbpcfg = gbpCfgCli(cntlr_ip)
+    gbpnova = gbpNova(cntlr_ip)
+    gbpheat = gbpHeat(cntlr_ip)
 
     def vm_create(self, ptgs, vmlist):
         """

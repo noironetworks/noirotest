@@ -5,14 +5,8 @@ import optparse
 from commands import *
 getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
 from time import sleep
-from libs.gbp_verify_libs import Gbp_Verify
+from libs.gbp_heat_libs import gbpHeat
 from test_main_config import gbp_main_config
-#from testcases.testcases_dp.testsuites_setup_cleanup import super_hdr, header1, header2, header3, header4
-#from testcases.testcases_dp.testsuite_same_ptg_l2p_l3p import test_same_ptg_same_l2p_same_l3p
-#from testcases.testcases_dp.testsuite_diff_ptg_same_l2p_l3p import test_diff_ptg_same_l2p_l3p
-#from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_same_l3p import test_diff_ptg_diff_l2p_same_l3p
-#from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_diff_l3p import test_diff_ptg_diff_l2p_diff_l3p
-
 
 def main():
     usage = "usage: %prog [options]"
@@ -47,10 +41,9 @@ def main():
         testbed_cfg.setup()
 
         # Fetch gbp objects via heat output
-        gbpverify = Gbp_Verify()
-        objs_uuid = gbpverify.get_uuid_from_stack(
+        gbpheat = gbpHeat(super_hdr.cntlr_ip)
+        objs_uuid = gbpheat.get_uuid_from_stack(
             super_hdr.heat_temp, super_hdr.stack_name)
-
         # Verify the configuration on ACI
         print "Verification .. sleep 30s, allowing DP learning"
         sleep(30)

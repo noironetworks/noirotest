@@ -6,10 +6,9 @@ import logging
 import re
 import datetime
 from time import sleep
-from commands import *
 import keystoneclient.v2_0.client as ksclient
-#from novaclient import client as nvclient
 from novaclient.client import Client
+from gbp_utils import *
 
 
 # Initialize logging
@@ -19,16 +18,20 @@ _log = logging.getLogger( __name__ )
 _log.setLevel(logging.INFO)
 _log.setLevel(logging.DEBUG)
 
-class Gbp_Nova(object):
+class gbpNova(object):
 
-    def __init__(self, ostack_controller, username='admin', password='noir0123', tenant='admin'):
-        cred = {}
-        cred['version'] = '2'
-        cred['username'] = username
-        cred['api_key'] = password
-        cred['project_id'] = tenant
-        cred['auth_url'] = "http://%s:5000/v2.0/" % ostack_controller
-        self.nova = Client(**cred)
+    def __init__(self,controllerIp,cntrlr_uname='root',cntrlr_passwd='noir0123', keystone_user='admin',
+                 keystone_password='noir0123', tenant='admin'):
+        self.cntrlrip = controllerIp
+        self.username = cntrlr_uname
+        self.password = cntrlr_passwd
+        self.cred = {}
+        self.cred['version'] = '2'
+        self.cred['username'] = keystone_user
+        self.cred['api_key'] = keystone_password
+        self.cred['project_id'] = tenant
+        self.cred['auth_url'] = "http://%s:5000/v2.0/" % self.cntrlrip
+        self.nova = Client(**self.cred)
         self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown','Exception']
 
     def cmd_error_check(self,cmd_out):
@@ -44,22 +47,23 @@ class Gbp_Nova(object):
         """
         Updates the instances/cores/ram
         """
-        cmd_inst = "sed -i 's/quota_instances.*/quota_instances=50/' /etc/nova/nova.conf"
-        cmd_core = "sed -i 's/quota_cores.*/quota_cores=200/' /etc/nova/nova.conf"
-        cmd_ram = "sed -i 's/quota_ram.*/quota_ram=655360000/' /etc/nova/nova.conf"
-        for cmd in [cmd_inst,cmd_core,cmd_ram]:
-           getoutput(cmd)
-        for service in ['openstack-nova-api.service','openstack-nova-scheduler.service']:
-            cmd_restart = 'systemctl restart %s' %(service)
-            getoutput(cmd_restart)
-            sleep(2)
-            cmd_verify = 'systemctl status %s' %(service)
-            out = getoutput(cmd_verify)
-            if len(re.findall('Active: active \(running\)',out)):
-               return 1
-            else:
-                _log.error('This service %s did not restart' %(service))
-                return 0
+        cmd_inst = "sed -i 's/quota_instances.*/quota_instances=-1/' /etc/nova/nova.conf"
+        cmd_core = "sed -i 's/quota_cores.*/quota_cores=-1/' /etc/nova/nova.conf"
+        cmd_ram = "sed -i 's/quota_ram.*/quota_ram=-1/' /etc/nova/nova.conf"
+        cmd_sched = "sed -i 's/^#scheduler_max_attempts=.*/scheduler_max_attempts=1/' /etc/nova/nova.conf"
+        cmd_restart1 = "service openstack-nova-api restart"
+        cmd_restart2 = "service openstack-nova-scheduler restart"
+        cmdlist = [cmd_inst,cmd_core,cmd_ram,cmd_sched,\
+                   cmd_restart1,cmd_restart2]
+        result = run_remote_cli(cmdlist,self.cntrlrip,
+                                self.username,
+                                self.password,
+                                passOnFailure=False)
+        if result:
+            return 1
+        else:
+            _log.error('One of Both Nova services did not restart')
+            return 0
 
 
     def avail_zone(self,method,action,agg_name_id,avail_zone_name='',hostname=''):
@@ -72,28 +76,35 @@ class Gbp_Nova(object):
 
         if action == 'create':
            if method == 'api':
-              agg_str = str(self.nova.aggregates.create(agg_name_id,avail_zone_name)) # By default create() returns a class,to get id converting to str() for regex
+              agg_str = str(self.nova.aggregates.create(agg_name_id,
+                                                        avail_zone_name))
+              # By default create() returns a class,to get id converting to str() for regex
               t = re.search('<Aggregate: (\d+)>',agg_str,re.I)
               if t:
                  agg_id = t.group(1)
                  return agg_id
            if method == 'cli':
-              cmd='nova aggregate-create '+agg_name_id+' '+avail_zone_name
-              cmd_out = getoutput(cmd)
-              if self.cmd_error_check(cmd_out) == 0:
-                 return 0
-              t = re.search('\\b(\d+)\\b.*\\b%s\\b.*' %(agg_name_id),cmd_out,re.I)
-              if t:
-                 agg_id = t.group(1)
-                 return agg_id
+               cmd='nova aggregate-create '+agg_name_id+' '+avail_zone_name
+               results = run_openstack_cli([cmd],self.cntrlrip,
+                                           username=self.username,
+                                           passwd=self.password)
+               if results:
+                   t = re.search('\\b(\d+)\\b.*\\b%s\\b.*'\
+                       %(agg_name_id),results,re.I)
+                   if t:
+                       agg_id = t.group(1)
+                       return agg_id
+               else:
+                   return 0
         if action == 'delete':
            if method == 'api':
               self.nova.aggregates.delete(agg_name_id)
               return 1
            if method == 'cli':
               cmd='nova aggregate-delete '+agg_name_id
-              cmd_out = getoutput(cmd)
-              if self.cmd_error_check(cmd_out) == 0:
+              if not run_openstack_cli([cmd],self.cntrlrip,
+                                   username=self.username,
+                                   passwd=self.password):
                  return 0
               return 1
         if action == 'addhost':
@@ -102,8 +113,9 @@ class Gbp_Nova(object):
               return 1
            if method == 'cli':
               cmd='nova aggregate-add-host '+agg_name_id+' %s' %(hostname)
-              cmd_out = getoutput(cmd_out)
-              if self.cmd_error_check(cmd_out) == 0:
+              if not run_openstack_cli([cmd],self.cntrlrip,
+                                   username=self.username,
+                                   passwd=self.password):
                  return 0
               return 1
         if action == 'removehost':
@@ -112,8 +124,9 @@ class Gbp_Nova(object):
               return 1
            if method == 'cli':
               cmd='nova aggregate-remove-host '+agg_name_id+' %s' %(hostname)
-              cmd_out = getoutput(cmd)
-              if self.cmd_error_check(cmd_out) == 0:
+              if not run_openstack_cli([cmd],self.cntrlrip,
+                                   username=self.username,
+                                   passwd=self.password):
                  return 0
               return 1
     
@@ -134,7 +147,9 @@ class Gbp_Nova(object):
         vm_flavor = self.nova.flavors.find(name=flavor_name)
         port_id = [{'port-id': '%s' %(portid)}]
         if avail_zone != '':
-           instance = self.nova.servers.create(name=vmname, image=vm_image, flavor=vm_flavor, nics=port_id,availability_zone=avail_zone)
+           instance = self.nova.servers.create(name=vmname, image=vm_image,
+                                               flavor=vm_flavor, nics=port_id,
+                                               availability_zone=avail_zone)
         else:
            instance = self.nova.servers.create(name=vmname, image=vm_image, flavor=vm_flavor, nics=port_id)
         print instance
@@ -154,11 +169,20 @@ class Gbp_Nova(object):
           status_try +=1
         return 1
 
-    def vm_create_cli(self,vmname,vm_image,ports,avail_zone=''):
+    def vm_create_cli(self,vmname,vm_image,ports,
+                      avail_zone='',tenant=''):
         """
         Creates VM and checks for ACTIVE status
+        tenant :: pass explicit tenant-name, if needed
         """
-        cmd = 'nova boot --image '+vm_image+' --flavor m1.medium'
+        #There is a possibility that the NovaClass can be instantiated for
+        #for a given tenant-A, however in the same context user wants to 
+        #access a different tenant, hence the need of 'tenant' arg.
+        #ONLY applicable for CLI usage
+        if not tenant:
+            tenant=self.cred['project_id']
+        cmd = 'nova --os-tenant-name %s boot --image ' %(tenant)+\
+              vm_image+' --flavor m1.medium'
         if isinstance(ports,str):
            ports = [ports]
         for port in ports:
@@ -168,28 +192,15 @@ class Gbp_Nova(object):
         else:
            cmd = cmd + ' %s' %(vmname)
         print '\nvmcreate cmd ==', cmd
-        out = getoutput(cmd)
-        print '\nvmcreate out ==', out
-        if self.cmd_error_check(out) == 0:
-           return 0
+        if not run_openstack_cli([cmd],self.cntrlrip,
+                              username=self.username,
+                              passwd=self.password):
+            _log.info("Creation of VM failed using CLI")
+            return 0
         sleep(5)
-        cmd = 'nova show '+vmname
-        out = getoutput(cmd)
-        status_try = 1
-        while True:
-            if re.findall('ACTIVE',out) != []:
-               break
-            else:
-               _log.info("Retrying every 5s .... to check if VM is ACTIVE state")
-               sleep(5)
-               out = getoutput(cmd)
-               if status_try > 10:
-                  _log.error("After waiting for 50 seconds, VM status is NOT ACTIVE")
-                  return 0
-            status_try +=1
-        return 1
-
-    def vm_delete(self,vmname,method='cli'):
+        return self.check_vm_status('create',vmname,tenant=tenant)
+                
+    def vm_delete(self,vmname,method='cli',tenant=''):
         """
         Delete Instance 
         """
@@ -197,23 +208,46 @@ class Gbp_Nova(object):
            instance = self.nova.servers.find(name=vmname)
            instance.delete()
         else:
-           cmd = 'nova delete '+vmname
-           out = getoutput(cmd)
+           if not tenant:
+               tenant=self.cred['project_id']
+           cmd = 'nova --os-tenant-name %s delete ' %(tenant)+vmname
+           results = run_openstack_cli([cmd],self.cntrlrip,
+                                    username=self.username,
+                                    passwd=self.password)
+        return self.check_vm_status('delete',vmname,tenant=tenant)
+
+    def check_vm_status(self,action,vmname,tenant=''):
+        """
+        Checks the VM status based on
+        action :: 'create' or 'delete'
+        """
+        
+        if not tenant:
+            tenant=self.cred['project_id']
         status_try = 1
-        cmd = 'nova show '+vmname
-        out = getoutput(cmd)
         while True:
-            if self.cmd_error_check(out) == 0:
-               break
-            else:
-               sleep(5)
-               out = getoutput(cmd)
-               if status_try > 10:
-                  _log.error("After waiting for 50 seconds, VM still NOT Deleted")
-                  return 0
+            cmd = 'nova --os-tenant-name %s show ' %(tenant)+vmname
+            out = run_openstack_cli([cmd],self.cntrlrip,
+                                 username='root',
+                                 passwd='noir0123')
+            if action == 'create':
+                if out and re.findall('ACTIVE',out) != []:
+                    break
+                vm_state = 'NOT ACTIVE'
+            if action == 'delete':
+                if not out:
+                   break
+                vm_state = 'STILL STALE'
+            _log.info(
+            "\nRetrying every 5s to check status of VM on %s" %(action))
+            sleep(5)
+            if status_try > 3:
+               _log.error(
+               "\nAfter waiting for 50 seconds, VM status is %s" %(vm_state))
+               return 0
             status_try +=1
         return 1
-
+        
     def get_floating_ip(self,vmname):
         """
         Returns the Floating IP associated for the vmname
@@ -222,8 +256,10 @@ class Gbp_Nova(object):
         try:
            floating_ips = []
            floating_ip_class_list = self.nova.floating_ips.findall(instance_id=instance.id) 
-           # this returns a list of class FloatingIP for each floating ip of an instance
-           # The above list contains many attributes like fixed_ip,pool_id etc, we can use it to fetch those attribute if need be
+           # this returns a list of class FloatingIP for each floating ip
+           # of an instance the above list contains many attributes like
+           # fixed_ip,pool_id etc, we can use it to fetch those attribute
+           # if need be
            for index in range(0,len(floating_ip_class_list)):
                floating_ips.append(floating_ip_class_list[index].ip.encode('ascii'))
         except Exception:

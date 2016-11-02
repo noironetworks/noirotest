@@ -8,7 +8,7 @@ import yaml
 from time import sleep
 from libs.gbp_aci_libs import GbpApic
 from libs.gbp_crud_libs import GBPCrud
-from libs.gbp_nova_libs import Gbp_Nova
+from libs.gbp_nova_libs import gbpNova
 
 Log = logging.getLogger(__name__)
 Log.setLevel(logging.INFO)
@@ -23,7 +23,7 @@ class GbpAllCleanup(object):
 
     def __init__(self,cntlrip,apicip):
         self.gbpcrud = GBPCrud(cntlrip)
-        self.gbpnova = Gbp_Nova(cntlrip)
+        self.gbpnova = gbpNova(cntlrip)
 	self.gbpapic = GbpApic(apicip,'gbp')
 
     def cleanupAll(self):

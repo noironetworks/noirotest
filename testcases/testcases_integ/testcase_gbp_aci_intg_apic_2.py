@@ -7,11 +7,11 @@ import datetime
 import yaml
 import string
 from time import sleep
-from libs.gbp_conf_libs import Gbp_Config
+from libs.gbp_conf_libs import gbpCfgCli
 from libs.gbp_verify_libs import Gbp_Verify
 from libs.gbp_fab_traff_libs import Gbp_def_traff
 from libs.gbp_pexp_traff_libs import Gbp_pexp_traff
-from libs.gbp_heat_libs import Gbp_Heat
+from libs.gbp_heat_libs import gbpHeat
 from libs.raise_exceptions import *
 from libs.gbp_aci_libs import Gbp_Aci
 from libs.gbp_utils import *
@@ -34,15 +34,15 @@ class  testcase_gbp_aci_intg_apic_2(object):
 
     def __init__(self,params):
 
-      self.gbpcfg = Gbp_Config()
+      self.gbpcfg = gbpCfgCli()
       self.gbpverify = Gbp_Verify()
       self.gbpdeftraff = Gbp_def_traff()
       self.gbpaci = Gbp_Aci()
       self.heat_stack_name = 'gbpapic3'
       self.cntlr_ip = params['cntlr_ip']
       self.heat_temp_test = params['heat_temp_file']
-      self.gbpheat = Gbp_Heat(self.cntlr_ip)
-      self.gbpnova = Gbp_Nova(self.cntlr_ip)
+      self.gbpheat = gbpHeat(self.cntlr_ip)
+      self.gbpnova = gbpNova(self.cntlr_ip)
       self.leaf_ip = params['leaf1_ip']
       self.apic_ip = params['apic_ip']
       self.ntk_node = params['ntk_node']

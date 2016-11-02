@@ -5,11 +5,11 @@ import logging
 import os
 import datetime
 import string
-from libs.gbp_heat_libs import Gbp_Heat
+from libs.gbp_heat_libs import gbpHeat
 from libs.raise_exceptions import *
 from libs.gbp_aci_libs import Gbp_Aci
-from libs.gbp_nova_libs import Gbp_Nova
-from libs.gbp_conf_libs import Gbp_Config
+from libs.gbp_nova_libs import gbpNova
+from libs.gbp_conf_libs import gbpCfgCli
 from libs.gbp_verify_libs import Gbp_Verify
 from libs.gbp_fab_traff_libs import Gbp_def_traff
 from libs.gbp_pexp_traff_libs import Gbp_pexp_traff
@@ -21,7 +21,7 @@ def verify_traff(ntk_node,vm_loc='default',proto=['all']):
         """
         #Incase of Diff PTG Same L2 & L3P all traffic is dis-allowed by default unless Policy-Ruleset is applied
         # Hence verify_traff will check for all protocols including the implicit ones
-        gbpcfg = Gbp_Config()
+        gbpcfg = gbpCfgCli()
         vm4_ip = gbpcfg.get_vm_subnet('VM4')[0]
         vm4_subn = gbpcfg.get_vm_subnet('VM4')[1]
         dhcp_ns = gbpcfg.get_netns(ntk_node,vm4_subn)
@@ -72,8 +72,8 @@ def SetUpConfig(cntlr_ip,apic_ip,agg_name,avail_zone_name,az_comp_node_name,heat
         """
         Test Step using Heat, setup the Test Config
         """
-        gbpheat = Gbp_Heat(cntlr_ip)
-        gbpnova = Gbp_Nova(cntlr_ip)
+        gbpheat = gbpHeat(cntlr_ip)
+        gbpnova = gbpNova(cntlr_ip)
         print ("\nSetupCfg: Create Aggregate & Availability Zone to be executed\n")
         agg_id = self.gbpnova.avail_zone('api','create',agg_name,avail_zone_name=avail_zone_name)
         if agg_id == 0:
