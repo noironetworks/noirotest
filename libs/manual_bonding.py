@@ -214,7 +214,7 @@ class Bonding(object):
                    #first remove the below config params(meant for vxlan)
                    for pat in ['uplink-iface','uplink-vlan',
                                'remote-ip','remote-port']:
-                       run('sed -i '+"'/%s/d' " %(pat)+destfile)
+                       run('sed -i '+"'/%s/d' " %(pat)+path)
                    result1 = run("sed -i 's/\"encap-iface\":.*,/\"encap-iface\": \"%s\",/' %s" %(vif_name,path))
                    result2 = run("ovs-vsctl add-port br-int bond0")
                    if result2.succeeded:
