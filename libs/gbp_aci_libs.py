@@ -19,6 +19,7 @@ import os
 import re
 import json
 import requests
+import sys
 from time import sleep
 from commands import *
 from fabric.api import cd,run,env, hide, get, settings, local, lcd
@@ -40,24 +41,10 @@ class GbpApic(object):
         self.user = username
         self.passwd = password
 	self.apicsystemID = apicsystemID
-	self.mode = mode # pass the arg mode as 'gbp' or 'ml2'
-	if self.mode == 'gbp':
-               self.appProfile = 'ap-%s_app' %(self.apicsystemID)
-        elif self.mode == 'ml2':
-               self.appProfile = 'ap-%s' %(self.apicsystemID)
+        self.appProfile = '%s_app' %(self.apicsystemID)
         self.cookies = None
         self.login()
       
-    def cmd_error_check(self,cmd_output):
-        """
-        Verifies whether executed cmd has any known error string
-        """
-        for err in self.err_strings:
-            if re.search('\\b%s\\b' %(err), cmd_output, re.I):
-               _log.info(cmd_output)
-               _log.info("Cmd execution failed! with this Return Error: \n%s" %(err))
-               return 0
-
     def exec_admin_cmd(self,ip,cmd='',passwd='noir0123'):
         env.host_string = ip
         env.user = "admin"
@@ -83,43 +70,10 @@ class GbpApic(object):
         env.disable_known_hosts = True
         out = run(cmd)
         if out.failed:
-            raise ErrorRemoteCommand("---ERROR---: Error running %s on %s as user root, stderr %s" % (cmd,ip,out.stderr))
+            raise ErrorRemoteCommand(
+                  "---ERROR---: Error running %s on %s as user root,"
+                  "stderr %s" % (cmd,ip,out.stderr))
         return out
-
-    def opflex_proxy_act(self,leaf_ip,act='restart'):
-        """
-        Function to 'restart', 'stop' & 'start' opflex_proxy
-        leaf_ip = IP Address of a Leaf
-        act = restart/stop/start
-        """
-        cmd_ps = 'ps aux | grep svc_ifc_opflexp'
-        out = re.search('\\broot\\b\s+(\d+).*/isan/bin/svc_ifc_opflexp',self.exec_root_cmd(leaf_ip,cmd_ps),re.I)
-        if out != None:
-           pid = int(out.group(1))        
-        if act == 'stop':
-           cmd_stop = "kill -s SEGV %s" %(pid)
-           for i in range(1,8):
-               self.exec_root_cmd(leaf_ip,cmd_stop)
-               sleep(5)
-               out = re.search('\\broot\\b\s+(\d+).*/isan/bin/svc_ifc_opflexp',self.exec_root_cmd(leaf_ip,cmd_ps),re.I)
-               if out == None:
-                  break
-	       i=i+1
-        if act == 'start':
-           cmd_start = 'vsh & test reparse 0xf'
-           self.exec_root_cmd(leaf_ip,cmd_start)
-           sleep(5)
-           cmd_chk = 'vsh & show system internal sysmgr service name opflex_proxy'
-           if len(re.findall('State: SRV_STATE_HANDSHAKED',self.exec_root_cmd(leaf_ip,cmd_chk))) > 1:
-              return 1
-        if act == 'restart':
-           cmd = "kill -HUP %s" %(pid)
-           out = self.exec_root_cmd(leaf_ip,cmd)
-        if out.failed:
-            raise ErrorRemoteCommand("---ERROR---: Error running %s on %s as user root, stderr %s" % (cmd,leaf_ip,out.stderr))
-        print 'Checking whether process got new pid = \n', self.exec_root_cmd(leaf_ip,cmd_ps)
-        
-        return 1 
 
     def apic_verify_mos(self,apic_ip,objs,tenant='admin',uname='admin',passwd='noir0123'):
         """
@@ -239,43 +193,49 @@ class GbpApic(object):
 		print e
 		return None
 
-    def getTenant(self,ostack_tenant=''):
+    def getTenant(self,getDN=True):
         """
         Method to get the tenant from APIC
         which will correspond to an openstack project/tenant
         ostack_tenant :: openstack tenant/project-name
         """
-        tenants = []
-        pathtenants = '/api/node/mo/uni.json?query-target=subtree&target-subtree-class=fvTenant'
+        tenants = {}
+        pathtenants = '/api/node/mo/uni.json?'+\
+                      'query-target=subtree&target-subtree-class=fvTenant'
         reqfortnts = self.get(pathtenants)
         details = reqfortnts.json()['imdata']
         #NOTE: In aim-aid, UUID will be used instead of name
         #and the exact ostack proj-name will appear as name-alias
+        #In aim-aid, nameAlias is always True, then 'name' attribute
+        #will be the UUID of the Ostack Project
         for item in details:
-            if item['fvTenant']['attributes']['nameAlias']:
-                tnt = item['fvTenant']['attributes']['nameAlias']
-            else:
-                tnt = item['fvTenant']['attributes']['name']
-            if ostack_tenant:
-                if ostack_tenant in tnt:
-                   return tnt
-            else:
-                tenants.append(tnt)
+            try:
+                #tntname will be UUID for Ostack projects
+                tntname = item['fvTenant']['attributes']['name']
+                if tntname not in ['common','mgmt','infra']:
+                   if item['fvTenant']['attributes']['nameAlias']:
+                        tntdispname = item['fvTenant']['attributes']['nameAlias']
+                        tntdn = item['fvTenant']['attributes']['dn']
+                        tenants[tntdispname]=tntdn
+                   else:
+                       raise Exception(
+                       "nameAlias is NOT FOUND in APIC for Tenant %s" %(tntname))
+            except Exception as e:
+                print 'Finding Tenant failed because: '+repr(e)       
+                pass
         return tenants
 
-    def getEpgOper(self,tnt):
+    def getEpgOper(self,tntdn):
 	"""
         Method to fetch EPG and their Endpoints iand BD for a given tenant
-        tnt: tenant name
+        tntdn: tenant's DN, incase of 'common' tenant, pass tntdn as 'common'
 	"""
 	finaldictEpg = {}
-        if tnt == 'common':
-               apictenant = 'tn-common'
-        else:
-               apictenant = 'tn-_%s_%s' %(self.apicsystemID,tnt)
+        if tntdn == 'common':
+               tntdn = 'uni/tn-common'
 	tenantepgdict = {}
-	pathtenantepg = '/api/node/mo/uni/%s/%s.json?query-target=children&target-subtree-class=fvAEPg'\
-                            %(apictenant,self.appProfile)
+	pathtenantepg = '/api/node/mo/%s/%s.json?query-target=children&target-subtree-class=fvAEPg'\
+                            %(tntdn,self.appProfile)
 	#print 'Tenant EPG Path', pathtenantepg
 	reqforepgs = self.get(pathtenantepg)
         tntDetails = reqforepgs.json()['imdata']
@@ -305,18 +265,16 @@ class GbpApic(object):
         #print 'EPG Details == \n', finaldictEpg
 	return finaldictEpg
            
-    def getBdOper(self,tnt):
+    def getBdOper(self,tntdn):
 	"""
 	Method to fetch subnets,their scopes,L3out association
 	"""
         finaldictBD = {}
-        if tnt == 'common':
-               apictenant = 'tn-common'
-        else:
-               apictenant = 'tn-_%s_%s' %(self.apicsystemID,tnt)
+        if tntdn == 'common':
+               tntdn = 'tn-common'
 	tenantbddict = {}
-	pathtenantbd = '/api/node/mo/uni/%s.json?query-target=children&target-subtree-class=fvBD'\
-			   %(apictenant)
+	pathtenantbd = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvBD'\
+			   %(tntdn)
 	#print 'Tenant BD Path', pathtenantbd
 	reqforbds = self.get(pathtenantbd)
 	tntDetails = reqforbds.json()['imdata']
@@ -366,18 +324,16 @@ class GbpApic(object):
 	return finaldictBD
 
     
-    def getL3Out(self,tnt):
+    def getL3Out(self,tntdn):
 	"""
 	Method to fetch the L3Out, its associated VRF and External Ntk
 	for a given Tenant/s
 	"""
 	finaldictL3Out = {}
 	tenantdictL3Out = {}
-	if tnt == 'common':
-	      apictenant = 'tn-common'
-	else:
-	       apictenant = 'tn-_%s_%s' %(self.apicsystemID,tnt)
-	pathtenantL3Outs = '/api/node/mo/uni/%s.json?query-target=children&target-subtree-class=l3extOut' %(apictenant)
+	if tntdn == 'common':
+	      tntdn = 'tn-common'
+	pathtenantL3Outs = '/api/node/mo/%s.json?query-target=children&target-subtree-class=l3extOut' %(tntdn)
 	#print 'Tenant L3Out Path', pathtenantL3Outs
 	reqforL3Outs = self.get(pathtenantL3Outs)
         tntDetails = reqforL3Outs.json()['imdata']
@@ -399,16 +355,14 @@ class GbpApic(object):
 	#print 'L3 Out Details == \n', finaldictL3Out
 	return finaldictL3Out
 
-    def getVrfs(self,tnt):
+    def getVrfs(self,tntdn):
 	"""
 	Fetch VRF for tenant/s
 	"""
 	finalvrfprops = []
-	if tnt == 'common':
-               apictenant = 'tn-common'
-        else:
-               apictenant = 'tn-_%s_%s' %(self.apicsystemID,tnt)
-        pathtenantvrf = '/api/node/mo/uni/%s.json?query-target=children&target-subtree-class=fvCtx' %(apictenant)
+	if tntdn == 'common':
+               tntdn = 'tn-common'
+        pathtenantvrf = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvCtx' %(tntdn)
 	reqforvrfs = self.get(pathtenantvrf)
 	tntDetails = reqforvrfs.json()['imdata']
 	for item in tntDetails:
@@ -448,30 +402,37 @@ class GbpApic(object):
             path = '/api/node/mo/%s.json' %(deltnt)
             self.delete(path)
 
-    def create_add_filter(self,svcepg,tenant='admin'):
+    def create_add_filter(self,tntdn='uni/tn-admin_c0880'):
         """
         svcepg: Preferably pass a list of svcepgs if more than one
         """
         #Create the noiro-ssh filter with ssh & rev-ssh subjects
-        apictenant = 'tn-_%s_%s' %(self.apicsystemID,tenant)
-        path = '/api/node/mo/uni/%s/flt-noiro-ssh.json' %(apictenant)
-        data = '{"vzFilter":{"attributes":{"dn":"uni/%s/flt-noiro-ssh","name":"noiro-ssh","rn":"flt-noiro-ssh","status":"created"},"children":[{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh","name":"ssh","etherT":"ip","prot":"tcp","sFromPort":"22","sToPort":"22","rn":"e-ssh","status":"created"},"children":[]}},{"vzEntry":{"attributes":{"dn":"uni/%s/flt-noiro-ssh/e-ssh-rev","name":"ssh-rev","etherT":"ip","prot":"tcp","dFromPort":"22","dToPort":"22","rn":"e-ssh-rev","status":"created"},"children":[]}}]}}' %(3*(apictenant,))
-        self.post(path, data)
-        # Add the noiro-ssh filter to every svcepg_contract
-        if not isinstance(svcepg,list):
-               svcepg = [svcepg]
-        for epg in svcepg:
-                path = '/api/node/mo/uni/%s/brc-Svc-%s/subj-Svc-%s.json' %(apictenant,epg,epg)
-                data = '{"vzRsSubjFiltAtt":{"attributes":{"tnVzFilterName":"noiro-ssh","status":"created"},"children":[]}}'
-	        self.post(path, data)
+        path = '/api/node/mo/%s/flt-noiro-ssh.json' %(tntdn)
+        data = '{"vzFilter":{"attributes":{"dn":"%s/flt-noiro-ssh","name":"noiro-ssh","rn":"flt-noiro-ssh","status":"created,modified"},"children":[{"vzEntry":{"attributes":{"dn":"%s/flt-noiro-ssh/e-ssh","name":"ssh","etherT":"ip","prot":"tcp","sFromPort":"22","sToPort":"22","rn":"e-ssh","status":"created,modified"},"children":[]}},{"vzEntry":{"attributes":{"dn":"%s/flt-noiro-ssh/e-rev-ssh","name":"rev-ssh","etherT":"ip","prot":"tcp","dFromPort":"22","dToPort":"22","rn":"e-rev-ssh","status":"created,modified"},"children":[]}}]}}' %(3*(tntdn,))
+        results = self.post(path, data)
+        print results
+        # Fetch all the Svc* contracts for this tenant
+        pathtntcont = '/api/node/mo/%s.json?query-target=children&target-subtree-class=vzBrCP' %(tntdn)
+        reqforconts = self.get(pathtntcont)
+        tntDetails = reqforconts.json()['imdata']
+        tntcontdn = {}
+        for item in tntDetails:
+            if 'Svc' in item['vzBrCP']['attributes']['name'].encode():
+                tntcontdn[item['vzBrCP']['attributes']['name'].encode()] = item['vzBrCP']['attributes']['dn']
+        # Add the noiro-ssh filter to every Svc-contract in this tenant
+        for ctname,ctdn in tntcontdn.iteritems():
+            #print ctname, ctdn
+            path = '/api/node/mo/%s/subj-%s.json' %(ctdn,ctname)
+            #print path
+            data = '{"vzRsSubjFiltAtt":{"attributes":{"tnVzFilterName":"noiro-ssh","status":"created,modified"},"children":[]}}'
+	    self.post(path, data)
         return 1
     
-    def addRouteInShadowL3Out(self,l3p,l3out,extPol,subnet,tenant='admin'):
+    def addRouteInShadowL3Out(self,l3p,l3out,extPol,subnet,tntdn='admin'):
         
-        apictenant = 'tn-_%s_%s' %(self.apicsystemID,tenant)
         shdL3out = '%s_Shd-%s-%s' %(self.apicsystemID,l3p,l3out)
         shdExtPol = '%s_Shd-%s-%s' %(self.apicsystemID,l3p,extPol)
-        path = '/api/node/mo/uni/%s/'%(apictenant)+\
+        path = '/api/node/mo/%s/'%(tntdn)+\
                'out-_%s/' %(shdL3out)+'instP-_%s/extsubnet-[%s].json'\
                %(shdExtPol,subnet)
         dn = path.lstrip('/api/node/mo').rstrip('.json')
@@ -483,13 +444,12 @@ class GbpApic(object):
         req = self.post(path,data)
         print req
 
-    def addEnforcedToPtg(self,epg,flag='enforced',tenant='admin'):
+    def addEnforcedToPtg(self,epg,tntdn,flag='enforced'):
         """
         Add Enforced flag to the PTG
         """
-        apictenant = 'tn-_%s_%s' %(self.apicsystemID,tenant)
-        path = '/api/node/mo/uni/%s/%s/epg-%s.json' %(apictenant,self.appProfile,epg)
-        data = '{"fvAEPg":{"attributes":{"dn":"uni/%s/%s/epg-%s","pcEnfPref":"%s"},"children":[]}}' %(apictenant,self.appProfile,epg,flag)
+        path = '/api/node/mo/%s/%s/epg-%s.json' %(tntdn,self.appProfile,epg)
+        data = '{"fvAEPg":{"attributes":{"dn":"%s/%s/epg-%s","pcEnfPref":"%s"},"children":[]}}' %(tntdn,self.appProfile,epg,flag)
         req = self.post(path, data)
         print req
 

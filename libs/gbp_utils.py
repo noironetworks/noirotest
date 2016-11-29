@@ -70,7 +70,7 @@ def run_remote_cli(cmdList,hostip,username,
                 else:
                     print "Cmd execution Failed, bailing out"
                     return 0,results
-    return 1
+    return results
  
 def upload_files(hostip,username,
                  password,filename,destpath):
@@ -85,6 +85,14 @@ def upload_files(hostip,username,
     env.password = password
     files.upload_template(filename,destpath) 
      
+def get_apic_system_id(hostip,username,password,
+                       filename='/etc/neutron/neutron.conf'):
+    #NOTE: For aim-aid the filename should be /etc/aim/aim.conf
+    cmd = "sed -nre 's/^apic_system_id=(.*)/\\1/p' %s" filename
+    apic_aystem_id = run_remote_cli(cmd,hostip,username,password)
+   if apic_system_id:
+      return apic_system_id
+
 def report_table(suitename):
     ps = subprocess.Popen(['grep', '-r', 'TESTCASE', '/tmp/%s.log' %(suitename)], stdout=subprocess.PIPE)
     outPut = ps.communicate()[0]
