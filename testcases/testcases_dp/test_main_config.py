@@ -56,7 +56,6 @@ class gbp_main_config(object):
         self.gbpnova = gbpNova(self.cntlr_ip)
         self.gbpheat = gbpHeat(self.cntlr_ip)
 	self.gbpaci = GbpApic(self.apic_ip,
-			       'gbp',
 			       apicsystemID=self.apicsystemID) 
 	self.vmlist = ['VM1','VM2','VM3','VM4',
 		       'VM5','VM6','VM7','VM8',
@@ -70,6 +69,11 @@ class gbp_main_config(object):
                         'demo_diff_ptg_l2p_same_l3p_bd_2',
                         'demo_srvr_bd', 'demo_clnt_bd'
                        ]
+        #Fetch the Tenant's DN for Openstack project 'admin'
+        apictnts = self.gbpaci.getTenant()
+        self.tntDN = [apictnts[key] for key in apictnts.iterkeys()\
+                      if 'admin' in key][0]
+
     def setup(self):
         """
         Availability Zone creation
@@ -131,7 +135,7 @@ class gbp_main_config(object):
         sleep(5)  # Sleep 5s assuming that all objects are created in APIC
         self._log.info(
             "\n Adding SSH-Filter to Svc_epg created for every dhcp_agent")
-	if not self.gbpaci.create_add_filter(self.L2plist):
+	if not self.gbpaci.create_add_filter(self.tntDN):
 	    self._log.error(
             "\nABORTING THE TESTSUITE RUN,adding filter to SvcEpg failed")
 	    self.cleanup()
