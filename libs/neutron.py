@@ -131,13 +131,16 @@ class neutronCli(object):
 	return 0
 
     def netcrud(self,name,action,\
-                tenant='admin',external=False, shared=False):
+                tenant='admin',external=False, 
+                shared=False, aim=''):
         if action == 'create':
 	   if external:
 	        if shared:
 	           cmd = 'neutron --os-tenant-name %s net-create %s --router:external --shared' %(tenant,name)
 	        else:
 	           cmd = 'neutron --os-tenant-name %s net-create %s --router:external' %(tenant,name)
+                if aim:
+                   cmd = cmd + ' %s' %(aim)
 	   else:
 	        cmd = 'neutron --os-tenant-name %s net-create %s' %(tenant,name)
 	   ntkId = self.getuuid(self.runcmd(cmd))
@@ -148,7 +151,8 @@ class neutronCli(object):
 	   cmd = 'neutron --os-tenant-name %s net-delete %s' %(tenant,name)
            self.runcmd(cmd)
 
-    def subnetcrud(self,name,action,ntkNameId=None,cidr=None,tenant='admin'):
+    def subnetcrud(self,name,action,ntkNameId=None,cidr=None,tenant='admin',
+                   extsub=False,aim='' ):
 	"""
 	Create/Delete subnets for a given tenant
 	action: 'create' or 'delete' are the only valid strings to pass
@@ -156,7 +160,13 @@ class neutronCli(object):
         cidr: Mandatory to pass when action == create
         """
 	if action == 'create':
-	   cmd = 'neutron --os-tenant-name %s subnet-create %s %s --name %s' %(tenant,ntkNameId,cidr,name) 
+            if extsub:
+	        cmd = 'neutron --os-tenant-name %s subnet-create %s %s --name %s --disable-dhcp'\
+                      %(tenant,ntkNameId,cidr,name)
+                if aim:
+                    cmd = cmd +' %s' %(aim)
+            else:
+	        cmd = 'neutron --os-tenant-name %s subnet-create %s %s --name %s' %(tenant,ntkNameId,cidr,name) 
 	   subnetId = self.getuuid(self.runcmd(cmd))
 	   if subnetId:
 	       return subnetId

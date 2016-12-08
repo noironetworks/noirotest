@@ -34,8 +34,11 @@ _log.setLevel(logging.INFO)
 _log.setLevel(logging.DEBUG)
 
 class GbpApic(object):
-    def __init__(self, addr,mode,apicsystemID='noirolab',username='admin', password='noir0123', ssl=True):
-        self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown','Exception']
+    def __init__(self, addr, apicsystemID='noirolab',\
+                 username='admin', password='noir0123', ssl=True):
+        self.err_strings=['Unable','Conflict',\
+                          'Bad Request','Error',\
+                          'Unknown','Exception']
         self.addr = addr
         self.ssl = ssl
         self.user = username
@@ -213,15 +216,16 @@ class GbpApic(object):
                 #tntname will be UUID for Ostack projects
                 tntname = item['fvTenant']['attributes']['name']
                 if tntname not in ['common','mgmt','infra']:
+                   tntdn = item['fvTenant']['attributes']['dn']
                    if item['fvTenant']['attributes']['nameAlias']:
                         tntdispname = item['fvTenant']['attributes']['nameAlias']
-                        tntdn = item['fvTenant']['attributes']['dn']
                         tenants[tntdispname]=tntdn
                    else:
+		       tenants[tntname]=tntdn
                        raise Exception(
                        "nameAlias is NOT FOUND in APIC for Tenant %s" %(tntname))
             except Exception as e:
-                print 'Finding Tenant failed because: '+repr(e)       
+                print 'WARNING: '+repr(e)       
                 pass
         return tenants
 
@@ -240,9 +244,13 @@ class GbpApic(object):
 	reqforepgs = self.get(pathtenantepg)
         tntDetails = reqforepgs.json()['imdata']
   	for item in tntDetails:
+            try:
                 epgName = item['fvAEPg']['attributes']['name']
 		epgDn = item['fvAEPg']['attributes']['dn']
                 tenantepgdict[epgDn] = epgName
+            except Exception as e:
+                print 'WARNING: '+repr(e)
+                return {}
 	if len(tenantepgdict):
 	        for dn,epgname in tenantepgdict.iteritems():
 		    finaldictEpg[epgname] = {}
@@ -402,7 +410,7 @@ class GbpApic(object):
             path = '/api/node/mo/%s.json' %(deltnt)
             self.delete(path)
 
-    def create_add_filter(self,tntdn='uni/tn-admin_c0880'):
+    def create_add_filter(self,tntdn='uni/tn-admin_c75a9'):
         """
         svcepg: Preferably pass a list of svcepgs if more than one
         """
