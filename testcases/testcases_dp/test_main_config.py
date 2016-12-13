@@ -6,11 +6,11 @@ import os
 import datetime
 import yaml
 from time import sleep
-from commands import *
 from libs.gbp_heat_libs import gbpHeat
 from libs.gbp_nova_libs import gbpNova
 from libs.gbp_aci_libs import GbpApic
 from libs.gbp_compute import Compute
+from libs.keystone import Keystone
 from libs.gbp_utils import *
 
 
@@ -31,7 +31,7 @@ class gbp_main_config(object):
     # Add the handler to the logger
     _log.addHandler(hdlr)
 
-    def __init__(self, cfg_file):
+    def __init__(self, cfg_file,plugin=''):
         """
         Iniatizing the test-cfg variables & classes
         """
@@ -53,8 +53,10 @@ class gbp_main_config(object):
         self.heat_stack_name = conf['heat_dp_stack_name']
 	self.pausetodebug = conf['pausetodebug']
         self.test_parameters = conf['test_parameters']
+	self.plugin = plugin
         self.gbpnova = gbpNova(self.cntlr_ip)
         self.gbpheat = gbpHeat(self.cntlr_ip)
+	self.keyst = Keystone(self.cntlr_ip)
 	self.gbpaci = GbpApic(self.apic_ip,
 			       apicsystemID=self.apicsystemID) 
 	self.vmlist = ['VM1','VM2','VM3','VM4',
@@ -70,34 +72,30 @@ class gbp_main_config(object):
                         'demo_srvr_bd', 'demo_clnt_bd'
                        ]
         #Fetch the Tenant's DN for Openstack project 'admin'
+        if self.plugin:
+	    tnt = self.keyst.get_tenant_attribute('admin','id')
+        else:
+            tnt='admin'
         apictnts = self.gbpaci.getTenant()
         self.tntDN = [apictnts[key] for key in apictnts.iterkeys()\
-                      if 'admin' in key][0]
+                      if tnt in key][0]
 
     def setup(self):
         """
         Availability Zone creation
-        SSH Key creation
         Heat Stack Creates All Test Config
         """
-        # Enabling Route Reflector
-        self._log.info("\n Set the APIC Route Reflector")
-        cmd = 'apic-route-reflector --ssl SSL %s admin noir0123' % (
-            self.apic_ip)
-        getoutput(cmd)
 
-        # Updating/Enabling Nova config for quota & availability-zone
-        self._log.info("\n Update Nova Quota")
-        if self.gbpnova.quota_update() == 0:
-            self._log.error(
-                "\n ABORTING THE TESTSUITE RUN, Updating the Nova Quota's Failed")
-            sys.exit(1)
+        # Updating/Enabling Nova config availability-zone
         if self.num_hosts > 1:
             try:
-               cmd = "nova aggregate-list" # Check if Agg already exists then delete
-               if self.nova_agg in getoutput(cmd):
+               # Check if Agg already exists then delete
+	       cmdagg = run_openstack_cli("nova aggregate-list", self.cntlr_ip)
+               if self.nova_agg in cmdagg:
                   self._log.warning("Residual Nova Agg exits, hence deleting it")
-                  self.gbpnova.avail_zone('cli', 'removehost', self.nova_agg, hostname=self.comp_node)
+                  self.gbpnova.avail_zone('cli', 'removehost',
+                                           self.nova_agg, 
+                                           hostname=self.comp_node)
                   self.gbpnova.avail_zone('cli', 'delete', self.nova_agg)
                self._log.info("\nCreating Nova Host-aggregate & its Availability-zone")
                self.agg_id = self.gbpnova.avail_zone(
@@ -135,11 +133,48 @@ class gbp_main_config(object):
         sleep(5)  # Sleep 5s assuming that all objects are created in APIC
         self._log.info(
             "\n Adding SSH-Filter to Svc_epg created for every dhcp_agent")
-	if not self.gbpaci.create_add_filter(self.tntDN):
-	    self._log.error(
-            "\nABORTING THE TESTSUITE RUN,adding filter to SvcEpg failed")
-	    self.cleanup()
-	    sys.exit(1)
+        try:
+	    if self.plugin: #i.e. if 'aim'
+	       tnt_id = self.keyst.get_tenant_attribute('admin','id')
+	       cmdgetContracts = 'aimctl manager contract-find --tenant_name %s -p | grep Svc' %(tnt_id)
+	       cmdcont = run_remote_cli(cmdgetContracts, self.cntlr_ip, 'root','noir0123')
+	       if not cmdcont:
+		   raise Exception("aimctl for finding contracts failed")
+	       s = re.search('\\b%s\s+(Svc-[a-z0-9]*)' %(tnt_id),cmdcont,re.I)
+	       svcCont = s.group(1)
+	       if not svcCont:
+		   raise Exception("Svc contract not found")
+ 	       cmdcrFlt = 'aimctl manager filter-create %s noiro-ssh' %(tnt_id)
+               cmdflt = run_remote_cli(cmdcrFlt,self.cntlr_ip, 'root','noir0123')
+	       if not cmdflt:
+		   raise Exception("aimctl filter-create failed")
+	       cmdfltent1 = "aimctl manager filter-entry-create --ether_type ip"+\
+                          " --ip_protocol tcp --source_from_port 22 "+\
+                          "--source_to_port 22 %s noiro-ssh ssh" %(tnt_id)
+	       cmdfltent2 = "aimctl manager filter-entry-create --ether_type ip"+\
+                          " --ip_protocol tcp --dest_from_port 22 "+\
+                          "--dest_to_port 22 %s noiro-ssh ssh-rev" %(tnt_id)
+	       for cmd in [cmdfltent1,cmdfltent2]:
+		    cmdfltent = run_remote_cli(cmd,self.cntlr_ip, 'root','noir0123')
+	  	    if not cmdfltent:
+			raise Exception("aimctl filter-entry-create failed")
+	       #Assumption Svc_COntrat name & its subject name are both same
+	       cmdUpdContSubj = "aimctl manager contract-subject-update "+\
+			        "--bi_filters noiro-ssh "+\
+				"%s %s %s" %(tnt_id,svcCont,svcCont)
+	       sleep(100) #JISHNU, for manually updating the contractSubject
+	       #JISHNU: Below 3 lines of code will be obseleted by aim-api
+	       #cmdsubjout = run_remote_cli(cmdUpdContSubj, self.cntlr_ip, 'root','noir0123')
+	       #if not cmdsubjout:
+	       #	   raise Exception("aimctl updating contract subject failed")
+            else:
+	        if not self.gbpaci.create_add_filter(self.tntDN):
+			raise Exception("adding filter to SvcEpg failed")
+	except Exception as e:
+                 self._log.error(
+                 "\nABORTING THE TESTSUITE RUN: " + repr(e))
+	         self.cleanup()
+	         sys.exit(1)
 
     def verifySetup(self):
    	"""

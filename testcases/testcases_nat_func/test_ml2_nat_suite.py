@@ -501,28 +501,18 @@ class NatML2TestSuite(object):
         )
         self.NETtoVM = {}
         vm_num = 1
-        i = 0  # Intent is to place VMs alternately on two comp-nodes
+        az = self.neutron.alternate_az(self.avzone):  # Intent is to place VMs alternately on two comp-nodes
         avzonetoHost = [self.avhost, self.novahost]
         for netid, name in self.netIDnames[self.tnt1].iteritems():
             self.NETtoVM[name] = {}
             self.vmname = '%s-VM-' % (self.tnt1) + str(vm_num)
-            if i:
-                avzone = 'nova'
-                avhost = self.novahost
-            else:
-                avzone = self.avzone
-                avhost = self.avhost
             vmcreate = self.neutron.spawnVM(self.tnt1,
                                             self.vmname,
                                             netid,
-                                            availzone='%s' % (
-                                                avzone)
+                                            availzone=az.next()
                                             )
             # vmcreate: label for the return value which is
             # [vmip,portID,portMAC]
-            i += 1
-            if i > 1:
-                i = 0
             if not vmcreate:
                 LOG.error("\nStep-4-TC-5:Fail: VM Creation Failed")
                 return 0

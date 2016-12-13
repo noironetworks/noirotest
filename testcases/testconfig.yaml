@@ -1,10 +1,10 @@
 #!highlight yaml
 
 # Mandatory: User must not change the below config params
-dnat_heat_temp: '/root/gbpauto/testcases/heat_temps/heat_dnat_only.yaml'
-snat_heat_temp: '/root/gbpauto/testcases/heat_temps/heat_snat_only.yaml'
-preexist_dnat_temp: '/root/gbpauto/testcases/heat_temps/preexist_dnat_only.yaml'
-preexist_snat_temp: '/root/gbpauto/testcases/heat_temps/preexist_snat_only.yaml'
+dnat_heat_temp: 'heat_dnat_only.yaml'
+snat_heat_temp: 'heat_snat_only.yaml'
+preexist_dnat_temp: 'preexist_dnat_only.yaml'
+preexist_snat_temp: 'preexist_snat_only.yaml'
 main_setup_heat_temp: 'heat_tmpl_regular_dp_tests.yaml'
 nova_agg_name: 'gbp_agg'
 nova_az_name: 'gbp_zone'
@@ -14,19 +14,19 @@ key_name: 'gbpkey' #Ensure that it is same as mentioned in heat template
 apic_system_id: 'noirolab'
 # User editable config params
 num_comp_nodes: 2
-apic_ip: '172.28.184.30'
+apic_ip: '172.28.184.40'
 apic_passwd: 'noir0123'
-leaf1_ip: '172.28.184.31'
-leaf2_ip: '172.28.184.32'
-spine_ip: '172.28.184.33'
-controller_ip: '172.28.184.35'
+leaf1_ip: '172.28.184.41'
+leaf2_ip: '172.28.184.42'
+spine_ip: '172.28.184.43'
+controller_ip: '172.28.184.45'
 neutronconffile: '/etc/neutron/neutron.conf' #Ensure it has the VALID apic_external_network config section defined
-ntk_node: '172.28.184.36' #in our lab env, compute-1=network-node
-az_comp_node: 'f2-compute-1.noiro.lab'
-compute_2: '172.28.184.37'
-ext_gw_rtr: '172.28.184.38'
-fip1_of_extgw: '1.102.1.1'
-fip2_of_extgw: '1.102.2.1'
+ntk_node: '172.28.184.46' #in our lab env, compute-1=network-node
+az_comp_node: 'f3-compute-1.noiro.lab'
+compute_2: '172.28.184.47'
+ext_gw_rtr: '172.28.184.48'
+fip1_of_extgw: '1.103.1.1'
+fip2_of_extgw: '1.103.2.1'
 #NOTE:Below Flag 'preexist' if True,then ensure 'Datacenter-Out' & 'Management-Out' are configured in APIC
 #with their resp external-policies as 'DcExtPol' & 'MgmtExtPol' << ensure name staring are as EXACT as given
 #here

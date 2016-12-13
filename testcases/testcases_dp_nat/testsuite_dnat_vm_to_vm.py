@@ -8,7 +8,6 @@ import pprint
 import string
 from libs.gbp_nova_libs import gbpNova
 from libs.gbp_crud_libs import GBPCrud
-from libs.raise_exceptions import *
 from traff_from_allvms import NatTraffic
 from libs.gbp_utils import *
 import uuid

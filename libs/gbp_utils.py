@@ -27,7 +27,7 @@ from fabric.context_managers import *
 from raise_exceptions import *
 from time import sleep
 
-def run_openstack_cli(cmdList,cntrlrip,rc_file='/root/keystonerc_admin',
+def run_openstack_cli(cmdList,cntrlrip,
                       username='root',passwd='noir0123'):
     """
     This function enables the user to
@@ -41,13 +41,16 @@ def run_openstack_cli(cmdList,cntrlrip,rc_file='/root/keystonerc_admin',
     if not isinstance(cmdList,list):
        cmdList = [cmdList]
     with settings(warn_only=True):
-        run("hostname")
-        cmd_src = 'source %s' %(rc_file)
+        os_flvr = run('cat /etc/os-release',quiet=True)
+        if 'Red Hat' in os_flvr:
+            cmd_src = 'source /root/keystonerc_admin'
+        if 'Ubuntu' in os_flvr:
+            cmd_src = 'source ~/openrc'
         with prefix(cmd_src):
             for cmd in cmdList:
-                results = run(cmd)
+                results = run(cmd,quiet=True)
                 if not results.succeeded:
-                    print "Cmd Execution Failed, bailing out"
+		    print "Unsuccessfull cmd-run output, bailing out ==\n",results
    		    return 0
     return results
 
@@ -88,9 +91,9 @@ def upload_files(hostip,username,
 def get_apic_system_id(hostip,username,password,
                        filename='/etc/neutron/neutron.conf'):
     #NOTE: For aim-aid the filename should be /etc/aim/aim.conf
-    cmd = "sed -nre 's/^apic_system_id=(.*)/\\1/p' %s" filename
+    cmd = "sed -nre 's/^apic_system_id=(.*)/\\1/p' %s" %(filename)
     apic_aystem_id = run_remote_cli(cmd,hostip,username,password)
-   if apic_system_id:
+    if apic_system_id:
       return apic_system_id
 
 def report_table(suitename):

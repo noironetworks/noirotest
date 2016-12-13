@@ -55,6 +55,7 @@ class test_same_ptg_same_l2p_same_l3p(object):
         self.test_5_prs = objs_uuid['demo_ruleset_icmp_tcp_id']
         self.test_6_prs = objs_uuid['demo_ruleset_icmp_udp_id']
         self.test_7_prs = objs_uuid['demo_ruleset_all_id']
+	self.plugin_mode = objs_uuid['plugin_mode']
         self.vm1_ip = self.gbpcfg.get_vm_subnet('VM1')[0]
         self.vm1_subn = self.gbpcfg.get_vm_subnet('VM1')[1]
         self.dhcp_ns = self.gbpcfg.get_netns(self.ntk_node, self.vm1_subn)
@@ -81,16 +82,22 @@ class test_same_ptg_same_l2p_same_l3p(object):
             ptg_name = 'demo_same_ptg_l2p_l3p_ptg' #TBD: JISHNU For now hardcoded, we will improve this
             if flag == 'enforced':
                expectedRetVal = 0
-               self.gbpaci.addEnforcedToPtg(
-                                ptg_name,
-                                tenant='admin',
-                                ) #Cant use self.ptg as its a UUID instead of namestring
+	       if self.plugin_mode == 'aim':
+                  self.gbpcfg.gbp_policy_cfg_all(2, 'group', self.ptg, intra_ptg_allow="True")
+	       else:
+                   self.gbpaci.addEnforcedToPtg(
+                   		                ptg_name,
+                                		tenant='admin',
+                                		) #Cant use self.ptg as its a UUID instead of namestring
             else:
-               self.gbpaci.addEnforcedToPtg(
-                                ptg_name,
-                                flag=flag,
-                                tenant='admin',
-                                )
+	       if self.plugin_mode == 'aim':
+                  self.gbpcfg.gbp_policy_cfg_all(2, 'group', self.ptg, intra_ptg_allow="False")
+	       else:
+                   self.gbpaci.addEnforcedToPtg(
+                   		                ptg_name,
+                                		flag=flag,
+                                		tenant='admin',
+                                		)	
                expectedRetVal = 1
             for test in test_list:
                 repeat_test = 1

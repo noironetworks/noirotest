@@ -43,7 +43,7 @@ class gbpCfgCli(object):
       """
       Execute system calls
       """
-      return run_openstack_cli(cmdList,self.cntrlrip,rc_file=self.rcfile,
+      return run_openstack_cli(cmdList,self.cntrlrip,
                                username=self.uname,passwd=self.passwd)
 
     def gbp_uuid_get(self,cmd_out):

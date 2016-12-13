@@ -55,7 +55,7 @@ class gbpHeat(object):
                _log.info("Cmd execution failed! with this Return Error: \n%s" %(cmd_out))
                return 0
  
-    def cfg_all_cli(self,val,name,heat_temp='',tenant=''):
+    def cfg_all_cli(self,val,name,heat_temp='',tenant='',upload=False):
         """
         Function to create/delete a pre-defined Heat Template
         -parma val : 0 for delete, 1 for create
@@ -64,11 +64,12 @@ class gbpHeat(object):
            tenant = self.tenant
         cmd_ver = "heat --os-tenant-name %s stack-show %s" %(tenant,name)
         if val ==1: ## Create & Verify Stack
-            upload_files(self.cntrlrip,
-                         self.username,
-                         self.password,
-                         heat_temp,
-                         '~/')
+	    if upload:
+                upload_files(self.cntrlrip,
+                             self.username,
+                             self.password,
+                             heat_temp,
+                             '~/')
             cmd_cfg = "heat --os-tenant-name %s stack-create -f %s "\
                      %(tenant,heat_temp)+ name
             cfg_out = self.run_heat_cli(cmd_cfg)
@@ -144,10 +145,14 @@ class gbpHeat(object):
             objs_uuid[key] = cmd_out
         return objs_uuid
 
-    def get_uuid_from_stack(self,yaml_file,heat_stack_name):
+    def get_uuid_from_stack(self,heat_templ_file,heat_stack_name):
         """
         Fetches the UUID of the GBP Objects created by Heat
         """
+        path = path='../'
+        for root,dirs,files in os.walk(path):
+            if heat_templ_file in files:
+	        yaml_file = os.path.join(root, heat_templ_file)
         with open(yaml_file,'rt') as f:
            heat_conf = yaml.load(f)
         obj_uuid = {}

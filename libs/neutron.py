@@ -225,6 +225,12 @@ class neutronCli(object):
 	   for net in netList:
 		self.runcmd('neutron --os-tenant-name %s net-delete %s' %(tenant,net))
 
+    def alternate_az(self,avzone):
+	"Alternately returns AvailZone for alternate VM placement"
+	while True:
+	    yield avzone
+            yield 'nova'
+
     def spawnVM(self,tenant,vmname,net='',port='',availzone=''):
         """
         Method for spawning VMs using net-id or port-id

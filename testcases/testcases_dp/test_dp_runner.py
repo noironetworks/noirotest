@@ -14,6 +14,10 @@ def main():
     parser.add_option("-c", "--configfile",
                       help="Mandatory Arg: Name of Config File with location",
                       dest='configfile')
+    parser.add_option("-m", "--mode",
+                      help="Type of noiro plugin, valid string: aim ",
+                      default='',
+                      dest='mode')
     parser.add_option("-i", "--integ",
                       help="integrated ACI Tests. "\
                       "Valid strings: borderleaf or leaf or spine",
@@ -37,13 +41,18 @@ def main():
              test_diff_ptg_diff_l2p_diff_l3p
         # Build the Test Config to be used for all DataPath Testcases
         print "Setting up global config for all DP Testing"
-        testbed_cfg = gbp_main_config(options.configfile)
-        testbed_cfg.setup()
-
+	if options.mode == 'aim':
+            plugin_type = 'aim'
+        else:
+  	    plugin_type = ''
+        testbed_cfg = gbp_main_config(options.configfile,plugin=plugin_type)
+        #testbed_cfg.setup() #JISHNU
         # Fetch gbp objects via heat output
         gbpheat = gbpHeat(super_hdr.cntlr_ip)
         objs_uuid = gbpheat.get_uuid_from_stack(
             super_hdr.heat_temp, super_hdr.stack_name)
+	objs_uuid['plugin_mode'] = options.mode
+	print "JISHNU .. print objs_uuid dict ==\n", objs_uuid
         """ #TBD: JISHNU: removed until verification Libs are fixed for aim-aid
         # Verify the configuration on ACI
         print "Verification .. sleep 30s, allowing DP learning"

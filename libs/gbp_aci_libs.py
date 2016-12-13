@@ -410,7 +410,7 @@ class GbpApic(object):
             path = '/api/node/mo/%s.json' %(deltnt)
             self.delete(path)
 
-    def create_add_filter(self,tntdn='uni/tn-admin_c75a9'):
+    def create_add_filter(self,tntdn):
         """
         svcepg: Preferably pass a list of svcepgs if more than one
         """
