@@ -33,7 +33,7 @@ _log = logging.getLogger( __name__ )
 _log.setLevel(logging.INFO)
 _log.setLevel(logging.DEBUG)
 
-class GbpApic(object):
+class gbpApic(object):
     def __init__(self, addr, apicsystemID='noirolab',\
                  username='admin', password='noir0123', ssl=True):
         self.err_strings=['Unable','Conflict',\

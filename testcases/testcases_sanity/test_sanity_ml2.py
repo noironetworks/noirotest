@@ -11,6 +11,7 @@ from libs.gbp_aci_libs import *
 from libs.gbp_utils import *
 from libs.neutron import *
 from libs.gbp_compute import *
+from libs.gbp_pexp_traff_libs import gbpExpTraff
 
 
 # Initialize logging
@@ -30,7 +31,9 @@ with open(cfgfile, 'rt') as f:
 CNTRLIP = conf['controller_ip']
 APICIP = conf['apic_ip']
 TNT_LIST_ML2 =  ['FOO','BOOL']
-TNT_LIST_GBP = ['COKE','GRASS']
+TNT_LIST_GBP = ['MANDRAKE','GARTH']
+ML2vms = {'FOO' : ['FVM1','FVM2'], 'BOOL' : ['BVM3']}
+GBPvms = {'MANDRAKE' : ['MVM1','MVM2'], 'GARTH' : ['GVM3']}
 EXTRTR = conf['ext_rtr']
 EXTRTRIP1 = conf['extrtr_ip1']
 EXTRTRIP2 = conf['extrtr_ip2']
@@ -42,14 +45,15 @@ COMPUTE1 = conf['compute-1']
 COMPUTE2 = conf['compute-2']
 EXTDNATCIDR,FIPBYTES = '50.50.50.0/28', '50.50.50.'
 EXTSNATCIDR = '55.55.55.0/28'
+comp1 = Compute(COMPUTE1)
+comp2 = Compute(COMPUTE2)
+neutron = neutronCli(CNTRLIP)
+neutron_api = neutronPy(CNTRLIP)
+apic = gbpApic(APICIP)
 
 class crudML2(object):
-    global comp1 comp2 tnt1 tnt2 ml2Ntks ml2Subs tnt1sub tnt2sub neutron\
-           apic Cidrs vms
-    comp1 = Compute(COMPUTE1)
-    comp2 = Compute(COMPUTE2)
-    neutron = neutronCli(CNTRLIP)
-    apic = GbpApic(APICIP)
+    global tnt1 tnt2 ml2Ntks ml2Subs tnt1sub tnt2sub\
+           Cidrs vms
     tnt1, tnt2 = TNT_LIST_ML2[0],TNT_LIST_ML2[1]
     ml2Ntks,ml2Subs,Cidrs,vms = {},{},{},{}
     ml2Ntks[tnt1] = ['Net1', 'Net2']
@@ -58,8 +62,8 @@ class crudML2(object):
     ml2Subs[tnt2] = ['sub3']
     Cidrs[tnt1] = ['1.1.1.0/28','2.2.2.0/28']
     Cidrs[tnt2] = ['3.3.3.0/28']
-    vms[tnt1] = ['FVM1','FVM2']
-    vms[tnt2] = ['BVM3']
+    vms[tnt1] = ML2vms[tnt1]
+    vms[tnt2] = ML2vms[tnt2]
     neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create')
 
     def create_external_network_subnets(self):
@@ -74,7 +78,7 @@ class crudML2(object):
         aimsnat = '--apic:snat_host_pool True'
 	print aimntkcfg
 	try:
-	    neutron.netcrud('Management-Out','create',external=True,
+	   neutron.netcrud('Management-Out','create',external=True,
                             shared=True, aim = aimntkcfg)
             neutron.subnetcrud('extsub1','create',ntkNameId='Management-Out',
  			       cidr=EXTDNATCIDR,extsub=True)
@@ -165,6 +169,7 @@ class crudML2(object):
 	%(tnt))
         # Since VMs are created with 'default' secgroup, hence
         # adding rules to the default secgroup
+	vm_ntk_ip = {}
         neutron.runcmd(
             'nova --os-tenant-name %s secgroup-add-rule default icmp -1 -1 0.0.0.0/0'
             % (tnt))
@@ -179,6 +184,7 @@ class crudML2(object):
                                            self.networkIDs[tnt][i],
                                            availzone=az.next()
                                        	   )
+		vm_ntk_ip[vms[tnt][i]] = [vmcreate[0],self.networkIDs[tnt][i]]
 	    except Exception as e:
                 LOG.error('VM Creation for tnt %s Failed' %(tnt))
                 return 0
@@ -206,6 +212,24 @@ class verifyML2(object):
 
 
 class sendTraffic(object):
-	# Access the VMs from netns
-	# Send ICMP, TCP traffic(ExtGw, Fabric GW, VM-to-VM
-	# VErify the results
+    #Ensure to inherit/instantiate the class after 
+    #all VMs are created
+    def __init__(self,vm_ntk_ip):
+  	self.traff_from_vm = {}
+	pingable_ips = [ip for val in vm_ntk_ip.values() for ip in x][0::2]+\
+			[EXTRTRIP1,EXTRTRIP2]
+	for vm,prop in vm_ntk_ip.iteritems():
+	    dest_ips = pingable_ips
+	    self.traff_from_vm[vm] = {'netns' : 'qdhcp-'+prop[1],
+				      'src_ip' : prop[0],
+				      'dest_ip' : dest_ips.remove(prop[0])
+				     }
+	
+    def traff_from_vm(self,vmname):
+	vm_traff = gbpExpTraff(NETNODE,self.traff_from_vm['netns'],
+				self.traff_from_vm['src_ip'],
+				self.traff_from_vm['dest_ip'])
+	
+	return vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1)
+
+

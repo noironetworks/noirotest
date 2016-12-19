@@ -8,7 +8,7 @@ import yaml
 from time import sleep
 from libs.gbp_heat_libs import gbpHeat
 from libs.gbp_nova_libs import gbpNova
-from libs.gbp_aci_libs import GbpApic
+from libs.gbp_aci_libs import gbpApic
 from libs.gbp_compute import Compute
 from libs.keystone import Keystone
 from libs.gbp_utils import *
@@ -57,7 +57,7 @@ class gbp_main_config(object):
         self.gbpnova = gbpNova(self.cntlr_ip)
         self.gbpheat = gbpHeat(self.cntlr_ip)
 	self.keyst = Keystone(self.cntlr_ip)
-	self.gbpaci = GbpApic(self.apic_ip,
+	self.gbpaci = gbpApic(self.apic_ip,
 			       apicsystemID=self.apicsystemID) 
 	self.vmlist = ['VM1','VM2','VM3','VM4',
 		       'VM5','VM6','VM7','VM8',
@@ -136,37 +136,10 @@ class gbp_main_config(object):
         try:
 	    if self.plugin: #i.e. if 'aim'
 	       tnt_id = self.keyst.get_tenant_attribute('admin','id')
-	       cmdgetContracts = 'aimctl manager contract-find --tenant_name %s -p | grep Svc' %(tnt_id)
-	       cmdcont = run_remote_cli(cmdgetContracts, self.cntlr_ip, 'root','noir0123')
-	       if not cmdcont:
-		   raise Exception("aimctl for finding contracts failed")
-	       s = re.search('\\b%s\s+(Svc-[a-z0-9]*)' %(tnt_id),cmdcont,re.I)
-	       svcCont = s.group(1)
-	       if not svcCont:
-		   raise Exception("Svc contract not found")
- 	       cmdcrFlt = 'aimctl manager filter-create %s noiro-ssh' %(tnt_id)
-               cmdflt = run_remote_cli(cmdcrFlt,self.cntlr_ip, 'root','noir0123')
-	       if not cmdflt:
-		   raise Exception("aimctl filter-create failed")
-	       cmdfltent1 = "aimctl manager filter-entry-create --ether_type ip"+\
-                          " --ip_protocol tcp --source_from_port 22 "+\
-                          "--source_to_port 22 %s noiro-ssh ssh" %(tnt_id)
-	       cmdfltent2 = "aimctl manager filter-entry-create --ether_type ip"+\
-                          " --ip_protocol tcp --dest_from_port 22 "+\
-                          "--dest_to_port 22 %s noiro-ssh ssh-rev" %(tnt_id)
-	       for cmd in [cmdfltent1,cmdfltent2]:
-		    cmdfltent = run_remote_cli(cmd,self.cntlr_ip, 'root','noir0123')
-	  	    if not cmdfltent:
-			raise Exception("aimctl filter-entry-create failed")
-	       #Assumption Svc_COntrat name & its subject name are both same
-	       cmdUpdContSubj = "aimctl manager contract-subject-update "+\
-			        "--bi_filters noiro-ssh "+\
-				"%s %s %s" %(tnt_id,svcCont,svcCont)
-	       sleep(100) #JISHNU, for manually updating the contractSubject
-	       #JISHNU: Below 3 lines of code will be obseleted by aim-api
-	       #cmdsubjout = run_remote_cli(cmdUpdContSubj, self.cntlr_ip, 'root','noir0123')
-	       #if not cmdsubjout:
-	       #	   raise Exception("aimctl updating contract subject failed")
+	       if isinstance (run_remote_cli(
+                              "python add_ssh_filter.py %s create" %(tnt_id),
+                               self.cntlr_ip, 'root', 'noir0123'), tuple):
+		        raise Exception("adding filter to SvcEpg failed in AIM")
             else:
 	        if not self.gbpaci.create_add_filter(self.tntDN):
 			raise Exception("adding filter to SvcEpg failed")
@@ -253,6 +226,10 @@ class gbp_main_config(object):
         self._log.info("Cleaning Up The Test Config")
         if stack == 0:
            self.gbpheat.cfg_all_cli(0, self.heat_stack_name)
+	   if self.plugin:
+	       # Remove the noiro-ssh filter from AIM
+	       run_remote_cli("python add_ssh_filter.py %s create" %(tnt_id),
+                            self.cntlr_ip, 'root', 'noir0123')
            # Ntk namespace cleanup in Network-Node.. VM names are static
            # throughout the test-cycle
            del_netns(self.ntk_node)

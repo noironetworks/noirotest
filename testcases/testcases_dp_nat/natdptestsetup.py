@@ -9,7 +9,7 @@ from commands import *
 from time import sleep
 from libs.gbp_heat_libs import gbpHeat
 from libs.gbp_nova_libs import gbpNova
-from libs.gbp_aci_libs import GbpApic
+from libs.gbp_aci_libs import gbpApic
 from libs.gbp_compute import Compute
 from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_utils import *
@@ -66,7 +66,7 @@ class nat_dp_main_config(object):
         self.neutronconffile = conf['neutronconffile']
         self.gbpnova = gbpNova(self.cntlr_ip)
         self.gbpheat = gbpHeat(self.cntlr_ip)
-	self.gbpaci = GbpApic(self.apic_ip,
+	self.gbpaci = gbpApic(self.apic_ip,
                               'gbp',
 			      apicsystemID=self.apicsystemID)
         self.gbpcrud = GBPCrud(self.cntlr_ip)

@@ -48,7 +48,7 @@ class NatML2TestSuite(object):
         self.comp1 = Compute(conf['compute-1'])
         self.comp2 = Compute(conf['compute-2'])
         self.neutron = neutronCli(self.cntlrip)
-        self.apic = GbpApic(self.apicip, 'ml2')
+        self.apic = gbpApic(self.apicip, 'ml2')
         self.tnt1, self.tnt2 = self.tenant_list[0],\
             self.tenant_list[1]
         self.netNames = {self.tnt1: ['Net1', 'Net2', 'Net3'],

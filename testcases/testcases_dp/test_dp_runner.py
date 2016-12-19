@@ -46,13 +46,12 @@ def main():
         else:
   	    plugin_type = ''
         testbed_cfg = gbp_main_config(options.configfile,plugin=plugin_type)
-        #testbed_cfg.setup() #JISHNU
+        testbed_cfg.setup()
         # Fetch gbp objects via heat output
         gbpheat = gbpHeat(super_hdr.cntlr_ip)
         objs_uuid = gbpheat.get_uuid_from_stack(
             super_hdr.heat_temp, super_hdr.stack_name)
 	objs_uuid['plugin_mode'] = options.mode
-	print "JISHNU .. print objs_uuid dict ==\n", objs_uuid
         """ #TBD: JISHNU: removed until verification Libs are fixed for aim-aid
         # Verify the configuration on ACI
         print "Verification .. sleep 30s, allowing DP learning"
@@ -75,6 +74,8 @@ def main():
 
             # Initialize Testsuite class to run its testcases
             testsuite = val[1](objs_uuid)
+                testsuite.test_runner(log_string, location)
+            # now run the loop of test-combos(NOTE: The below forloop is now part of Harness & cfgable)
             for location in ['same_host', 'diff_host_diff_leaf']:
                 if reboot:
                     log_string = "%s_%s_%s_%s_%s" % (
@@ -90,18 +91,6 @@ def main():
                               testbed_cfg.test_parameters['vpc_type'],
                               location)
                 testsuite.test_runner(log_string, location)
-        # now run the loop of test-combos(NOTE: The below forloop is now part of Harness & cfgable)
-        """
-        for bdtype in ['vxlan', 'vlan']:
-            for ip in ['ipv4', 'ipv6']:
-                for vpc in ['novpc', 'vpc_novpc', 'vpc_vpc']:
-                    for location in ['same_host', 'diff_host_same_leaf', 'diff_host_diff_leaf']:
-                        # Run the testcases specific to the initialized
-                        # testsuite
-                        log_string = "%s_%s_%s_%s" % (
-                            bdtype, ip, vpc, location)
-                        testsuite.test_runner(log_string, location)
-        """
     run() #Run the Test without any Integration Test, this will ALWAYS RUN
 
     # Options to Run ACI Integration Tests:

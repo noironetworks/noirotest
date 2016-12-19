@@ -56,6 +56,23 @@ class neutronPy(object):
     def get_port_list(self):
         return self.client.list_ports()['ports']
 
+    def get_all_port_details(self):
+	port_details = {}
+	for port in self.get_port_list():
+            port_details[port['id']] = {'owner' : port['device_owner'],
+ 				        'network' : port['network_id'],
+					'ip' : port['fixed_ips'][0]['ip_address']}
+					
+	return port_details
+    
+    def get_dhcp_port_details(self):
+	details = self.get_all_port_details()
+	dhcp_ports = {}
+	for prop in details.values():
+	    if prop['owner'] == 'network:dhcp':
+	        dhcp_ports[prop['network']] = prop['ip']
+	return dhcp_ports
+
     def get_port_by_owner(self, owner):
         ret = None
         for p in self.get_port_list():
@@ -167,8 +184,8 @@ class neutronCli(object):
                     cmd = cmd +' %s' %(aim)
             else:
 	        cmd = 'neutron --os-tenant-name %s subnet-create %s %s --name %s' %(tenant,ntkNameId,cidr,name) 
-	   subnetId = self.getuuid(self.runcmd(cmd))
-	   if subnetId:
+	    subnetId = self.getuuid(self.runcmd(cmd))
+	    if subnetId:
 	       return subnetId
 	if action == 'delete':
 	   cmd = 'neutron --os-tenant-name %s subnet-delete %s' %(tenant,name)	  

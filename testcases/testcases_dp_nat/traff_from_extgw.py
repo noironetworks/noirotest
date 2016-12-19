@@ -6,8 +6,8 @@ import os
 import datetime
 import string
 import re
-from libs.gbp_fab_traff_libs import Gbp_def_traff
-from libs.gbp_pexp_traff_libs import Gbp_pexp_traff
+from libs.gbp_fab_traff_libs import gbpFabTraff
+from libs.gbp_pexp_traff_libs import gbpExpTraff
 from libs.raise_exceptions import *
 
 
@@ -15,7 +15,7 @@ def traff_from_extgwrtr(extgwrtr_ip, fipsOftargetVMs, proto='all', jumbo=0):
     """
     Traffic from ExternalGW Router to Tenant VMs
     """
-    traff = Gbp_def_traff()
+    traff = gbpFabTraff()
     targetvm_list = ['Web-Server', 'Web-Client-1',
                      'Web-Client-2', 'App-Server']
     print 'FIPs of Target VMs == %s' % (fipsOftargetVMs)

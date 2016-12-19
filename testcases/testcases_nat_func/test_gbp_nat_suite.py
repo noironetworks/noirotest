@@ -10,7 +10,7 @@ import yaml
 from time import sleep
 from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_utils import *
-from libs.gbp_fab_traff_libs import Gbp_def_traff
+from libs.gbp_fab_traff_libs import gbpFabTraff
 from natfuncglobalcfg import GbpNatFuncGlobalCfg
 from natfunctestmethod import NatFuncTestMethods
 
@@ -58,7 +58,7 @@ class NatGbpTestSuite(object):
         self.natpoolname = self.steps.natpoolname2
         self.fipsubnet1 = self.steps.natippool1
         self.fipsubnet2 = self.steps.natippool2
-        self.forextrtr = Gbp_def_traff()
+        self.forextrtr = gbpFabTraff()
         self.flag=flag
         
     def test_runner(self):

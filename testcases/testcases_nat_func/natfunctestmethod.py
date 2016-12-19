@@ -6,7 +6,7 @@ import logging
 import sys
 
 from time import sleep
-from libs.gbp_aci_libs import GbpApic
+from libs.gbp_aci_libs import gbpApic
 from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_nova_libs import gbpNova
 from libs.raise_exceptions import *
@@ -613,7 +613,7 @@ class NatFuncTestMethods(object):
         Adds SSH contract between NS and EPG
         Needed for SNAT Tests
         """
-        aci=GbpApic(apicip,'gbp')
+        aci=gbpApic(apicip,'gbp')
         self._log.info(
             "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
         svcepglist = [

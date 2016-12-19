@@ -7,8 +7,8 @@ import datetime
 import string
 import pprint
 from libs.gbp_conf_libs import gbpCfgCli
-from libs.gbp_fab_traff_libs import Gbp_def_traff
-from libs.gbp_pexp_traff_libs import Gbp_pexp_traff
+from libs.gbp_fab_traff_libs import gbpFabTraff
+from libs.gbp_pexp_traff_libs import gbpExpTraff
 from libs.raise_exceptions import *
 from testsuites_setup_cleanup import super_hdr
 from libs.gbp_utils import *
@@ -36,7 +36,7 @@ class test_diff_ptg_diff_l2p_same_l3p(object):
     def __init__(self, objs_uuid):
 
         self.gbpcfg = gbpCfgCli(super_hdr.cntlr_ip)
-        self.gbpdeftraff = Gbp_def_traff()
+        self.gbpdeftraff = gbpFabTraff()
         stack_name = super_hdr.stack_name
         heat_temp = super_hdr.heat_temp
         self.ntk_node = super_hdr.ntk_node
@@ -131,12 +131,12 @@ class test_diff_ptg_diff_l2p_same_l3p(object):
         if self.vm_loc == 'diff_host_same_leaf' or self.vm_loc == 'diff_host_diff_leaf':
             dest_ip = self.gbpcfg.get_vm_subnet('VM9', ret='ip')
             self._log.debug('VM7-IP: %s, VM7-subnet: %s, Dest-IP: %s, NetNS: %s' %(self.vm7_ip, self.vm7_subn, dest_ip, self.dhcp_ns))
-            gbppexptraff = Gbp_pexp_traff(
+            gbppexptraff = gbpExpTraff(
                 self.ntk_node, self.dhcp_ns, self.vm7_ip, dest_ip)
         if self.vm_loc == 'same_host':
             dest_ip = self.gbpcfg.get_vm_subnet('VM8', ret='ip')
             self._log.debug('VM7-IP: %s, VM7-subnet: %s, Dest-IP: %s, NetNS: %s' %(self.vm7_ip, self.vm7_subn, dest_ip, self.dhcp_ns))
-            gbppexptraff = Gbp_pexp_traff(
+            gbppexptraff = gbpExpTraff(
                 self.ntk_node, self.dhcp_ns, self.vm7_ip, dest_ip)
         results = gbppexptraff.test_run()
         self._log.info('Results from the Testcase == %s' %(results))

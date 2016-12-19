@@ -21,6 +21,7 @@ def setup(controller_ip,apic_ip,cntlr_user='root',apic_user='admin',
 			'~/noirotest_local/testcases/heat_temps/preexist_dnat_only.yaml',
 			'~/noirotest_local/testcases/heat_temps/preexist_snat_only.yaml',
 			'~/noirotest_local/testcases/heat_temps/heat_tmpl_regular_dp_tests.yaml'
+			'add_ssh_filter.py'
 			]:
          put(heat_templt,'~/')
     #Step-2: Restart the below services

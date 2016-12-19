@@ -7,7 +7,7 @@ import re
 import sys
 from fabric.api import cd,run,env, hide, get, settings
 
-class Gbp_def_traff(object):
+class gbpFabTraff(object):
 
     # Initialize logging
     logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)

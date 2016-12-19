@@ -8,8 +8,8 @@ import string
 import re
 from libs.gbp_conf_libs import gbpCfgCli
 from libs.gbp_nova_libs import gbpNova
-from libs.gbp_fab_traff_libs import Gbp_def_traff
-from libs.gbp_pexp_traff_libs import Gbp_pexp_traff
+from libs.gbp_fab_traff_libs import gbpFabTraff
+from libs.gbp_pexp_traff_libs import gbpExpTraff
 from libs.raise_exceptions import *
 
 
@@ -100,7 +100,7 @@ class NatTraffic(object):
         dhcp_ns_vm = self.vm_to_ip_ns[vm_name][1]
         vm_pvt_ip = self.vm_to_ip_ns[vm_name][0][0]
         print 'EXTERNAL GW IPs from TESTUITE == ', extgw
-        gbppexptraff = Gbp_pexp_traff(
+        gbppexptraff = gbpExpTraff(
             self.ntk_node, dhcp_ns_vm, vm_pvt_ip, extgw)
         # Run for all protocols irrespective of the contract type
         results = gbppexptraff.test_run(
