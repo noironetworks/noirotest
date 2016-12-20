@@ -5,14 +5,13 @@ import pprint
 import re
 import string
 import sys
-import yaml
 from time import sleep
 from libs.gbp_aci_libs import *
 from libs.gbp_utils import *
 from libs.neutron import *
 from libs.gbp_compute import *
 from libs.gbp_pexp_traff_libs import gbpExpTraff
-
+from testcases.config import conf
 
 # Initialize logging
 LOG = logging.getLogger(__name__)
@@ -25,24 +24,19 @@ hdlr.setFormatter(formatter)
 LOG.addHandler(hdlr)
 
 #Extract and set global vars from config file
-cfgfile = sys.argv[1]
-with open(cfgfile, 'rt') as f:
-     conf = yaml.load(f)
 CNTRLIP = conf['controller_ip']
 APICIP = conf['apic_ip']
 TNT_LIST_ML2 =  ['FOO','BOOL']
 TNT_LIST_GBP = ['MANDRAKE','GARTH']
 ML2vms = {'FOO' : ['FVM1','FVM2'], 'BOOL' : ['BVM3']}
 GBPvms = {'MANDRAKE' : ['MVM1','MVM2'], 'GARTH' : ['GVM3']}
-EXTRTR = conf['ext_rtr']
-EXTRTRIP1 = conf['extrtr_ip1']
-EXTRTRIP2 = conf['extrtr_ip2']
+EXTRTR = conf['ext_gw_rtr']
+EXTRTRIP1 = conf['fip1_of_extgw']
+EXTRTRIP2 = conf['fip2_of_extgw']
 AVZONE = conf['nova_az_name']
 AVHOST = conf['az_comp_node']
-NOVAHOST = conf['az_nova_comp_node']
-NETNODE = conf['network_node']
-COMPUTE1 = conf['compute-1']
-COMPUTE2 = conf['compute-2']
+COMPUTE1 = conf['ntk_node']
+COMPUTE2 = conf['compute_2']
 EXTDNATCIDR,FIPBYTES = '50.50.50.0/28', '50.50.50.'
 EXTSNATCIDR = '55.55.55.0/28'
 comp1 = Compute(COMPUTE1)
@@ -52,8 +46,7 @@ neutron_api = neutronPy(CNTRLIP)
 apic = gbpApic(APICIP)
 
 class crudML2(object):
-    global tnt1 tnt2 ml2Ntks ml2Subs tnt1sub tnt2sub\
-           Cidrs vms
+    global tnt1, tnt2, ml2Ntks, ml2Subs, tnt1sub, tnt2sub, Cidrs, vms
     tnt1, tnt2 = TNT_LIST_ML2[0],TNT_LIST_ML2[1]
     ml2Ntks,ml2Subs,Cidrs,vms = {},{},{},{}
     ml2Ntks[tnt1] = ['Net1', 'Net2']
@@ -78,12 +71,12 @@ class crudML2(object):
         aimsnat = '--apic:snat_host_pool True'
 	print aimntkcfg
 	try:
-	   neutron.netcrud('Management-Out','create',external=True,
+	    neutron.netcrud('Management-Out','create',external=True,
                             shared=True, aim = aimntkcfg)
             neutron.subnetcrud('extsub1','create',ntkNameId='Management-Out',
  			       cidr=EXTDNATCIDR,extsub=True)
             neutron.subnetcrud('extsub2','create',ntkNameId='Management-Out',
- 			       cidr=EXTDNATCIDR,extsub=True,aim=aimsnat)
+ 			       cidr=EXTSNATCIDR,extsub=True,aim=aimsnat)
       	except Exception as e:
 	    LOG.error("Shared External Network Failed: "+repr(e))
             return 0
@@ -94,6 +87,9 @@ class crudML2(object):
         "## Create Private Network & Subnet for both ML2 Tenants ##\n"
         "#########################################################\n"
         )
+	self.subnetIDs = {}
+	self.networkIDs = {}
+	self.netIDnames = {}
         for tnt in [tnt1,tnt2]:
             try:
                 # Every Network has just one Subnet, 1:1
@@ -116,6 +112,9 @@ class crudML2(object):
             except Exception as e:
                LOG.error('Create Network/Subnet Failed: '+repr(e))
 	       return 0
+        print self.netIDnames
+	print self.networkIDs
+	print self.subnetIDs
 
     def create_routers(self):
         LOG.info(
@@ -179,6 +178,7 @@ class crudML2(object):
         az = neutron.alternate_az(AVZONE)
         for i in range(len(vms[tnt])):
             try:
+		n = self.networkIDs[tnt][i]
                 vmcreate = neutron.spawnVM(tnt,
                                            vms[tnt][i],
                                            self.networkIDs[tnt][i],
@@ -186,7 +186,7 @@ class crudML2(object):
                                        	   )
 		vm_ntk_ip[vms[tnt][i]] = [vmcreate[0],self.networkIDs[tnt][i]]
 	    except Exception as e:
-                LOG.error('VM Creation for tnt %s Failed' %(tnt))
+                LOG.error('VM Creation for tnt %s Failed: ' %(tnt)+repr(e))
                 return 0
 
     def attach_fip_to_vms(self,tnt):
@@ -226,7 +226,7 @@ class sendTraffic(object):
 				     }
 	
     def traff_from_vm(self,vmname):
-	vm_traff = gbpExpTraff(NETNODE,self.traff_from_vm['netns'],
+	vm_traff = gbpExpTraff(COMPUTE1,self.traff_from_vm['netns'],
 				self.traff_from_vm['src_ip'],
 				self.traff_from_vm['dest_ip'])
 	
