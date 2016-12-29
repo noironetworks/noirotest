@@ -12,7 +12,7 @@ from libs.gbp_aci_libs import gbpApic
 from libs.gbp_compute import Compute
 from libs.keystone import Keystone
 from libs.gbp_utils import *
-
+from testcases.config import conf
 
 class gbp_main_config(object):
     """
@@ -31,12 +31,10 @@ class gbp_main_config(object):
     # Add the handler to the logger
     _log.addHandler(hdlr)
 
-    def __init__(self, cfg_file,plugin=''):
+    def __init__(self, plugin):
         """
         Iniatizing the test-cfg variables & classes
         """
-        with open(cfg_file, 'rt') as f:
-            conf = yaml.load(f)
 	self.apicsystemID = conf['apic_system_id']
         self.nova_agg = conf['nova_agg_name']
         self.nova_az = conf['nova_az_name']
@@ -56,7 +54,6 @@ class gbp_main_config(object):
 	self.plugin = plugin
         self.gbpnova = gbpNova(self.cntlr_ip)
         self.gbpheat = gbpHeat(self.cntlr_ip)
-	self.keyst = Keystone(self.cntlr_ip)
 	self.gbpaci = gbpApic(self.apic_ip,
 			       apicsystemID=self.apicsystemID) 
 	self.vmlist = ['VM1','VM2','VM3','VM4',
@@ -71,14 +68,6 @@ class gbp_main_config(object):
                         'demo_diff_ptg_l2p_same_l3p_bd_2',
                         'demo_srvr_bd', 'demo_clnt_bd'
                        ]
-        #Fetch the Tenant's DN for Openstack project 'admin'
-        if self.plugin:
-	    tnt = self.keyst.get_tenant_attribute('admin','id')
-        else:
-            tnt='admin'
-        apictnts = self.gbpaci.getTenant()
-        self.tntDN = [apictnts[key] for key in apictnts.iterkeys()\
-                      if tnt in key][0]
 
     def setup(self):
         """
@@ -131,6 +120,16 @@ class gbp_main_config(object):
             self.cleanup()
             sys.exit(1)
         sleep(5)  # Sleep 5s assuming that all objects are created in APIC
+        #Fetch the Tenant's DN for Openstack project 'admin'
+        if self.plugin:
+	    self.keyst = Keystone(self.cntlr_ip)
+	    tnt = self.keyst.get_tenant_attribute('admin','id')
+        else:
+            tnt='admin'
+        apictnts = self.gbpaci.getTenant()
+        self.tntDN = [apictnts[key] for key in apictnts.iterkeys()\
+                      if tnt in key[0]]
+        #Adding SSH-filter to Svc_Contract provided by Svc_Epgs
         self._log.info(
             "\n Adding SSH-Filter to Svc_epg created for every dhcp_agent")
         try:

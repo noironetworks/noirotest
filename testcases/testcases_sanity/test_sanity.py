@@ -243,17 +243,22 @@ class crudGBP(object):
     #For now we will run with single tenant,
     #once 'shared' is supported, we will run
     #with two tenants sharing a single L3P
-    global tnt1, tnt2,vms
+    from libs.gbp_nova_libs import gbpNova
+    global tnt1, tnt2, vms, gbptnt1, gbptnt2, novatnt1, novatnt2,\
+	   gbpL3p, gbpL2p, ippool
     tnt1, tnt2 = TNT_LIST_GBP
     gbpL3p = 'L3P1'
     gbpL2p = {tnt1 : ['L2P1','L2P2']}
     ippool = {tnt1 : '70.70.70.0/24',
               tnt2 : '80.80.80.0/24'}
+    vms = {}
     vms[tnt1] = GBPvms[tnt1]
     vms[tnt2] = GBPvms[tnt2]
     neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create')
     gbptnt1 = GBPCrud(CNTRLIP,tenant=tnt1)
     gbptnt2 = GBPCrud(CNTRLIP,tenant=tnt2)
+    novatnt1 = gbpNova(CNTRLIP,tenant=tnt1)
+    novatnt2 = gbpNova(CNTRLIP,tenant=tnt2)
 
     def create_l2p(self):
         LOG.info(
@@ -262,11 +267,11 @@ class crudGBP(object):
         "##################################################################\n"
 	%(tnt1))
 	self.l2p1_uuid,self.l2p1_impl3p,self.l2p1_autoptg = \
-             gbp.create_gbp_l2policy(gbpL2p[tnt1][0],getl3p=True,autoptg=True)
+             gbptnt1.create_gbp_l2policy(gbpL2p[tnt1][0],getl3p=True,autoptg=True)
         LOG.info(
         "\n## Create explcit L2Policy associated to above implicit L3Policy ##\n"
 	)
-	self.l2p2_uuid,self.l2p2_autoptg = gbp.create_gbp_l2policy(gbpL2p[tnt1][1],
+	self.l2p2_uuid,self.l2p2_autoptg = gbptnt1.create_gbp_l2policy(gbpL2p[tnt1][1],
                                                          autoptg=True,
    				                         l3_policy_id=self.l2p1_impl3p)
 	if not self.l2p2_uuid or not self.l2p2_autoptg\
@@ -288,11 +293,11 @@ class crudGBP(object):
         "## Create Explicit PTG using L2P1 for Tenant %s ##\n"
         "##################################################\n"
 	%(tnt1))
-	self.reg_ptg = gbp.create_gbp_policy_target_group(
+	self.reg_ptg = gbptnt1.create_gbp_policy_target_group(
 				'REGPTG',
 				l2_policy_id=self.l2p1_uuid
 				)
-	if self.reg_ptg:
+	if not self.reg_ptg:
 		 return 0
 
     def create_policy_target(self):
@@ -303,24 +308,27 @@ class crudGBP(object):
         "##################################################\n"
 	%(tnt1))
 	if self.reg_ptg and self.l2p1_autoptg and self.l2p2_autoptg:
-	    self.ptgs = [self.l2p1_autoptg, self.l2p2_autoptg, self.reg_ptg]
+	    #Two PTs will be created out of self.l2p2_autoptg, so repeating
+	    #the element in the list, such that this list and ptlist length
+	    #are same
+	    self.ptgs = [self.l2p1_autoptg, self.l2p2_autoptg, self.l2p2_autoptg,\
+		         self.reg_ptg]
 	else:
 	    LOG.error(
 		    "Cannot create PTs since some PTGs are not yet initialized"
 		     )
 	    return 0
+	print 'JISHNU === ', self.ptgs
 	self.vm_to_port = {}
         self.vms = GBPvms[tnt1]
 	self.ptlist = ['pt1','pt2','pt3','pt4']
-	for i in range(len(ptlist)):
+	for i in range(len(self.ptlist)):
 	    pt = self.ptlist[i]
 	    vm = self.vms[i]
-	    if i == 1 or i == 2:
-		ptg = self.ptgs[1]
-	    else:
-		ptg = self.ptgs[i]
-	    self.vm_to_port[vm] = self.gbpcrud.create_gbp_policy_target(
-       			   pt, ptg, 1)[1]
+	    ptg = self.ptgs[i]
+	    self.vm_to_port[vm] = gbptnt1.create_gbp_policy_target(
+       			          pt, ptg, ptg_property='uuid')[1]
+	print self.vm_to_port
 	if 0 in self.vm_to_port.values():
 	    LOG.error("\nNot all PTs are created properly = %s"
                      %(self.vm_to_port))

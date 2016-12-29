@@ -11,9 +11,6 @@ from test_main_config import gbp_main_config
 def main():
     usage = "usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
-    parser.add_option("-c", "--configfile",
-                      help="Mandatory Arg: Name of Config File with location",
-                      dest='configfile')
     parser.add_option("-m", "--mode",
                       help="Type of noiro plugin, valid string: aim ",
                       default='',
@@ -25,42 +22,38 @@ def main():
                       dest='integ')
     (options, args) = parser.parse_args()
 
-    if options.configfile == None:
-        print "Please provide the ConfigFile with location"
-        sys.exit(1)
-    else:
-        from testcases.testcases_dp.testsuites_setup_cleanup import \
+    from testcases.testcases_dp.testsuites_setup_cleanup import \
              super_hdr, header1, header2, header3, header4
-        from testcases.testcases_dp.testsuite_same_ptg_l2p_l3p import \
+    from testcases.testcases_dp.testsuite_same_ptg_l2p_l3p import \
              test_same_ptg_same_l2p_same_l3p
-        from testcases.testcases_dp.testsuite_diff_ptg_same_l2p_l3p import \
+    from testcases.testcases_dp.testsuite_diff_ptg_same_l2p_l3p import \
              test_diff_ptg_same_l2p_l3p
-        from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_same_l3p import \
+    from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_same_l3p import \
              test_diff_ptg_diff_l2p_same_l3p
-        from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_diff_l3p import \
+    from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_diff_l3p import \
              test_diff_ptg_diff_l2p_diff_l3p
-        # Build the Test Config to be used for all DataPath Testcases
-        print "Setting up global config for all DP Testing"
-	if options.mode == 'aim':
-            plugin_type = 'aim'
-        else:
-  	    plugin_type = ''
-        testbed_cfg = gbp_main_config(options.configfile,plugin=plugin_type)
-        testbed_cfg.setup()
-        # Fetch gbp objects via heat output
-        gbpheat = gbpHeat(super_hdr.cntlr_ip)
-        objs_uuid = gbpheat.get_uuid_from_stack(
-            super_hdr.heat_temp, super_hdr.stack_name)
-	objs_uuid['plugin_mode'] = options.mode
-        """ #TBD: JISHNU: removed until verification Libs are fixed for aim-aid
-        # Verify the configuration on ACI
-        print "Verification .. sleep 30s, allowing DP learning"
-        sleep(30)
-        if not testbed_cfg.verifySetup():
-            testbed_cfg.cleanup()
-            sys.exit(1)
-        """
-        header_to_suite_map = {'header1': [header1, test_same_ptg_same_l2p_same_l3p],
+    # Build the Test Config to be used for all DataPath Testcases
+    print "Setting up global config for all DP Testing"
+    if options.mode == 'aim':
+            plugin = 'aim'
+    else:
+  	    plugin = ''
+    testbed_cfg = gbp_main_config(plugin)
+    testbed_cfg.setup()
+    # Fetch gbp objects via heat output
+    gbpheat = gbpHeat(super_hdr.cntlr_ip)
+    objs_uuid = gbpheat.get_uuid_from_stack(
+        super_hdr.heat_temp, super_hdr.stack_name)
+    objs_uuid['plugin_mode'] = options.mode
+    """ #TBD: JISHNU: removed until verification Libs are fixed for aim-aid
+    # Verify the configuration on ACI
+    print "Verification .. sleep 30s, allowing DP learning"
+    sleep(30)
+    if not testbed_cfg.verifySetup():
+           testbed_cfg.cleanup()
+           sys.exit(1)
+    """
+    header_to_suite_map = {'header1': [header1, test_same_ptg_same_l2p_same_l3p],
                            'header2': [header2, test_diff_ptg_same_l2p_l3p],
                             'header3': [header3, test_diff_ptg_diff_l2p_same_l3p],
                            'header4': [header4, test_diff_ptg_diff_l2p_diff_l3p]}
@@ -74,7 +67,6 @@ def main():
 
             # Initialize Testsuite class to run its testcases
             testsuite = val[1](objs_uuid)
-                testsuite.test_runner(log_string, location)
             # now run the loop of test-combos(NOTE: The below forloop is now part of Harness & cfgable)
             for location in ['same_host', 'diff_host_diff_leaf']:
                 if reboot:

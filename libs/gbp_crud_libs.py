@@ -594,13 +594,17 @@ class GBPCrud(object):
         else:
            return ptgs_list
 
-    def create_gbp_policy_target(self,name,ptg_name,pt_count=1):
+    def create_gbp_policy_target(self,name,ptg_name,pt_count=1,ptg_property='name'):
         """
         Create a Policy Target for a given PTG
-        'pt_count'= number of PTs to be created for a given PTG
+        'pt_count':: number of PTs to be created for a given PTG
+	'ptg_property':: ptg passed can be 'name' or 'uuid'
         """
         try:
-           ptg_id = self.verify_gbp_policy_target_group(ptg_name)
+	   if ptg_property == 'name':
+               ptg_id = self.verify_gbp_policy_target_group(ptg_name)
+	   else:
+	       ptg_id = ptg_name
            for i in range(pt_count):
                body = {"policy_target" : {
                                        "policy_target_group_id" : ptg_id,
@@ -781,7 +785,7 @@ class GBPCrud(object):
 	   if getl3p:
 		l3p_uuid = output['l2_policy']['l3_policy_id'].encode('ascii')
 	   if autoptg:
-	 	autoptg_uuid = output['l2_policy']['policy_target_groups']	
+	 	autoptg_uuid = output['l2_policy']['policy_target_groups'][0]	
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
            _log.error("Creating L2Policy = %s, failed" %(name))

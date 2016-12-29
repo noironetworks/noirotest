@@ -103,7 +103,7 @@ def main():
         # Setup the PreExitingL3Out Config in neutron conf
         preExistcfg(options.cntlrIp)
     # Build the Test Config to be used for all NAT DataPath Testcases
-    testbed_cfg = nat_dp_main_config(cfgfile,preexist)
+    testbed_cfg = nat_dp_main_config(preexist)
     gbpheat = gbpHeat(options.cntlrIp) #Instantiated to fetch gbp-objects
 
     if nat_type == 'dnat':

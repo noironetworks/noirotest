@@ -13,7 +13,7 @@ from libs.gbp_aci_libs import gbpApic
 from libs.gbp_compute import Compute
 from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_utils import *
-
+from testcases.config import conf
 
 class nat_dp_main_config(object):
     """
@@ -28,12 +28,10 @@ class nat_dp_main_config(object):
     _log.setLevel(logging.INFO)
     _log.setLevel(logging.DEBUG)
 
-    def __init__(self, cfg_file,preexist):
+    def __init__(self, preexist):
         """
         Iniatizing the test-cfg variables & classes
         """
-        with open(cfg_file, 'rt') as f:
-            conf = yaml.load(f)
         #self.preexist = conf['preexist'] #TBD: For now fed from commandline
 	self.apicsystemID = conf['apic_system_id']
         self.nova_agg = conf['nova_agg_name']
