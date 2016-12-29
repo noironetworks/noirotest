@@ -1,4 +1,4 @@
-from test_sanity_ml2 import *
+from test_sanity import *
 
 test_steps = crudML2()
 tnt1,tnt2 = TNT_LIST_ML2

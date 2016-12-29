@@ -169,7 +169,7 @@ class neutronCli(object):
            self.runcmd(cmd)
 
     def subnetcrud(self,name,action,ntkNameId=None,cidr=None,tenant='admin',
-                   extsub=False,aim='' ):
+                   extsub=False,aim='',subnetpool='' ):
 	"""
 	Create/Delete subnets for a given tenant
 	action: 'create' or 'delete' are the only valid strings to pass
@@ -183,7 +183,13 @@ class neutronCli(object):
                 if aim:
                     cmd = cmd +' %s' %(aim)
             else:
-	        cmd = 'neutron --os-tenant-name %s subnet-create %s %s --name %s' %(tenant,ntkNameId,cidr,name) 
+		if subnetpool:
+		    cmd = 'neutron --os-tenant-name %s' %(tenant)+\
+			  'subnet-create %s --subnetpool %s %s'\
+			  %(ntkNameId,subnetpool,name)
+		else:
+	            cmd = 'neutron --os-tenant-name %s subnet-create %s %s --name %s'\
+			  %(tenant,ntkNameId,cidr,name) 
 	    subnetId = self.getuuid(self.runcmd(cmd))
 	    if subnetId:
 	       return subnetId
@@ -211,6 +217,44 @@ class neutronCli(object):
 	          return rtrId
 	self.runcmd(cmd) 	   		
 	
+    def addscopecrud(self, name, action, tenant='admin', ip=4, shared=False):
+        if action == 'create':
+	    if shared:
+	           cmd = 'neutron --os-tenant-name %s ' %(tenant)+\
+			 'address-scope-create --shared %s %s ' %(name,ip)
+	    else:
+	           cmd = 'neutron --os-tenant-name %s ' %(tenant)+\
+			 'address-scope-create %s %s ' %(name,ip)
+	    ascId = self.getuuid(self.runcmd(cmd))
+	    if ascId:
+	       #print 'Output of ID ==\n', ascId
+	       return ascId
+	if action == 'delete':
+	   cmd = 'neutron --os-tenant-name %s address-scope-delete %s' %(tenant,name)
+           self.runcmd(cmd)
+
+    def subpoolcrud(self,name,action,address_scope='', pool='',
+		       prefix_len=28,tenant='admin', shared=False):
+	#if action:: 'create' , ONLY then address_scope,pool are mandatory
+        if action == 'create':
+	    if shared:
+	           cmd = 'neutron --os-tenant-name %s ' %(tenant)+\
+			 '--address-scope %s --shared ' %(address_scope)+\
+			 '--pool-prefix %s --default-prefixlen %s %s' \
+			 %(pool,prefix_len,name)
+	    else:
+	           cmd = 'neutron --os-tenant-name %s ' %(tenant)+\
+			 '--address-scope %s ' %(address_scope)+\
+			 '--pool-prefix %s --default-prefixlen %s %s' \
+			 %(pool,prefix_len,name)
+	    spId = self.getuuid(self.runcmd(cmd))
+	    if spId:
+	       #print 'Output of ID ==\n', spId
+	       return spId
+	if action == 'delete':
+	   cmd = 'neutron --os-tenant-name %s subnetpool-delete %s' %(tenant,name)
+           self.runcmd(cmd)
+
     def Stripper(self,cmdout):
 	"""
 	Not the Las Vegas one

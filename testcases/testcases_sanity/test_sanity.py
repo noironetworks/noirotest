@@ -10,6 +10,7 @@ from libs.gbp_aci_libs import *
 from libs.gbp_utils import *
 from libs.neutron import *
 from libs.gbp_compute import *
+from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_pexp_traff_libs import gbpExpTraff
 from testcases.config import conf
 
@@ -28,8 +29,9 @@ CNTRLIP = conf['controller_ip']
 APICIP = conf['apic_ip']
 TNT_LIST_ML2 =  ['FOO','BOOL']
 TNT_LIST_GBP = ['MANDRAKE','GARTH']
-ML2vms = {'FOO' : ['FVM1','FVM2'], 'BOOL' : ['BVM3']}
-GBPvms = {'MANDRAKE' : ['MVM1','MVM2'], 'GARTH' : ['GVM3']}
+ML2vms = {'FOO' : ['FVM1','FVM2'], 'BOOL' : ['BVM3', 'BVM4']}
+GBPvms = {'MANDRAKE' : ['MVM1','MVM2','MVM3','MVM4'],
+          'GARTH' : ['GVM3','GVM4']}
 EXTRTR = conf['ext_gw_rtr']
 EXTRTRIP1 = conf['fip1_of_extgw']
 EXTRTRIP2 = conf['fip2_of_extgw']
@@ -46,15 +48,18 @@ neutron_api = neutronPy(CNTRLIP)
 apic = gbpApic(APICIP)
 
 class crudML2(object):
-    global tnt1, tnt2, ml2Ntks, ml2Subs, tnt1sub, tnt2sub, Cidrs, vms
+    global tnt1, tnt2, ml2Ntks, ml2Subs, Cidrs, vms, addscopename, \
+	   subpoolname, subpool
     tnt1, tnt2 = TNT_LIST_ML2[0],TNT_LIST_ML2[1]
     ml2Ntks,ml2Subs,Cidrs,vms = {},{},{},{}
     ml2Ntks[tnt1] = ['Net1', 'Net2']
-    ml2Ntks[tnt2] = ['ntk3']
+    ml2Ntks[tnt2] = ['ntk3', 'ntk4']
     ml2Subs[tnt1] = ['Subnet1', 'Subnet2']
-    ml2Subs[tnt2] = ['sub3']
-    Cidrs[tnt1] = ['1.1.1.0/28','2.2.2.0/28']
-    Cidrs[tnt2] = ['3.3.3.0/28']
+    ml2Subs[tnt2] = ['sub3', 'sub4']
+    addscopename = 'asc1'
+    subpoolname = 'subpool1'
+    subpool = '22.22.22.0/24'
+    Cidrs[tnt1] = ['11.11.11.0/28', '21.21.21.0/28']
     vms[tnt1] = ML2vms[tnt1]
     vms[tnt2] = ML2vms[tnt2]
     neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create')
@@ -103,11 +108,19 @@ class crudML2(object):
                     netID = neutron.netcrud(network,'create',tnt)
                     self.netIDnames[tnt][netID] = network
                     self.networkIDs[tnt].append(netID)
-                    self.subnetIDs[tnt].append(
+		    if tnt == tnt1:
+                        self.subnetIDs[tnt].append(
                                         neutron.subnetcrud(subnet,
                                                            'create',
                                                            ntkNameId=netID,
                                                            cidr=cidr,
+                                                           tenant=tnt))
+		    else:
+			self.subnetIDs[tnt].append( 
+                                        neutron.subnetcrud(subnet,
+                                                           'create',
+                                                           ntkNameId=netID,
+                                                           subnetpool=self.subpoolID,
                                                            tenant=tnt))
             except Exception as e:
                LOG.error('Create Network/Subnet Failed: '+repr(e))
@@ -116,6 +129,26 @@ class crudML2(object):
 	print self.networkIDs
 	print self.subnetIDs
 
+    def create_add_scope(self):
+        LOG.info(
+        "\n#############################################\n"
+        "####  Create Address-Scope ONLY for Tenant %s ####\n"
+        "###############################################\n"
+        %(TNT_LIST_ML2[1]))
+	self.addscopID = neutron.addscopecrud(addscopename,'create',
+					      tenant=TNT_LIST_ML2[1])
+	
+    def create_subnetpool(self):
+        LOG.info(
+        "\n#############################################\n"
+        "####  Create SubnetPool ONLY for Tenant %s ####\n"
+        "###############################################\n"
+        %(TNT_LIST_ML2[1]))
+	self.subpoolID = neutron.subpoolcrud(subpoolname,'create',
+                                             add_scope=addscopename,
+					     pool=subpool,
+					     tenant=TNT_LIST_ML2[1])
+    
     def create_routers(self):
         LOG.info(
         "\n#############################################\n"
@@ -206,6 +239,108 @@ class crudML2(object):
 	    run_openstack_cli(cmd2)
 
 	    
+class crudGBP(object):
+    #For now we will run with single tenant,
+    #once 'shared' is supported, we will run
+    #with two tenants sharing a single L3P
+    global tnt1, tnt2,vms
+    tnt1, tnt2 = TNT_LIST_GBP
+    gbpL3p = 'L3P1'
+    gbpL2p = {tnt1 : ['L2P1','L2P2']}
+    ippool = {tnt1 : '70.70.70.0/24',
+              tnt2 : '80.80.80.0/24'}
+    vms[tnt1] = GBPvms[tnt1]
+    vms[tnt2] = GBPvms[tnt2]
+    neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create')
+    gbptnt1 = GBPCrud(CNTRLIP,tenant=tnt1)
+    gbptnt2 = GBPCrud(CNTRLIP,tenant=tnt2)
+
+    def create_l2p(self):
+        LOG.info(
+        "\n################################################################\n"
+        "## Create Explicit L2Policies, Auto-PTGs & implicit L3Policy for Tenant %s ##\n"
+        "##################################################################\n"
+	%(tnt1))
+	self.l2p1_uuid,self.l2p1_impl3p,self.l2p1_autoptg = \
+             gbp.create_gbp_l2policy(gbpL2p[tnt1][0],getl3p=True,autoptg=True)
+        LOG.info(
+        "\n## Create explcit L2Policy associated to above implicit L3Policy ##\n"
+	)
+	self.l2p2_uuid,self.l2p2_autoptg = gbp.create_gbp_l2policy(gbpL2p[tnt1][1],
+                                                         autoptg=True,
+   				                         l3_policy_id=self.l2p1_impl3p)
+	if not self.l2p2_uuid or not self.l2p2_autoptg\
+	   or not self.l2p1_uuid or not self.l2p1_impl3p\
+	   or not self.l2p1_autoptg:
+	     return 0
+	else:
+	    LOG.info(
+	    "\n## Following resources have been created for Tenant %s:\n"
+	    "Implicitly-created L3Policy = %s\n"
+	    "Explicit L2Policy_1 = %s and its AutoPTG = %s\n"
+	    "Explicit L2Policy_2 = %s and its AutoPTG = %s\n"
+	    %(tnt1, self.l2p1_impl3p, self.l2p1_uuid, self.l2p1_autoptg,
+	    self.l2p2_uuid, self.l2p2_autoptg))
+  	
+    def create_ptg(self):
+        LOG.info(
+        "\n################################################\n"
+        "## Create Explicit PTG using L2P1 for Tenant %s ##\n"
+        "##################################################\n"
+	%(tnt1))
+	self.reg_ptg = gbp.create_gbp_policy_target_group(
+				'REGPTG',
+				l2_policy_id=self.l2p1_uuid
+				)
+	if self.reg_ptg:
+		 return 0
+
+    def create_policy_target(self):
+        LOG.info(
+        "\n################################################\n"
+        "## Create Policy-Targets for two Auto-PTGs and one\n"
+        "## Regular PTG for Tenant %s ##\n"
+        "##################################################\n"
+	%(tnt1))
+	if self.reg_ptg and self.l2p1_autoptg and self.l2p2_autoptg:
+	    self.ptgs = [self.l2p1_autoptg, self.l2p2_autoptg, self.reg_ptg]
+	else:
+	    LOG.error(
+		    "Cannot create PTs since some PTGs are not yet initialized"
+		     )
+	    return 0
+	self.vm_to_port = {}
+        self.vms = GBPvms[tnt1]
+	self.ptlist = ['pt1','pt2','pt3','pt4']
+	for i in range(len(ptlist)):
+	    pt = self.ptlist[i]
+	    vm = self.vms[i]
+	    if i == 1 or i == 2:
+		ptg = self.ptgs[1]
+	    else:
+		ptg = self.ptgs[i]
+	    self.vm_to_port[vm] = self.gbpcrud.create_gbp_policy_target(
+       			   pt, ptg, 1)[1]
+	if 0 in self.vm_to_port.values():
+	    LOG.error("\nNot all PTs are created properly = %s"
+                     %(self.vm_to_port))
+	    return 0
+	    
+    def install_tenant_vms(self):
+        LOG.info(
+        "\n################################################\n"
+        "## Create VMs for Tenant %s ##\n"
+        "##################################################\n"
+	%(tnt1))
+        az = neutron.alternate_az(AVZONE)
+	for vm,port in self.vm_to_port.iteritems():
+            if not self.gbpnova.vm_create_api(vm,
+                                      'ubuntu_multi_nics',
+                                      port,
+                                      avail_zone=az.next()) == 0:
+                self._log.error(
+                             "\n//// %s Create failed ////" %(vm))
+
 class verifyML2(object):
       def __init__(self):
 	return 1

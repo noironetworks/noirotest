@@ -8,7 +8,6 @@ import string
 import sys
 import yaml
 from time import sleep
-from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_utils import *
 from libs.gbp_fab_traff_libs import gbpFabTraff
 from natfuncglobalcfg import GbpNatFuncGlobalCfg

@@ -43,6 +43,7 @@ class GBPCrud(object):
         cred['password']=password
         cred['tenant_name']=tenant
         cred['auth_url'] = "http://%s:5000/v2.0/" % ostack_controller
+        print cred
         self.client = gbpclient.Client(**cred)
 
     def create_gbp_policy_action(self,name,**kwargs):
@@ -761,7 +762,7 @@ class GBPCrud(object):
         else:
            return l3p_list
 
-    def create_gbp_l2policy(self,name,**kwargs):
+    def create_gbp_l2policy(self,name,getl3p=False,autoptg=False,**kwargs):
         """
         Create a GBP L2Policy
         Supported  keyword based attributes and their values/type:
@@ -775,12 +776,24 @@ class GBPCrud(object):
            for arg,val in kwargs.items():
                l2policy[arg]=val
            body = {"l2_policy": l2policy}
-           l2p_uuid = self.client.create_l2_policy(body)['l2_policy']['id'].encode('ascii')
+           output = self.client.create_l2_policy(body)
+           l2p_uuid = output['l2_policy']['id'].encode('ascii')
+	   if getl3p:
+		l3p_uuid = output['l2_policy']['l3_policy_id'].encode('ascii')
+	   if autoptg:
+	 	autoptg_uuid = output['l2_policy']['policy_target_groups']	
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
            _log.error("Creating L2Policy = %s, failed" %(name))
            return 0
-        return l2p_uuid
+	if getl3p and autoptg:
+            return l2p_uuid,l3p_uuid,autoptg_uuid
+	elif getl3p :
+	    return l2p_uuid,l3p_uuid
+	elif autoptg:
+	    return l2p_uuid,autoptg_uuid
+	else:
+	    return l2p_uuid
 
     def verify_gbp_l2policy(self,name):
         """

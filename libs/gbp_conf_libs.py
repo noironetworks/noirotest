@@ -37,7 +37,9 @@ class gbpCfgCli(object):
       self.passwd = cntrlr_passwd
       self.tenant = tenant
       self.rcfile = rcfile
-      self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown','Exception','Invalid','read-only','not supported','prefix greater than subnet mask']
+      self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown',
+			'Exception','Invalid','read-only','not supported',
+			'prefix greater than subnet mask']
       
     def exe_command(self,cmdList):
       """
