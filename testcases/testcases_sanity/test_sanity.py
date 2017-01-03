@@ -16,9 +16,10 @@ from testcases.config import conf
 
 # Initialize logging
 LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.INFO)
+LOG.propagate = False
+LOG.setLevel(logging.ERROR)
 # create a logfile handler
-hdlr = logging.FileHandler('/tmp/test_ml2_nat.log')
+hdlr = logging.FileHandler('/tmp/test_ml2_sanity.log')
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 hdlr.setFormatter(formatter)
 # Add the handler to the logger
@@ -107,17 +108,14 @@ class crudML2(object):
                 self.subnetIDs[tnt] = []
                 self.networkIDs[tnt] = []
                 self.netIDnames[tnt] = {}
-		print "JISHNU: INside for Loop == ", ml2Ntks[tnt]
                 for index in range(len(ml2Ntks[tnt])):
                     network = ml2Ntks[tnt][index]
                     subnet = ml2Subs[tnt][index]
-		    print "JISHNU for Network, Subnet == ", network,subnet
                     netID = neutron.netcrud(network,'create',tnt)
                     self.netIDnames[tnt][network] = netID
                     self.networkIDs[tnt].append(netID)
 		    if tnt == ml2tnt1:
                         cidr = Cidrs[tnt][index]
-			print "Jishnu ======= ", tnt
                         self.subnetIDs[tnt].append(
                                         neutron.subnetcrud(subnet,
                                                            'create',
@@ -125,8 +123,6 @@ class crudML2(object):
                                                            cidr=cidr,
                                                            tenant=tnt))
 		    else:
-			print "Jishnu XXXXXXX ", subnet
-			print "Jishnu XXXXXXX ", tnt
 			self.subnetIDs[tnt].append( 
                                         neutron.subnetcrud(subnet,
                                                            'create',
@@ -218,8 +214,10 @@ class crudML2(object):
         neutron.runcmd(
             'nova --os-tenant-name %s secgroup-add-rule default tcp 22 22 0.0.0.0/0'
             % (tnt))
+        neutron.runcmd(
+            'nova --os-tenant-name %s secgroup-add-rule default tcp 80 80 0.0.0.0/0'
+            % (tnt))
         az = neutron.alternate_az(AVZONE)
-	print "JISHNU vms inside VM create for ML2 == ",ML2vms
         for i in range(len(ML2vms[tnt])):
             try:
 		n = self.networkIDs[tnt][i]
@@ -242,12 +240,14 @@ class crudML2(object):
 	for vm in ML2vms[tnt]:
 	    cmd1 = 'nova --os-tenant-name %s' %(tnt)+\
                   ' floating-ip-create Management-Out'
-	    fip = re.search('(%s\d+).*'%(FIPBYTES),
-                                        run_openstack_cli(cmd1),
+	    match = re.search('(%s\d+).*'%(FIPBYTES),
+                                        neutron.runcmd(cmd1),
 					re.I)
-	    cmd2 = 'nova --os-tenant-name %s' %(tnt)+\
+	    if match:
+		fip = match.group(1)
+	    cmd2 = 'nova --os-tenant-name %s ' %(tnt)+\
                    'floating-ip-associate %s %s' %(vm,fip)
-	    run_openstack_cli(cmd2)
+	    neutron.runcmd(cmd2)
 
 	    
 class crudGBP(object):
@@ -331,7 +331,6 @@ class crudGBP(object):
 		    "Cannot create PTs since some PTGs are not yet initialized"
 		     )
 	    return 0
-	print 'JISHNU === ', self.ptgs
 	self.vm_to_port = {}
         self.vms = GBPvms[tnt1]
 	self.ptlist = ['pt1','pt2','pt3','pt4']
@@ -389,24 +388,41 @@ class verifyML2(object):
 class sendTraffic(object):
     #Ensure to inherit/instantiate the class after 
     #all VMs are created
-    def __init__(self,vm_ntk_ip):
-	print 'JISHNU .. INIT inside Traff class == ', vm_ntk_ip
-  	self.traff_from_vm = {}
-	pingable_ips = [ip for val in vm_ntk_ip.values() for ip in x][0::2]+\
+    def generate_vm_prop(self,ext=False):
+	print 'VM_to_NTK_IP inside Traffi Class == ', vm_ntk_ip
+  	properties = {}
+	if ext:
+	    pingable_ips = [ip for val in vm_ntk_ip.values() for ip in val][0::2]+\
 			[EXTRTRIP1,EXTRTRIP2]
+	else:
+	    pingable_ips = [ip for val in vm_ntk_ip.values() for ip in val][0::2]
 	for vm,prop in vm_ntk_ip.iteritems():
+	    if ext:
+	        pingable_ips = [ip for val in vm_ntk_ip.values() for ip in val][0::2]+\
+			[EXTRTRIP1,EXTRTRIP2]
+	    else:
+	        pingable_ips = [ip for val in vm_ntk_ip.values() for ip in val][0::2]
+	    pingable_ips.remove(prop[0]) #Removing the Src_IP from the list of pingable_ips
 	    dest_ips = pingable_ips
-	    self.traff_from_vm[vm] = {'netns' : 'qdhcp-'+prop[1],
+	    properties[vm] = {'netns' : 'qdhcp-'+prop[1],
 				      'src_ip' : prop[0],
-				      'dest_ip' : dest_ips.remove(prop[0])
+				      'dest_ip' : dest_ips
 				     }
+	return properties
 	
-    def traff_from_ml2_tenants(self,tnt):
+    def traff_from_ml2_tenants(self,tnt,ext=False,proto=['icmp','tcp']):
+	LOG.info(
+        "\n#############################################\n"
+        "## Sending Traffic from VMs in ML2-tenant %s ##\n"
+        "###############################################\n"
+        %(tnt))
 	tenant_vms  = ML2vms[tnt]
+	vm_property = self.generate_vm_prop(ext=ext)
+	print "VM Properties == ", vm_property
 	for vm in tenant_vms:
-	    vm_traff = gbpExpTraff(COMPUTE1,self.traff_from_vm[vm]['netns'],
-				self.traff_from_vm[vm]['src_ip'],
-				self.traff_from_vm[vm]['dest_ip'])
-	    print vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1)
+	    vm_traff = gbpExpTraff(COMPUTE1,vm_property[vm]['netns'],
+				vm_property[vm]['src_ip'],
+				vm_property[vm]['dest_ip'])
+	    return vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1)
 
 

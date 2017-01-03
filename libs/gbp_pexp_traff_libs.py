@@ -30,8 +30,6 @@ class gbpExpTraff(object):
 
     def test_run(self,protocols=['icmp','tcp','udp'],port=80,tcp_syn_only=0,jumbo=0):
         child = pexpect.spawn('ssh root@%s' %(self.net_node))
-	child.expect('password:')
-        child.sendline('noir0123')
         child.expect('#')
         child.sendline('hostname')
         child.expect('#')
@@ -69,6 +67,8 @@ class gbpExpTraff(object):
         child.expect('noiro:')
         child.sendline('noir0123')
         child.expect('#')
+	child.sendline('nohup python -m SimpleHTTPServer 80 &')
+	child.expect('#')
         child.sendline('ifconfig eth0')
         child.expect('#')
         print child.before
