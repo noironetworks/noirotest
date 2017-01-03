@@ -168,7 +168,7 @@ class neutronCli(object):
 	   cmd = 'neutron --os-tenant-name %s net-delete %s' %(tenant,name)
            self.runcmd(cmd)
 
-    def subnetcrud(self,name,action,ntkNameId=None,cidr=None,tenant='admin',
+    def subnetcrud(self,name,action,ntkNameId,cidr=None,tenant='admin',
                    extsub=False,aim='',subnetpool='' ):
 	"""
 	Create/Delete subnets for a given tenant
@@ -184,8 +184,8 @@ class neutronCli(object):
                     cmd = cmd +' %s' %(aim)
             else:
 		if subnetpool:
-		    cmd = 'neutron --os-tenant-name %s' %(tenant)+\
-			  'subnet-create %s --subnetpool %s %s'\
+		    cmd = 'neutron --os-tenant-name %s ' %(tenant)+\
+			  'subnet-create %s --subnetpool %s --name %s'\
 			  %(ntkNameId,subnetpool,name)
 		else:
 	            cmd = 'neutron --os-tenant-name %s subnet-create %s %s --name %s'\
@@ -238,12 +238,12 @@ class neutronCli(object):
 	#if action:: 'create' , ONLY then address_scope,pool are mandatory
         if action == 'create':
 	    if shared:
-	           cmd = 'neutron --os-tenant-name %s ' %(tenant)+\
+	           cmd = 'neutron --os-tenant-name %s subnetpool-create ' %(tenant)+\
 			 '--address-scope %s --shared ' %(address_scope)+\
 			 '--pool-prefix %s --default-prefixlen %s %s' \
 			 %(pool,prefix_len,name)
 	    else:
-	           cmd = 'neutron --os-tenant-name %s ' %(tenant)+\
+	           cmd = 'neutron --os-tenant-name %s subnetpool-create ' %(tenant)+\
 			 '--address-scope %s ' %(address_scope)+\
 			 '--pool-prefix %s --default-prefixlen %s %s' \
 			 %(pool,prefix_len,name)

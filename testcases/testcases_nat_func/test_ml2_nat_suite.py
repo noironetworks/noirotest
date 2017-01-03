@@ -177,7 +177,7 @@ class NatML2TestSuite(object):
                 self.networkIDs[tnt].append(netID)
                 self.subnetIDs[tnt].append(self.neutron.subnetcrud(self.subNames[tnt][index],
                                                                    'create',
-                                                                   ntkNameId=netID,
+                                                                   netID,
                                                                    cidr=self.Cidrs[
                                                                        tnt][index],
                                                                    tenant=tnt))
@@ -265,7 +265,7 @@ class NatML2TestSuite(object):
                 self.new_subnetIDs[tnt].append(self.neutron.subnetcrud(
                     self.newSubNames[index],
                     'create',
-                    ntkNameId=self.networkIDs[tnt][index],
+                    self.networkIDs[tnt][index],
                     cidr=self.newCidrs[index],
                     tenant=tnt))
 

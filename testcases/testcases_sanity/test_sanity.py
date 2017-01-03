@@ -25,6 +25,7 @@ hdlr.setFormatter(formatter)
 LOG.addHandler(hdlr)
 
 #Extract and set global vars from config file
+#NOTE:The external-segment is hardcoded to 'Management-Out'
 CNTRLIP = conf['controller_ip']
 APICIP = conf['apic_ip']
 TNT_LIST_ML2 =  ['FOO','BOOL']
@@ -41,6 +42,7 @@ COMPUTE1 = conf['ntk_node']
 COMPUTE2 = conf['compute_2']
 EXTDNATCIDR,FIPBYTES = '50.50.50.0/28', '50.50.50.'
 EXTSNATCIDR = '55.55.55.0/28'
+vm_ntk_ip = {}
 comp1 = Compute(COMPUTE1)
 comp2 = Compute(COMPUTE2)
 neutron = neutronCli(CNTRLIP)
@@ -48,21 +50,25 @@ neutron_api = neutronPy(CNTRLIP)
 apic = gbpApic(APICIP)
 
 class crudML2(object):
-    global tnt1, tnt2, ml2Ntks, ml2Subs, Cidrs, vms, addscopename, \
+    global ml2tnt1, ml2tnt2, ml2Ntks, ml2Subs, Cidrs, addscopename, \
 	   subpoolname, subpool
-    tnt1, tnt2 = TNT_LIST_ML2[0],TNT_LIST_ML2[1]
-    ml2Ntks,ml2Subs,Cidrs,vms = {},{},{},{}
-    ml2Ntks[tnt1] = ['Net1', 'Net2']
-    ml2Ntks[tnt2] = ['ntk3', 'ntk4']
-    ml2Subs[tnt1] = ['Subnet1', 'Subnet2']
-    ml2Subs[tnt2] = ['sub3', 'sub4']
+    ml2tnt1, ml2tnt2 = TNT_LIST_ML2[0],TNT_LIST_ML2[1]
+    ml2Ntks,ml2Subs,Cidrs = {},{},{}
+    ml2Ntks[ml2tnt1] = ['Net1', 'Net2']
+    ml2Ntks[ml2tnt2] = ['ntk3', 'ntk4']
+    ml2Subs[ml2tnt1] = ['Subnet1', 'Subnet2']
+    ml2Subs[ml2tnt2] = ['sub3', 'sub4']
     addscopename = 'asc1'
     subpoolname = 'subpool1'
     subpool = '22.22.22.0/24'
-    Cidrs[tnt1] = ['11.11.11.0/28', '21.21.21.0/28']
-    vms[tnt1] = ML2vms[tnt1]
-    vms[tnt2] = ML2vms[tnt2]
-    neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create')
+    Cidrs[ml2tnt1] = ['11.11.11.0/28', '21.21.21.0/28']
+    print "Before Keystone Add is invoked tenant-list == ", TNT_LIST_ML2 
+    print "Global ML2 vm list == ", ML2vms[ml2tnt1]
+    print "Global ML2 vm list == ", ML2vms[ml2tnt2]
+    print "Global ML2 Tnt networks & subnets == ", ml2Ntks, ml2Subs
+
+    def create_ml2_tenants(self):
+	neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create')
 
     def create_external_network_subnets(self):
         LOG.info(
@@ -78,9 +84,9 @@ class crudML2(object):
 	try:
 	    neutron.netcrud('Management-Out','create',external=True,
                             shared=True, aim = aimntkcfg)
-            neutron.subnetcrud('extsub1','create',ntkNameId='Management-Out',
+            neutron.subnetcrud('extsub1','create','Management-Out',
  			       cidr=EXTDNATCIDR,extsub=True)
-            neutron.subnetcrud('extsub2','create',ntkNameId='Management-Out',
+            neutron.subnetcrud('extsub2','create','Management-Out',
  			       cidr=EXTSNATCIDR,extsub=True,aim=aimsnat)
       	except Exception as e:
 	    LOG.error("Shared External Network Failed: "+repr(e))
@@ -95,31 +101,36 @@ class crudML2(object):
 	self.subnetIDs = {}
 	self.networkIDs = {}
 	self.netIDnames = {}
-        for tnt in [tnt1,tnt2]:
+        for tnt in [ml2tnt1,ml2tnt2]:
             try:
                 # Every Network has just one Subnet, 1:1
                 self.subnetIDs[tnt] = []
                 self.networkIDs[tnt] = []
                 self.netIDnames[tnt] = {}
+		print "JISHNU: INside for Loop == ", ml2Ntks[tnt]
                 for index in range(len(ml2Ntks[tnt])):
                     network = ml2Ntks[tnt][index]
                     subnet = ml2Subs[tnt][index]
-                    cidr = Cidrs[tnt][index]
+		    print "JISHNU for Network, Subnet == ", network,subnet
                     netID = neutron.netcrud(network,'create',tnt)
-                    self.netIDnames[tnt][netID] = network
+                    self.netIDnames[tnt][network] = netID
                     self.networkIDs[tnt].append(netID)
-		    if tnt == tnt1:
+		    if tnt == ml2tnt1:
+                        cidr = Cidrs[tnt][index]
+			print "Jishnu ======= ", tnt
                         self.subnetIDs[tnt].append(
                                         neutron.subnetcrud(subnet,
                                                            'create',
-                                                           ntkNameId=netID,
+                                                           netID,
                                                            cidr=cidr,
                                                            tenant=tnt))
 		    else:
+			print "Jishnu XXXXXXX ", subnet
+			print "Jishnu XXXXXXX ", tnt
 			self.subnetIDs[tnt].append( 
                                         neutron.subnetcrud(subnet,
                                                            'create',
-                                                           ntkNameId=netID,
+                                                           netID,
                                                            subnetpool=self.subpoolID,
                                                            tenant=tnt))
             except Exception as e:
@@ -145,7 +156,7 @@ class crudML2(object):
         "###############################################\n"
         %(TNT_LIST_ML2[1]))
 	self.subpoolID = neutron.subpoolcrud(subpoolname,'create',
-                                             add_scope=addscopename,
+                                             address_scope=addscopename,
 					     pool=subpool,
 					     tenant=TNT_LIST_ML2[1])
     
@@ -156,7 +167,7 @@ class crudML2(object):
         "###############################################\n"
         )
         self.rtrIDs = {}
-        for tnt in [tnt1,tnt2]:
+        for tnt in [ml2tnt1,ml2tnt2]:
             try:
                 _id = neutron.rtrcrud('RTR1', 'create', tenant=tnt)
                 self.rtrIDs[tnt] = _id
@@ -201,7 +212,6 @@ class crudML2(object):
 	%(tnt))
         # Since VMs are created with 'default' secgroup, hence
         # adding rules to the default secgroup
-	vm_ntk_ip = {}
         neutron.runcmd(
             'nova --os-tenant-name %s secgroup-add-rule default icmp -1 -1 0.0.0.0/0'
             % (tnt))
@@ -209,15 +219,16 @@ class crudML2(object):
             'nova --os-tenant-name %s secgroup-add-rule default tcp 22 22 0.0.0.0/0'
             % (tnt))
         az = neutron.alternate_az(AVZONE)
-        for i in range(len(vms[tnt])):
+	print "JISHNU vms inside VM create for ML2 == ",ML2vms
+        for i in range(len(ML2vms[tnt])):
             try:
 		n = self.networkIDs[tnt][i]
                 vmcreate = neutron.spawnVM(tnt,
-                                           vms[tnt][i],
+                                           ML2vms[tnt][i],
                                            self.networkIDs[tnt][i],
                                            availzone=az.next()
                                        	   )
-		vm_ntk_ip[vms[tnt][i]] = [vmcreate[0],self.networkIDs[tnt][i]]
+		vm_ntk_ip[ML2vms[tnt][i]] = [vmcreate[0],self.networkIDs[tnt][i]]
 	    except Exception as e:
                 LOG.error('VM Creation for tnt %s Failed: ' %(tnt)+repr(e))
                 return 0
@@ -228,7 +239,7 @@ class crudML2(object):
         "#### Create & Attach FIP to VMs for the Tenant %s ####\n"
         "###############################################\n"
 	%(tnt))
-	for vm in vms[tnt]:
+	for vm in ML2vms[tnt]:
 	    cmd1 = 'nova --os-tenant-name %s' %(tnt)+\
                   ' floating-ip-create Management-Out'
 	    fip = re.search('(%s\d+).*'%(FIPBYTES),
@@ -244,8 +255,7 @@ class crudGBP(object):
     #once 'shared' is supported, we will run
     #with two tenants sharing a single L3P
     from libs.gbp_nova_libs import gbpNova
-    global tnt1, tnt2, vms, gbptnt1, gbptnt2, novatnt1, novatnt2,\
-	   gbpL3p, gbpL2p, ippool
+    global tnt1, tnt2, vms, gbpL3p, gbpL2p, ippool
     tnt1, tnt2 = TNT_LIST_GBP
     gbpL3p = 'L3P1'
     gbpL2p = {tnt1 : ['L2P1','L2P2']}
@@ -254,12 +264,15 @@ class crudGBP(object):
     vms = {}
     vms[tnt1] = GBPvms[tnt1]
     vms[tnt2] = GBPvms[tnt2]
-    neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create')
-    gbptnt1 = GBPCrud(CNTRLIP,tenant=tnt1)
-    gbptnt2 = GBPCrud(CNTRLIP,tenant=tnt2)
-    novatnt1 = gbpNova(CNTRLIP,tenant=tnt1)
-    novatnt2 = gbpNova(CNTRLIP,tenant=tnt2)
 
+    def create_gbp_tenants(self):
+        neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create')
+        self.gbptnt1 = GBPCrud(CNTRLIP,tenant=tnt1)
+        self.gbptnt2 = GBPCrud(CNTRLIP,tenant=tnt2)
+        self.gbpadmin = GBPCrud(CNTRLIP)
+        self.novatnt1 = gbpNova(CNTRLIP,tenant=tnt1)
+        self.novatnt2 = gbpNova(CNTRLIP,tenant=tnt2)
+    
     def create_l2p(self):
         LOG.info(
         "\n################################################################\n"
@@ -267,11 +280,11 @@ class crudGBP(object):
         "##################################################################\n"
 	%(tnt1))
 	self.l2p1_uuid,self.l2p1_impl3p,self.l2p1_autoptg = \
-             gbptnt1.create_gbp_l2policy(gbpL2p[tnt1][0],getl3p=True,autoptg=True)
+             self.gbptnt1.create_gbp_l2policy(gbpL2p[tnt1][0],getl3p=True,autoptg=True)
         LOG.info(
         "\n## Create explcit L2Policy associated to above implicit L3Policy ##\n"
 	)
-	self.l2p2_uuid,self.l2p2_autoptg = gbptnt1.create_gbp_l2policy(gbpL2p[tnt1][1],
+	self.l2p2_uuid,self.l2p2_autoptg = self.gbptnt1.create_gbp_l2policy(gbpL2p[tnt1][1],
                                                          autoptg=True,
    				                         l3_policy_id=self.l2p1_impl3p)
 	if not self.l2p2_uuid or not self.l2p2_autoptg\
@@ -293,7 +306,7 @@ class crudGBP(object):
         "## Create Explicit PTG using L2P1 for Tenant %s ##\n"
         "##################################################\n"
 	%(tnt1))
-	self.reg_ptg = gbptnt1.create_gbp_policy_target_group(
+	self.reg_ptg = self.gbptnt1.create_gbp_policy_target_group(
 				'REGPTG',
 				l2_policy_id=self.l2p1_uuid
 				)
@@ -326,7 +339,7 @@ class crudGBP(object):
 	    pt = self.ptlist[i]
 	    vm = self.vms[i]
 	    ptg = self.ptgs[i]
-	    self.vm_to_port[vm] = gbptnt1.create_gbp_policy_target(
+	    self.vm_to_port[vm] = self.gbptnt1.create_gbp_policy_target(
        			          pt, ptg, ptg_property='uuid')[1]
 	print self.vm_to_port
 	if 0 in self.vm_to_port.values():
@@ -339,16 +352,35 @@ class crudGBP(object):
         "\n################################################\n"
         "## Create VMs for Tenant %s ##\n"
         "##################################################\n"
-	%(tnt1))
+        %(tnt1))
         az = neutron.alternate_az(AVZONE)
-	for vm,port in self.vm_to_port.iteritems():
-            if not self.gbpnova.vm_create_api(vm,
+        for vm,port in self.vm_to_port.iteritems():
+            if not self.novatnt1.vm_create_api(vm,
                                       'ubuntu_multi_nics',
                                       port,
                                       avail_zone=az.next()) == 0:
-                self._log.error(
-                             "\n//// %s Create failed ////" %(vm))
+                self._log.error("\n//// %s Create failed ////" %(vm))
+                return 0
 
+    def create_ext_seg(self):
+        LOG.info(
+        "\n########################################################\n"
+        "## Create External Segment as shared under tenant-Admin ##\n"
+        "##########################################################\n"
+        )
+        self.extsegid = gbpadmin.create_gbp_external_segment(
+                                        Management-Out,
+                                        external_routes = [{
+                                           'destination':'0.0.0.0/0',
+                                           'nexthop': None}],
+				       	shared=True
+                                       )
+        if self.extsegid == 0:
+            self._log.error(
+            "\n///// Step: External Segment Creation %s failed /////"
+            %(extsegname))
+            return 0
+	
 class verifyML2(object):
       def __init__(self):
 	return 1
@@ -358,6 +390,7 @@ class sendTraffic(object):
     #Ensure to inherit/instantiate the class after 
     #all VMs are created
     def __init__(self,vm_ntk_ip):
+	print 'JISHNU .. INIT inside Traff class == ', vm_ntk_ip
   	self.traff_from_vm = {}
 	pingable_ips = [ip for val in vm_ntk_ip.values() for ip in x][0::2]+\
 			[EXTRTRIP1,EXTRTRIP2]
@@ -368,11 +401,12 @@ class sendTraffic(object):
 				      'dest_ip' : dest_ips.remove(prop[0])
 				     }
 	
-    def traff_from_vm(self,vmname):
-	vm_traff = gbpExpTraff(COMPUTE1,self.traff_from_vm['netns'],
-				self.traff_from_vm['src_ip'],
-				self.traff_from_vm['dest_ip'])
-	
-	return vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1)
+    def traff_from_ml2_tenants(self,tnt):
+	tenant_vms  = ML2vms[tnt]
+	for vm in tenant_vms:
+	    vm_traff = gbpExpTraff(COMPUTE1,self.traff_from_vm[vm]['netns'],
+				self.traff_from_vm[vm]['src_ip'],
+				self.traff_from_vm[vm]['dest_ip'])
+	    print vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1)
 
 

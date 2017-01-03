@@ -19,3 +19,10 @@ if test_steps.create_policy_target() == 0:
    print 'Create Policy-Target from Regular and Auto-PTGs FAIL'
 else:
    print 'Create Policy-Target from Regular and Auto-PTGs PASS'
+
+#Step 4:
+if test_steps.install_tenant_vms() == 0:
+    print 'Install VM on Regular and Auto-PTGs FAIL'
+else:
+    print 'Install VM on Regular and Auto-PTGs PASS'
+

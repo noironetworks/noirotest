@@ -128,7 +128,7 @@ class gbp_main_config(object):
             tnt='admin'
         apictnts = self.gbpaci.getTenant()
         self.tntDN = [apictnts[key] for key in apictnts.iterkeys()\
-                      if tnt in key[0]]
+                      if tnt in key]
         #Adding SSH-filter to Svc_Contract provided by Svc_Epgs
         self._log.info(
             "\n Adding SSH-Filter to Svc_epg created for every dhcp_agent")
