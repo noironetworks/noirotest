@@ -153,7 +153,9 @@ class gbpNova(object):
         agg_id = self.avail_zone('api','create',availzone_name,avail_zone_name=availzone_name)
         self.nova.aggregates.add_host(agg_id,hostname)
         
-    def vm_create_api(self,vmname,vm_image,portid,flavor_name='m1.medium',avail_zone=''):
+    def vm_create_api(self,vmname,vm_image,portid,
+		      flavor_name='m1.medium',avail_zone='',
+		      ret_ip = False):
         """
         Call Nova API to create VM and check for ACTIVE status
         """
@@ -181,6 +183,8 @@ class gbpNova(object):
               _log.error("\nAfter waiting for 110 seconds, VM status is NOT ACTIVE")
               return 0
           status_try +=1
+	if ret_ip:
+	    return instance.networks.values()[0][0].encode('ascii')
         return 1
 
     def vm_create_cli(self,vmname,vm_image,ports,

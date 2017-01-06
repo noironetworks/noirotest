@@ -786,16 +786,18 @@ class GBPCrud(object):
 		l3p_uuid = output['l2_policy']['l3_policy_id'].encode('ascii')
 	   if autoptg:
 	 	autoptg_uuid = output['l2_policy']['policy_target_groups'][0]	
+	   neutron_ntk = output['l2_policy']['network_id'].encode('ascii')
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
            _log.error("Creating L2Policy = %s, failed" %(name))
            return 0
 	if getl3p and autoptg:
-            return l2p_uuid,l3p_uuid,autoptg_uuid
+	    #Returning neutron network also	    
+            return l2p_uuid,l3p_uuid,autoptg_uuid,neutron_ntk
 	elif getl3p :
 	    return l2p_uuid,l3p_uuid
 	elif autoptg:
-	    return l2p_uuid,autoptg_uuid
+	    return l2p_uuid,autoptg_uuid,neutron_ntk
 	else:
 	    return l2p_uuid
 
