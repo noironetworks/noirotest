@@ -84,7 +84,10 @@ class gbpHeat(object):
             while num_try > 0:
                 if cmd_out.find('CREATE_COMPLETE') != -1:
                    return 1
-                else:
+                elif cmd_out.find('CREATE_FAILED') != -1:
+		      _log.info("Heat Stack Create Failed, bailing out")
+		      return 0
+		else:
                     _log.info("Keep Retrying every 5s to check if heat stack-create completed")
                     sleep(5)
                     cmd_out = self.run_heat_cli(cmd_ver)
