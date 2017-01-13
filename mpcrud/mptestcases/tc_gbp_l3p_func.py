@@ -15,23 +15,26 @@ import logging
 import platform
 import sys
 
-from libs import config_libs
-from libs import utils_libs
-from libs import verify_libs
+from mpcrud.mplibs import config_libs
+from mpcrud.mplibs import utils_libs
+from mpcrud.mplibs import verify_libs
 
 
 def main():
 
     # Run the Testcases:
     test = test_gbp_l3p_func()
-    if test.test_gbp_l3p_func_1() == 0:
-        test.cleanup(tc_name='TESTCASE_GBP_L3P_FUNC_1')
-    if test.test_gbp_l3p_func_2() == 0:
-        test.cleanup(tc_name='TESTCASE_GBP_L3P_FUNC_2')
-    if test.test_gbp_l3p_func_3() == 0:
-        test.cleanup(tc_name='TESTCASE_GBP_L3P_FUNC_3')
-    if test.test_gbp_l3p_func_4() == 0:
-        test.cleanup(tc_name='TESTCASE_GBP_L3P_FUNC_4')
+    #if test.test_gbp_l3p_func_1() == 0:
+    #    test.cleanup(tc_name='TESTCASE_GBP_L3P_FUNC_1')
+    #if test.test_gbp_l3p_func_2() == 0:
+    #    test.cleanup(tc_name='TESTCASE_GBP_L3P_FUNC_2')
+    #if test.test_gbp_l3p_func_3() == 0:
+    #    test.cleanup(tc_name='TESTCASE_GBP_L3P_FUNC_3')
+    #if test.test_gbp_l3p_func_4() == 0:
+    #    test.cleanup(tc_name='TESTCASE_GBP_L3P_FUNC_4')
+    if test.test_gbp_l3p_func_5() == 0:
+	sys.exit(1) #JISHNU
+        test.cleanup(tc_name='TESTCASE_GBP_L3P_FUNC_5')
     test.cleanup()
     utils_libs.report_results('test_gbp_l3p_func', 'test_results.txt')
     sys.exit(1)
@@ -68,6 +71,9 @@ class test_gbp_l3p_func(object):
             self._log.info('## %s: FAILED' % (tc_name))
         for obj in ['group', 'l2p', 'l3p']:
             self.gbpcfg.gbp_del_all_anyobj(obj)
+        self.gbpcfg.gbp_policy_cfg_all(0, 'subpool', 'sps')
+        self.gbpcfg.gbp_policy_cfg_all(0,'add_scope','ascs')
+	
 
     def test_gbp_l3p_func_1(
             self,
@@ -324,7 +330,7 @@ class test_gbp_l3p_func(object):
         self._log.info(
             "\n############################################################\n"
             "TESTCASE_GBP_L3P_FUNC_4: TO CREATE/UPDATE/DELETE/VERIFY "
-            "MULTI L2POLICY to SINGLE L3POLICY\n"
+            "MULTI L2POLICY to SINGLE SHARED L3POLICY\n"
             "TEST_STEPS::\n"
             "Create non-default L3Policy with defined attributes\n"
             "Create Multiple L2Policies with above non-default L3policy\n"
@@ -343,7 +349,7 @@ class test_gbp_l3p_func(object):
             "attrs and values ")
         l3p_uuid = self.gbpcfg.gbp_policy_cfg_all(
             1, 'l3p', self.l3p_name, ip_pool='40.50.0.0/24',
-            subnet_prefix_length='28')[0]
+            subnet_prefix_length='28',shared=True)[0]
         if l3p_uuid == 0:
             self._log.info("\n## Step 1: Create L3Policy == Failed")
             return 0
@@ -367,7 +373,7 @@ class test_gbp_l3p_func(object):
         while i < n:
             l2p_name = 'demo_l2p_%s' % (i)
             l2p = self.gbpcfg.gbp_policy_cfg_all(
-                1, 'l2p', l2p_name, l3_policy_id=l3p_uuid)
+                1, 'l2p', l2p_name, l3_policy_id=l3p_uuid, tenant='coke')
             if l2p == 0:
                 self._log.info(
                     "\n## Step 2B:New L2Policy Create Failed, hence "
@@ -420,5 +426,63 @@ class test_gbp_l3p_func(object):
         self._log.info("\n## TESTCASE_GBP_L3P_FUNC_4: PASSED")
         return 1
 
+    def test_gbp_l3p_func_5(self):
+
+        self._log.info(
+            "\n############################################################\n"
+            "TESTCASE_GBP_L3P_FUNC_5: TO CREATE/UPDATE/DELETE/VERIFY "
+            "L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE\n"
+            "TEST_STEPS::\n"
+            "Create a shared address-scope\n"
+	    "Create a shared subnetpool assocaited to the addscope\n"
+            "Create non-default L3Policy associated to above addscope\n"
+            "Create Multiple L2Policies with above non-default L3policy\n"
+            "Verify that L2Policies are created with non-default L3Policy\n"
+            "Delete all L2 Policies\n"
+            "Verify that non-default L3 Policy exists but with null "
+            "L2Policies\n"
+            "Delete the L3Policy\n"
+            "Verify L3/L2Policys successfully deleted\n"
+            "##############################################################\n")
+
+        # Testcase work-flow starts
+        # Create and Verify non-default L3 Policy
+        self._log.info("\n## Step 1A: Create Shared address-scope")
+        asc_uuid = self.gbpcfg.gbp_policy_cfg_all(
+		    1,'add_scope','ascs 4',shared='')
+	if not asc_uuid:
+	    self._log.info("\n## Step 1A: Shared neutron addr-scope =Failed")
+	    return 0
+        self._log.info("\n## Step 1B: Create Shared Subnetpool")
+        sp_uuid = self.gbpcfg.gbp_policy_cfg_all(
+		    1, 'subpool', 'sps', address_scope=asc_uuid,
+		    default_prefixlen='28', pool_prefix='40.50.0.0/24',
+		    shared='')
+	if not sp_uuid:
+	    self._log.info("\n## Step 1A: Shared neutron subnetpool =Failed")
+	    return 0
+        self._log.info(
+            "\n## Step 1C: Create L3Policy with non-default "
+            "attrs and values ")
+        l3p_uuid = self.gbpcfg.gbp_policy_cfg_all(
+            1, 'l3p', self.l3p_name,
+    	    address_scope_v4_id=asc_uuid)[0]
+        if l3p_uuid == 0:
+            self._log.info("\n## Step 1C: Create L3Policy == Failed")
+            return 0
+        if self.gbpverify.gbp_l2l3ntk_pol_ver_all(
+                1,
+                'l3p',
+                l3p_uuid,
+                id=l3p_uuid,
+                name=self.l3p_name,
+                ip_pool='40.50.0.0/24',
+                subnet_prefix_length='28',
+		address_scope_v4_id=asc_uuid,
+		subnetpools_v4=sp_uuid,
+		shared ='True',
+                ip_version='4') == 0:
+            self._log.info("\n## Step 1C: Verify non-default == Failed")
+            return 0
 if __name__ == '__main__':
     main()

@@ -20,14 +20,14 @@ import logging
 import string
 import re
 from fabric.api import cd,run,env, hide, get, settings
-from utils_libs import * #JISHNU, once it works it should import from gbp_utils
+from utils_libs import * 
 
 # Initialize logging
 #logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)
 _log = logging.getLogger()
 _log.setLevel(logging.INFO)
 
-class Gbp_Config(object): #JISHNU: Dont copy this file to noirotest/libs/gbp_conf_libs.py
+class Gbp_Config(object): 
 
     def __init__(self, controllerIp, cntrlr_username='root',
                  cntrlr_passwd='noir0123',
@@ -148,7 +148,10 @@ class Gbp_Config(object): #JISHNU: Dont copy this file to noirotest/libs/gbp_con
         cfgobj_dict={"action":"policy-action","classifier":"policy-classifier","rule":"policy-rule",
                       "ruleset":"policy-rule-set","group":"policy-target-group","target":"policy-target",
                       "l2p":"l2policy","l3p":"l3policy","nsp":"network-service-policy",
-                      "extseg":"external-segment","extpol":"external-policy","natpool":"nat-pool"}
+                      "extseg":"external-segment","extpol":"external-policy","natpool":"nat-pool",
+		      "net":"net","subnet":"subnet","add_scope":"address-scope","subpool":"subnetpool",
+		      "rtr":"router"}
+	neutron_cfgobjs = ["net","subnet","add_scope","subpool","rtr"]
         if cfgobj != '':
            if cfgobj not in cfgobj_dict:
               raise KeyError 
@@ -158,7 +161,10 @@ class Gbp_Config(object): #JISHNU: Dont copy this file to noirotest/libs/gbp_con
                       -- name_uuid == UUID or name_string\n''')
            return 0
         #Build the command with mandatory params
-        cmd_tnt = 'gbp %s ' %(self.set_tenant(**kwargs))
+	if cfgobj in neutron_cfgobjs:
+            cmd_tnt = 'neutron %s ' %(self.set_tenant(**kwargs))
+	else:    
+            cmd_tnt = 'gbp %s ' %(self.set_tenant(**kwargs))
         if cmd_val == 0:
            cmd = cmd_tnt+'%s-delete ' % cfgobj_dict[cfgobj]+str(name_uuid)
         if cmd_val == 1:
@@ -167,9 +173,14 @@ class Gbp_Config(object): #JISHNU: Dont copy this file to noirotest/libs/gbp_con
            cmd = cmd_tnt+'%s-update ' % cfgobj_dict[cfgobj]+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
         for arg, value in kwargs.items():
-          if '_' in arg:
-             arg=string.replace(arg,'_','-')
-          cmd = cmd + " --" + "".join( '%s=%s' %(arg, value ))
+	  if arg != 'tenant':
+              if '_' in arg:
+                 arg=string.replace(arg,'_','-')
+	      if arg == 'shared' and cfgobj in neutron_cfgobjs:
+		 augment_cmd = " --shared" #(in case of gbp --shared=<val>)
+	      else:
+		 augment_cmd = " --" + "".join( '%s=%s' %(arg, value ))
+              cmd = cmd + augment_cmd
         # Execute the cmd
         cmd_out = self.exe_command(cmd)
         if cmd_out:
@@ -289,59 +300,8 @@ class Gbp_Config(object): #JISHNU: Dont copy this file to noirotest/libs/gbp_con
         _log.info("\nThe Policy Object %s to be deleted = \n%s" %(cfgobj_dict[cfgobj],cmd_out))
         for item in final_out:
             item = item.strip(' |')
-            cmd = 'gbp %s-delete ' % cfgobj_dict[cfgobj]+str(item)
+            cmd = 'gbp %s-delete ' % cfgobj_dict[cfgobj]+item.rstrip()
             cmd_out = self.exe_command(cmd)
         return 1 
 
-    def get_netns(self,net_node_ip,subnet):
-        """
-        Returns the Network Node's Ntk NameSpace
-        Associated with every VM
-        """
-        env.host_string = net_node_ip
-        env.user = 'root'
-        env.password = 'noir0123'
-        
-        if isinstance(subnet,list):
-           netns_list = []
-           with settings(warn_only=True):
-              result = run("ip netns | grep qdhcp")
-              out = [x.strip() for x in result.split('\n')]
-              for netns in out:
-                  cmd = "ip netns exec %s ifconfig" %(netns)
-                  result = run(cmd).replace('\r\n',' ')
-                  if result.find(subnet) > -1:
-                     netns_list.append(netns)
-           return netns_list
-        else:
-          with settings(warn_only=True):
-           result = run("ip netns | grep qdhcp")
-           out = [x.strip() for x in result.split('\n')]
-           for netns in out:
-                  cmd = "ip netns exec %s ifconfig" %(netns)
-                  result = run(cmd).replace('\r\n',' ')
-                  if result.find(subnet) > -1:
-                     break
-          return netns
-
-    def get_vm_subnet(self,vm_string,ret=''):
-        """
-        ret = 'ip' : for returning VM-Port's IP
-              'subnet' : for returning VM-Port's subnet
-              '' : returns a list['ip,'subnet']
-        """
-        cmd = "nova list | grep %s" %(vm_string)
-        out_put = self.exe_command(cmd)
-        ip_match = re.search('.*=(\d+.\d+.\d+.\d+)',out_put,re.I)
-        subn_match = re.search('.*=(\d+.\d+.\d+)',out_put,re.I)
-        if ip_match != None and subn_match != None:
-           if  ret == 'ip':
-               return ip_match.group(1)
-           elif ret == 'subnet':
-               return subn_match.group(1)
-           else:
-               return [ip_match.group(1),subn_match.group(1)]
-        else:
-           return 0
-
-
+	

@@ -58,3 +58,43 @@
 | TESTCASE_GBP_L3P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE |
 | TESTCASE_GBP_L3P_FUNC_4 |  PASSED |   TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE L3POLICY  |
 +-------------------------+---------+---------------------------------------------------------------------+
++-------------------------+---------+---------------------------------------------------------------------+
+|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
++-------------------------+---------+---------------------------------------------------------------------+
+| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |   TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY   |
+| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |    TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs    |
+| TESTCASE_GBP_L3P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE |
+| TESTCASE_GBP_L3P_FUNC_4 |  FAILED |   TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE L3POLICY  |
++-------------------------+---------+---------------------------------------------------------------------+
++-------------------------+---------+------------------------------------------------------------------+
+|       TESTCASE_ID       | RESULTS |                         TESTCASE_HEADER                          |
++-------------------------+---------+------------------------------------------------------------------+
+| TESTCASE_GBP_L3P_FUNC_4 |  FAILED | TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE L3POLICY |
++-------------------------+---------+------------------------------------------------------------------+
++-------------------------+---------+------------------------------------------------------------------+
+|       TESTCASE_ID       | RESULTS |                         TESTCASE_HEADER                          |
++-------------------------+---------+------------------------------------------------------------------+
+| TESTCASE_GBP_L3P_FUNC_4 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE L3POLICY |
++-------------------------+---------+------------------------------------------------------------------+
++-------------------------+---------+------------------------------------------------------------------+
+|       TESTCASE_ID       | RESULTS |                         TESTCASE_HEADER                          |
++-------------------------+---------+------------------------------------------------------------------+
+| TESTCASE_GBP_L3P_FUNC_4 |  FAILED | TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE L3POLICY |
++-------------------------+---------+------------------------------------------------------------------+
++-------------+---------+-----------------+
+| TESTCASE_ID | RESULTS | TESTCASE_HEADER |
++-------------+---------+-----------------+
++-------------+---------+-----------------+
++-------------+---------+-----------------+
+| TESTCASE_ID | RESULTS | TESTCASE_HEADER |
++-------------+---------+-----------------+
++-------------+---------+-----------------+
++-------------+---------+-----------------+
+| TESTCASE_ID | RESULTS | TESTCASE_HEADER |
++-------------+---------+-----------------+
++-------------+---------+-----------------+
++-------------------------+---------+----------------------------------------------------------------------------+
+|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
++-------------------------+---------+----------------------------------------------------------------------------+
+| TESTCASE_GBP_L3P_FUNC_5 |  FAILED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
++-------------------------+---------+----------------------------------------------------------------------------+
