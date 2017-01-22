@@ -243,7 +243,7 @@ class Gbp_Config(object):
                return 0
             return 1
         else:
-            _log.info(
+            _log.error(
             "Cli cmd execution failed for %s" %(cfgobj_dict[cfgobj]))
 	    return 0
 
@@ -293,14 +293,16 @@ class Gbp_Config(object):
               raise KeyError
         #Build the command with mandatory params
         cmd = 'gbp %s-list -c id ' % cfgobj_dict[cfgobj]
-	print "Delete Cmd === ",cmd
         cmd_out = self.exe_command(cmd)
         _out=cmd_out.split('\n')
         final_out = _out[3:len(_out)-1]
-        _log.info("\nThe Policy Object %s to be deleted = \n%s" %(cfgobj_dict[cfgobj],cmd_out))
+        _log.info("\nThe Policy Object %s to be deleted = \n%s" %(cfgobj_dict[cfgobj],final_out))
         for item in final_out:
-            item = item.strip(' |')
-            cmd = 'gbp %s-delete ' % cfgobj_dict[cfgobj]+item.rstrip()
+	    if '---' in item:
+   		final_out.remove(item)
+	for obj in final_out:
+	    strip_obj = obj.strip('|\r')
+            cmd = 'gbp %s-delete ' % cfgobj_dict[cfgobj]+str(strip_obj.strip('|'))
             cmd_out = self.exe_command(cmd)
         return 1 
 

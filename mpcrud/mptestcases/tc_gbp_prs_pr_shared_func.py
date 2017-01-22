@@ -21,7 +21,7 @@ from mpcrud.mplibs import verify_libs
 
 def main():
     # Run the Testcases:
-    test = test_gbp_prs_pr_shared_func()
+    test = test_gbp_prs_pr_shared_func(sys.argv[1])
     if test.test_gbp_prs_pr_shared_func_1() == 0:
         test.cleanup(tc_name='TESTCASE_GBP_PRS_PR_SHARED_INTEG_1')
     if test.test_gbp_prs_pr_shared_func_2() == 0:
@@ -48,14 +48,14 @@ class test_gbp_prs_pr_shared_func(object):
     _log.setLevel(logging.INFO)
     _log.setLevel(logging.DEBUG)
 
-    def __init__(self):
+    def __init__(self,controller_ip):
         """
         Init def
         """
         self._log.info(
             "\n## START OF GBP POLICY_RULE_SET FUNCTIONALITY TESTSUITE\n")
-        self.gbpcfg = config_libs.Gbp_Config()
-        self.gbpverify = verify_libs.Gbp_Verify()
+        self.gbpcfg = config_libs.Gbp_Config(controller_ip)
+        self.gbpverify = verify_libs.Gbp_Verify(controller_ip)
         self.act_name = 'demo_pa'
         self.cls_name = 'demo_pc'
         self.rule_name = 'demo_pr'

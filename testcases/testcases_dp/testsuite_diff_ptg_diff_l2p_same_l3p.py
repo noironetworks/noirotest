@@ -86,7 +86,7 @@ class test_diff_ptg_diff_l2p_same_l3p(object):
                      abort = 1
                      break
                   self._log.warn("Repeat Run of the Testcase = %s" %(test.__name__.lstrip('self.')))
-                  if self.pausetodebug == True:
+                  if self.pausetodebug:
                      PauseToDebug()
                   repeat_test += 1
                 if repeat_test == 4:

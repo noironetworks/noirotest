@@ -34,7 +34,8 @@ def run_func_neg():
 def main():
     usage = "Usage: python suite_run.py <'aci' or 'upstream'>"
     try:
-        flag = sys.argv[1]
+	cntrl_ip = sys.argv[1]
+        flag = sys.argv[2]
     except Exception:
         print('%s' % (usage))
         sys.exit(1)
@@ -47,7 +48,7 @@ def main():
             # Assumption: test-scripts are executable from any location
             # Reading the line from text file, also reads trailing \n, hence we
             # need to strip
-            cmd = 'python %s %s' % (l.strip(), flag)
+            cmd = 'python %s %s %s' % (l.strip(), cntrl_ip, flag)
             print(cmd)
             # out=getoutput(cmd)
             subprocess.call(cmd, shell=True)

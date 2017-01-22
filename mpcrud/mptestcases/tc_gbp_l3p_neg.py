@@ -22,16 +22,16 @@ from mpcrud.mplibs import verify_libs
 def main():
 
     # Run the Testcases:
-    test = test_gbp_l3p_neg()
-    if test.test_gbp_l3p_neg_1() == 0:
+    test = test_gbp_l3p_neg(sys.argv[1])
+    if not test.test_gbp_l3p_neg_1():
         test.cleanup(tc_name='TESTCASE_GBP_L3P_NEG_1')
-    if test.test_gbp_l3p_neg_2() == 0:
+    if not test.test_gbp_l3p_neg_2():
         test.cleanup(tc_name='TESTCASE_GBP_L3P_NEG_2')
-    if test.test_gbp_l3p_neg_3() == 0:
+    if not test.test_gbp_l3p_neg_3():
         test.cleanup(tc_name='TESTCASE_GBP_L3P_NEG_3')
-    if test.test_gbp_l3p_neg_4() == 0:
+    if not test.test_gbp_l3p_neg_4():
         test.cleanup(tc_name='TESTCASE_GBP_L3P_NEG_4')
-    if test.test_gbp_l3p_neg_5() == 0:
+    if not test.test_gbp_l3p_neg_5():
         test.cleanup(tc_name='TESTCASE_GBP_L3P_NEG_5')
     test.cleanup()
     utils_libs.report_results('test_gbp_l3p_neg', 'test_results.txt')
@@ -54,13 +54,14 @@ class test_gbp_l3p_neg(object):
     _log.setLevel(logging.INFO)
     _log.setLevel(logging.DEBUG)
 
-    def __init__(self):
+    def __init__(self,controller_ip):
         """
         Init def
         """
         self._log.info("\n## START OF GBP L3_POLICY NEGATIVE TESTSUITE\n")
-        self.gbpcfg = config_libs.Gbp_Config()
-        self.gbpverify = verify_libs.Gbp_Verify()
+	self.controller_ip = controller_ip
+        self.gbpcfg = config_libs.Gbp_Config(self.controller_ip)
+        self.gbpverify = verify_libs.Gbp_Verify(self.controller_ip)
         self.l3p_name = 'demo_l3p'
 
     def cleanup(self, tc_name=''):
@@ -94,14 +95,14 @@ class test_gbp_l3p_neg(object):
                 "\n## Step 1A: Create L3Policy with Invalid IP-Pool = %s ##" %
                 (pool))
             if self.gbpcfg.gbp_policy_cfg_all(
-                    1, 'l3p', self.l3p_name, ip_pool=pool) != 0:
+                    1, 'l3p', self.l3p_name, ip_pool=pool):
                 self._log.info(
                     "# Step 1A: Create L3Policy with Invalid IP-Pool %s did "
                     "NOT fail" %
                     (pool))
             self._log.info('# Step 1A: Verify L3Policy did NOT get created')
             if self.gbpverify.gbp_l2l3ntk_pol_ver_all(
-                    1, 'l3p', self.l3p_name) != 0:
+                    1, 'l3p', self.l3p_name):
                 self._log.info(
                     "# Step 1A: L3Policy did NOT fail to create even with "
                     "Invalid IP-Pool %s" %
@@ -134,14 +135,14 @@ class test_gbp_l3p_neg(object):
                 "Prefix-lenght = %s ##" %
                 (prefix))
             if self.gbpcfg.gbp_policy_cfg_all(
-                    1, 'l3p', self.l3p_name, subnet_prefix_length=prefix) != 0:
+                    1, 'l3p', self.l3p_name, subnet_prefix_length=prefix):
                 self._log.info(
                     "# Step 1A: Create L3Policy with Invalid IP-Pool %s "
                     "did NOT fail" %
                     (prefix))
             self._log.info('# Step 1A: Verify L3Policy did NOT get created')
             if self.gbpverify.gbp_l2l3ntk_pol_ver_all(
-                    1, 'l3p', self.l3p_name) != 0:
+                    1, 'l3p', self.l3p_name):
                 self._log.info(
                     "# Step 1A: L3Policy did NOT fail to create even with "
                     "Invalid IP-Pool %s" %
@@ -180,13 +181,13 @@ class test_gbp_l3p_neg(object):
                     'l3p',
                     self.l3p_name,
                     ip_pool=ip,
-                    subnet_prefix_length=pref) != 0:
+                    subnet_prefix_length=pref):
                 self._log.info(
                     "# Step 1A: Create L3Policy with mix of valid and "
                     "invalid did NOT fail")
             self._log.info('# Step 1A: Verify L3Policy did NOT get created')
             if self.gbpverify.gbp_l2l3ntk_pol_ver_all(
-                    1, 'l3p', self.l3p_name) != 0:
+                    1, 'l3p', self.l3p_name):
                 self._log.info(
                     "# Step 1A: L3Policy did NOT fail to create even with "
                     "mix of Valid and Invalid attrs %s")
@@ -214,30 +215,36 @@ class test_gbp_l3p_neg(object):
 
         # Testcase work-flow starts
         self._log.info('\n## Step 1: Create a L3P with default attribute ##\n')
-        l3p_uuid = self.gbpcfg.gbp_policy_cfg_all(1, 'l3p', self.l3p_name)
-        if l3p_uuid == 0:
+        l3p_uuid = self.gbpcfg.gbp_policy_cfg_all(1, 'l3p', self.l3p_name)[0]
+        if not l3p_uuid:
             self._log.info("\n## Step 1: Create L3Policy == Failed")
             return 0
+        self._log.info(
+        '\n## Step 2: Update the L3Policy with Invalid Subnet-Prefix-Length ##\n')
         if self.gbpcfg.gbp_policy_cfg_all(
-                2, 'l3p', l3p_uuid, subnet_prefix_length='32') != 0:
+                2, 'l3p', l3p_uuid, subnet_prefix_length='32'):
             self._log.info(
                 "\n## Step 2: Updating L3Policy's Subnet-Prefix-Length "
                 "with Invalid Value=32 did NOT fail")
             return 0
+        self._log.info(
+        '\n## Step 3: Update the L3Policy with Valid IP-Pool ##\n')
         if self.gbpcfg.gbp_policy_cfg_all(
-                2, 'l3p', l3p_uuid, ip_pool='20.20.0.0/24') != 0:
+                2, 'l3p', l3p_uuid, ip_pool='20.20.0.0/24'):
             self._log.info(
                 "\n## Step 3: Updating L3Policy's Immutable attr IP-Pool "
                 "did NOT fail")
             return 0
-        if self.gbpverify.gbp_l2l3ntk_pol_ver_all(
+        self._log.info(
+        '\n## Step 4: Verify the update fails and config roll backs to original ##\n')
+        if not self.gbpverify.gbp_l2l3ntk_pol_ver_all(
                 1,
                 'l3p',
                 l3p_uuid,
                 id=l3p_uuid,
                 name=self.l3p_name,
                 ip_pool='10.0.0.0/8',
-                subnet_prefix_length='24') == 0:
+                subnet_prefix_length='24'):
             self._log.info(
                 "\n## Step 4: L3Policy config did NOT roll back to original "
                 "default values")
@@ -266,34 +273,38 @@ class test_gbp_l3p_neg(object):
 
         # Testcase work-flow starts
         self._log.info('\n## Step 1: Create a L3P with default attribute ##\n')
-        l3p_uuid = self.gbpcfg.gbp_policy_cfg_all(1, 'l3p', self.l3p_name)
-        if l3p_uuid == 0:
+        l3p_uuid = self.gbpcfg.gbp_policy_cfg_all(1, 'l3p', self.l3p_name)[0]
+        if not l3p_uuid:
             self._log.info("\n## Step 1: Create L3Policy == Failed")
             return 0
+	self._log.info(
+        "\n## Step 2: Updating L3Policy's Subnet-Prefix-Length > default Mask-length")
         if self.gbpcfg.gbp_policy_cfg_all(
-                2, 'l3p', l3p_uuid, subnet_prefix_length='4') != 0:
+                2, 'l3p', l3p_uuid, subnet_prefix_length='4'):
             self._log.info(
                 "\n## Step 2: Updating L3Policy's "
                 "Subnet-Prefix-Length > default Mask-length(8) did NOT fail")
             return 0
-        if self.gbpverify.gbp_l2l3ntk_pol_ver_all(
+        if not self.gbpverify.gbp_l2l3ntk_pol_ver_all(
                 1,
                 'l3p',
                 l3p_uuid,
                 id=l3p_uuid,
                 name=self.l3p_name,
                 ip_pool='10.0.0.0/8',
-                subnet_prefix_length='24') == 0:
+                subnet_prefix_length='24'):
             self._log.info(
                 "\n## Step 3: L3Policy config did NOT roll back "
                 "to original default values")
             return 0
+	self._log.info(
+	"\n## Step 4: Creating L3Policy with Subnet-Prefix-Length > Mask-Length")
         if self.gbpcfg.gbp_policy_cfg_all(
                 1,
                 'l3p',
                 'new_l3p',
                 ip_pool='20.20.20.0/24',
-                subnet_prefix_length='16') != 0:
+                subnet_prefix_length='16'):
             self._log.info(
                 "\n## Step 4: Creating L3Policy with "
                 "Subnet-Prefix-Length > Mask-Length(24) did NOT fail")

@@ -22,7 +22,7 @@ from mpcrud.mplibs import verify_libs
 def main():
 
     # Run the Testcase:
-    test = test_gbp_pa_neg()
+    test = test_gbp_pa_neg(sys.argv[1])
     if test.test_pa_invalid_act_type() == 0:
         test.cleanup(tc_name='TESTCASE_GBP_PA_NEG_1')
     if test.test_pa_valid_type_inval_val() == 0:
@@ -56,13 +56,13 @@ class test_gbp_pa_neg(object):
     _log.setLevel(logging.INFO)
     _log.setLevel(logging.DEBUG)
 
-    def __init__(self):
+    def __init__(self,controller_ip):
         """
         Init def
         """
         self._log.info("\n## START OF GBP POLICY_ACTION NEGATIVE TESTSUITE\n")
-        self.gbpcfg = config_libs.Gbp_Config()
-        self.gbpverify = verify_libs.Gbp_Verify()
+        self.gbpcfg = config_libs.Gbp_Config(controller_ip)
+        self.gbpverify = verify_libs.Gbp_Verify(controller_ip)
         self.act_name = 'demo_act'
 
     def cleanup(self, tc_name=''):

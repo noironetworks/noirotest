@@ -94,6 +94,8 @@ try:
 
     #Step 10:
     if test_traff.traff_from_ml2_tenants(tnt1,ext=True) == 0:
+	if pausetodebug:
+		PauseToDebug()
     	raise TestError(
     	"ML2-SANITY: Test-10: Using SNAT VMs' traffic in tenant %s reach Ext-Rtr " %(tnt1))
     else:
@@ -192,10 +194,10 @@ try:
     	LOG.info(
     	"ML2-SANITY: Test-20: Using FIP VMs' traffic in tenant %s reach Ext-Rtr : PASS" %(tnt2))
 except TestError as e:
-    raise TestError("%s : FAIL" %(e))
-    test_conf.cleanup_ml2()
+    LOG.error("%s : FAIL" %(e))
 finally:
-    LOG.info("THE EXECUTION OF ML2 SANITY TESTRUN COMPLETES, cleanup starts")
+    LOG.info("Cleanup being called finally")
     test_conf.cleanup_ml2()
+    LOG.info("THE EXECUTION OF ML2 SANITY TESTRUN COMPLETES")
     
 

@@ -22,8 +22,9 @@ from mpcrud.mplibs import verify_libs
 def main():
 
     # Run the Testcases:
-    env_flag = sys.argv[1]
-    test = test_gbp_ptg_func(env_flag)
+    env_flag = sys.argv[2]
+    controller_ip = sys.argv[1]
+    test = test_gbp_ptg_func(env_flag,controller_ip)
     test.global_cfg()
     if test.test_gbp_ptg_func_1() == 0:
         test.cleanup(tc_name='TESTCASE_GBP_PTG_FUNC_1')
@@ -52,14 +53,14 @@ class test_gbp_ptg_func(object):
     _log.setLevel(logging.INFO)
     _log.setLevel(logging.DEBUG)
 
-    def __init__(self, env_flag):
+    def __init__(self, controller_ip, env_flag):
         """
         Init def
         """
         self._log.info(
             "\n## START OF GBP POLICY_TARGET_GROUP FUNCTIONALITY TESTSUITE\n")
-        self.gbpcfg = config_libs.Gbp_Config()
-        self.gbpverify = verify_libs.Gbp_Verify()
+        self.gbpcfg = config_libs.Gbp_Config(controller_ip)
+        self.gbpverify = verify_libs.Gbp_Verify(controller_ip)
         self.act_name = 'test_ptg_pa'
         self.cls_name = 'test_ptg_pc'
         self.rule_name = 'test_ptg_pr'

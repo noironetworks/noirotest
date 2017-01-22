@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import logging
+import pdb #JISHNU
 import pprint
 import re
 import string
@@ -16,10 +17,9 @@ from testcases.config import conf
 
 # Initialize logging
 LOG = logging.getLogger(__name__)
-LOG.propagate = False
 LOG.setLevel(logging.ERROR)
 # create a logfile handler
-hdlr = logging.FileHandler('/tmp/test_ml2_sanity.log')
+hdlr = logging.FileHandler('/tmp/test_sanity.log')
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 hdlr.setFormatter(formatter)
 # Add the handler to the logger
@@ -41,6 +41,7 @@ AVZONE = conf['nova_az_name']
 AVHOST = conf['az_comp_node']
 COMPUTE1 = conf['ntk_node']
 COMPUTE2 = conf['compute_2']
+pausetodebug = conf['pausetodebug']
 EXTDNATCIDR,FIPBYTES = '50.50.50.0/28', '50.50.50.'
 EXTSNATCIDR = '55.55.55.0/28'
 EXTSUB1 = EXTSUB2 = ''
@@ -60,7 +61,7 @@ neutron = neutronCli(CNTRLIP)
 neutron_api = neutronPy(CNTRLIP)
 apic = gbpApic(APICIP)
 
-def create_external_network_subnets(self):
+def create_external_network_subnets():
 	#Needed for both GBP & ML2
         LOG.info(
         "\n#######################################################\n"
@@ -83,8 +84,7 @@ def create_external_network_subnets(self):
             return 0
 
 class TestError(Exception):
-    def __init__(self,errormsg):
-	return errormsg
+	pass
 
 class crudML2(object):
     global ml2tnt1, ml2tnt2, ml2Ntks, ml2Subs, Cidrs, addscopename, \
@@ -233,17 +233,17 @@ class crudML2(object):
         neutron.runcmd(
             'nova --os-tenant-name %s secgroup-add-rule default tcp 80 80 0.0.0.0/0'
             % (tnt))
+	ml2_vm_ntk_ip[tnt] = {}
         az = neutron.alternate_az(AVZONE)
         for i in range(len(ML2vms[tnt])):
-	    ml2_vm_ntk_ip[ML2vms[tnt][i]] = {}
+	    ml2_vm_ntk_ip[tnt][ML2vms[tnt][i]] = {}
             try:
-		n = self.networkIDs[tnt][i]
                 vmcreate = neutron.spawnVM(tnt,
                                            ML2vms[tnt][i],
                                            self.networkIDs[tnt][i],
                                            availzone=az.next()
                                        	   )
-		ml2_vm_ntk_ip[ML2vms[tnt][i]] = [vmcreate[0],self.networkIDs[tnt][i]]
+		ml2_vm_ntk_ip[tnt][ML2vms[tnt][i]] = [vmcreate[0],self.networkIDs[tnt][i]]
 	    except Exception as e:
                 LOG.error('VM Creation for tnt %s Failed: ' %(tnt)+repr(e))
                 return 0
@@ -385,7 +385,7 @@ class crudGBP(object):
 
 	#NOTE: 2 PTs/VMs will be created out of self.l2p1_autoptg,
 	#so repeating the element in the list, such that this list
-	#and the ptlist length are same
+	#and the ptlist are of same length
 	#VM in sef.regPtg = VM1
 	#VMs in self.l2p1_autoptg = VM2 & VM3
 	#VM in self.l2p2_autoptg = VM4 
@@ -492,7 +492,7 @@ class crudGBP(object):
 	    LOG.error("\nUpdating L3Policy to attach ExtSegment failed")
 	    return 0
 
-    def create_contracts(self):
+    def create_shared_contracts(self):
         LOG.info(
         "\n########################################################\n"
         "## Create shared contracts and related resources in tenant-Admin %s ##\n"
@@ -628,6 +628,46 @@ class crudGBP(object):
 		return 0
 				
     def cleanup_gbp(self):
+	for tnt in TNT_LIST_GBP:
+	    #Delete VMs for a given ML2 tenant
+	    for vm in GBPvms[tnt]:
+	        neutron.runcmd(
+		'nova --os-tenant-name %s delete %s' %(tnt,vm))
+	    #Delete FIPs
+	    try:
+	        if self.fips[tnt]:
+		    for fip in self.fips[tnt]:
+		        neutron.runcmd(
+		        'nova --os-tenant-name %s floating-ip-delete %s'
+ 			 %(tnt,fip))
+		gbpclean = GBPCrud(CNTRLIP,tenant=tnt)
+                pt_list = gbpclean.get_gbp_policy_target_list()
+            	if len(pt_list):
+              	    for pt in pt_list:
+                    	gbpclean.delete_gbp_policy_target(pt, property_type='uuid')
+           	ptg_list = gbpclean.get_gbp_policy_target_group_list()
+           	if len(ptg_list):
+              	    for ptg in ptg_list:
+                	gbpclean.delete_gbp_policy_target_group(ptg, property_type='uuid')
+           	l2p_list = gbpclean.get_gbp_l2policy_list()
+           	if len(l2p_list):
+              	    for l2p in l2p_list:
+                 	gbpclean.delete_gbp_l2policy(l2p, property_type='uuid')
+           	l3p_list = gbpclean.get_gbp_l3policy_list()
+           	if len(l3p_list) :
+                   for l3p in l3p_list:
+                 	gbpclean.delete_gbp_l3policy(l3p, property_type='uuid')
+           	gbpclean.delete_gbp_network_service_policy()
+           	natpool_list = gbpclean.get_gbp_nat_pool_list()
+           	if len(natpool_list) :
+              	    for natpool in natpool_list:
+                 	gbpclean.delete_gbp_nat_pool(natpool)
+           	extpol_list = gbpclean.get_gbp_external_policy_list()
+           	if len(extpol_list) :
+              	    for extpol in extpol_list:
+                 	gbpclean.delete_gbp_external_policy(extpol)
+	    except Exception:
+		pass
 	return 1
 
 class verifyML2(object):
@@ -641,12 +681,7 @@ class sendTraffic(object):
     def generate_vm_prop(self,tnt,ext=False):
 	print 'VM_to_NTK_IP inside Traffic Class for == ', ml2_vm_ntk_ip[tnt]
   	properties = {}
-	if ext:
-	    pingable_ips = [ip for val in ml2_vm_ntk_ip[tnt].values() for ip in val][0::2]+\
-			[EXTRTRIP1,EXTRTRIP2]
-	else:
-	    pingable_ips = [ip for val in ml2_vm_ntk_ip[tnt].values() for ip in val][0::2]
-	for vm,prop in ml2_vm_ntk_ip.iteritems():
+	for vm,prop in ml2_vm_ntk_ip[tnt].iteritems():
 	    if ext:
 	        pingable_ips = [ip for val in ml2_vm_ntk_ip[tnt].values() for ip in val][0::2]+\
 			[EXTRTRIP1,EXTRTRIP2]

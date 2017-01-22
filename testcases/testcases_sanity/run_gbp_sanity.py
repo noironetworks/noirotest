@@ -33,7 +33,7 @@ try:
     	"GBP-SANITY: Test-3: Create Policy-Targets on Regular & AutoPTGs : PASS")
 
     #Step 4: 
-    if test_conf.create_contracts() == 0:
+    if test_conf.create_shared_contracts() == 0:
         raise TestError("GBP-SANITY: Test-4: Create Shared Contracts & Relational resources")
     else:
         LOG.info("GBP-SANITY: Test-4: Create Shared Contracts & Relational resources : PASS")
@@ -58,9 +58,10 @@ try:
     	LOG.info(
     	"GBP-SANITY: Test-6: INTRA-EPG traffic between VMs in an AutoPTG %s : PASS"
      	%(tnt1))
+    cleanup_gbp #JISHNU
     sys.exit(1) #JISHNU 
     #Step 7: 
-    if test_conf. == 0:
+    if test_conf.update_intra_bd_ptg_by_contract(PRS_ICMP_TCP) == 0:
     	raise TestError(
     	"GBP-SANITY: Test-7: Attach router of tenant %s connects to shared External Ntk "
      	%(tnt1))
@@ -191,10 +192,10 @@ try:
     	LOG.info(
     	"GBP-SANITY: Test-20: Using FIP VMs' traffic in tenant %s reach Ext-Rtr : PASS" %(tnt2))
 except TestError as e:
-    raise TestError("%s : FAIL" %(e))
-    test_conf.cleanup_ml2()
+    LOG.error("%s : FAIL" %(e))
 finally:
-    LOG.info("THE EXECUTION OF ML2 SANITY TESTRUN COMPLETES, cleanup starts")
-    test_conf.cleanup_ml2()
+    LOG.info("Cleanup being called finally")
+    test_conf.cleanup_gbp()
+    LOG.info("THE EXECUTION OF ML2 SANITY TESTRUN COMPLETES")
     
 

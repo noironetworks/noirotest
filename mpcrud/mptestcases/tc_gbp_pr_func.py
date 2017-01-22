@@ -23,7 +23,7 @@ from mpcrud.mplibs import verify_libs
 def main():
 
     # Run the Testcases:
-    test = test_gbp_pr_func()
+    test = test_gbp_pr_func(sys.argv[1])
     if test.test_gbp_pr_func_1() == 0:
         test.cleanup(tc_name='TESTCASE_GBP_PR_FUNC_1')
     if test.test_gbp_pr_func_2() == 0:
@@ -57,14 +57,14 @@ class test_gbp_pr_func(object):
     _log.setLevel(logging.INFO)
     _log.setLevel(logging.DEBUG)
 
-    def __init__(self):
+    def __init__(self,controller_ip):
         """
         Init def
         """
         self._log.info(
             "\n## START OF GBP POLICY_RULE FUNCTIONALITY TESTSUITE\n")
-        self.gbpcfg = config_libs.Gbp_Config()
-        self.gbpverify = verify_libs.Gbp_Verify()
+        self.gbpcfg = config_libs.Gbp_Config(controller_ip)
+        self.gbpverify = verify_libs.Gbp_Verify(controller_ip)
         self.act_name = 'demo_pa'
         self.cls_name = 'demo_pc'
         self.rule_name = 'demo_pr'

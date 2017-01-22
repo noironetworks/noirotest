@@ -22,7 +22,7 @@ from mpcrud.mplibs import verify_libs
 def main():
 
     # Run the Testcase:
-    test = test_gbp_ri_func_1()
+    test = test_gbp_ri_func_1(sys.argv[1])
     test.run()
 
 
@@ -42,12 +42,12 @@ class test_gbp_ri_func_1(object):
     _log.setLevel(logging.INFO)
     _log.setLevel(logging.DEBUG)
 
-    def __init__(self):
+    def __init__(self,controller_ip):
         """
         Init def
         """
-        self.gbpcfg = config_libs.Gbp_Config()
-        self.gbpverify = verify_libs.Gbp_Verify()
+        self.gbpcfg = config_libs.Gbp_Config(controller_ip)
+        self.gbpverify = verify_libs.Gbp_Verify(controller_ip)
         self.act_name = 'allow_all'
         self.class_name = 'pc_icmp'
         self.rule_name = 'pr_icmp'

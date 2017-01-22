@@ -119,8 +119,7 @@ class neutronCli(object):
                    _output = run(cmd)
 		   return _output
 		except:
-		   print "Invalid command due to unknown neutron resource"
-		   return ''
+		   pass
 
     def addDelkeystoneTnt(self,tenantList,action):
 	'''
@@ -305,18 +304,27 @@ class neutronCli(object):
 	if availzone:
 	   cmd = cmd+' --availability-zone %s' %(availzone)
         if self.runcmd(cmd):
-	    sleep(10)
+	    sleep(5)
 	    vmout = self.runcmd('nova --os-tenant-name %s show %s | grep network' %(tenant,vmname))
 	    match = re.search("\\b(\d+.\d+.\d+.\d+)\\b.*",vmout,re.I)
 	    if match:
 		vmip = match.group(1)
-		_out = self.runcmd('nova --os-tenant-name %s interface-list %s | grep ACTIVE'\
+		num_try = 1
+		while num_try < 6:
+		    sleep(5)
+		    _out = self.runcmd('nova --os-tenant-name %s interface-list %s | grep ACTIVE'\
 				   %(tenant,vmname))
-		if _out.succeeded:
-		    portMAC = re.search(r'(([0-9a-f]{2}:){5}[0-9a-f]{2})',_out,re.I).group()
-		    _match = [i.strip(' ') for i in _out.split('|')]
-		    portID = _match[_match.index('ACTIVE')+1]
-	        return [vmip,portID,portMAC]
+		    if _out or num_try == 5:
+		         break
+		    num_try+=1
+		if _out: #It may happen even after above 5 retries,_out is still NoneType, so check for that
+		    if _out.succeeded:
+		        portMAC = re.search(r'(([0-9a-f]{2}:){5}[0-9a-f]{2})',_out,re.I).group()
+		        _match = [i.strip(' ') for i in _out.split('|')]
+		        portID = _match[_match.index('ACTIVE')+1]
+	            return [vmip,portID,portMAC]
+		else:
+		     return []
 	else:
 	    return []
 

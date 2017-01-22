@@ -24,9 +24,8 @@ from mpcrud.mplibs import verify_libs
 def main():
 
     # Run the Testcase:
-    test = test_gbp_pa_func()
+    test = test_gbp_pa_func(sys.argv[1])
     test.test_cr_ver_del_ver_default()
-    test.test_upd_ver_del()
     utils_libs.report_results('test_gbp_pa_func', 'test_results.txt')
     sys.exit(1)
 
@@ -47,14 +46,14 @@ class test_gbp_pa_func(object):
     _log.setLevel(logging.INFO)
     _log.setLevel(logging.DEBUG)
 
-    def __init__(self):
+    def __init__(self,controller_ip):
         """
         Init def
         """
         self._log.info(
             "\n## START OF GBP POLICY_ACTION FUNCTIONALITY TESTSUITE\n")
-        self.gbpcfg = config_libs.Gbp_Config()
-        self.gbpverify = verify_libs.Gbp_Verify()
+        self.gbpcfg = config_libs.Gbp_Config(controller_ip)
+        self.gbpverify = verify_libs.Gbp_Verify(controller_ip)
         self.act_name = 'demo_act'
 
     def cleanup(self, cfgobj, uuid_name, tc_name=''):
@@ -169,83 +168,6 @@ class test_gbp_pa_func(object):
             return 0
         if rep_cr == 0 and rep_del == 0:
             self._log.info("\n## TESTCASE_GBP_PA_FUNC_1: PASSED")
-        return 1
-
-    def test_upd_ver_del(self):
-        self._log.info(
-            "\n###################################################\n"
-            "TESTCASE_GBP_PA_FUNC_2: UPDATE/VERIFY/DELETE EDITABLE ATTRIBs "
-            "of a POLICY ACTION \n"
-            "TEST_STEPS::\n"
-            "Create Policy Action using Default param values\n"
-            "Update the Polciy Action's editable params\n"
-            "Verify the Policy Action's attributes & values, show & list "
-            "cmds\n"
-            "Delete the Policy Action\n"
-            "Verify Policy Action successfully deleted\n"
-            "###################################################\n")
-
-        # Testcase work-flow starts
-        self._log.info(
-            '\n##Step 1: Create Action with default attrib vals ##\n')
-        act_uuid = self.gbpcfg.gbp_action_config(1, self.act_name)
-        if act_uuid == 0:
-            self._log.info("## Step 1: Create Action == Failed")
-            return 0
-        self._log.info(
-            "\n## Step 1A: Creating a Service Chain Spec to be used for "
-            "UPdating Polic Action")
-        spec_cr_cmd = ('gbp servicechain-spec-create demo_spec | grep id | '
-                       'head -1')
-        cmd_out = commands.getoutput(spec_cr_cmd)
-        spec_id = re.search("\\bid\\b\s+\| (.*) \|", cmd_out, re.I).group(1)
-        self._log.info(
-            '\n##Step 2: Update Policy Action Attributes name and '
-            'action_value##\n')
-        if self.gbpcfg.gbp_action_config(
-                2,
-                act_uuid,
-                name='grppol_act',
-                action_value=spec_id) == 0:
-            self._log.info(
-                "\n##Step 2: Updating Policy Action's Attributes name "
-                "& action_value, Failed")
-            return 0
-
-        if self.gbpverify.gbp_action_verify(
-                0, 'grppol_act', act_uuid, spec_id) == 0:
-            self._log.info(
-                "\n## Step 2A: Verify Policy Action Updated Attributes "
-                "using -list option == Failed")
-            return 0
-        if self.gbpverify.gbp_action_verify(
-                1,
-                'grppol_act',
-                id=act_uuid,
-                action_type='allow',
-                shared='False',
-                action_value=spec_id) == 0:
-            self._log.info(
-                "\n## Step 2B: Verify Policy Action Updated Attributes "
-                "using -show option == Failed")
-            return 0
-        if self.gbpcfg.gbp_action_config(0, act_uuid) == 0:
-            self._log.info("## Step 3: Delete Action using Name == Failed")
-            return 0
-        self._log.info("\n## Step 3A: Now delete the service chain spec")
-        spec_del_cmd = 'gbp servicechain-spec-delete %s' % (spec_id)
-        cmd_out = commands.getoutput(spec_del_cmd)
-        if self.gbpverify.gbp_action_verify(
-                1,
-                'grppol_act',
-                id=act_uuid,
-                action_type='allow',
-                shared='False') != 0:
-            self._log.info(
-                "\n## Step 3B: Verify Action is Deleted using -show "
-                "option == Failed")
-            return 0
-        self._log.info("\n## TESTCASE_GBP_PA_FUNC_2: PASSED")
         return 1
 
 if __name__ == '__main__':

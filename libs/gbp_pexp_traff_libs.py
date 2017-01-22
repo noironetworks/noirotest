@@ -30,7 +30,7 @@ class gbpExpTraff(object):
 
     def test_run(self,protocols=['icmp','tcp','udp'],port=80,tcp_syn_only=0,jumbo=0):
         child = pexpect.spawn('ssh root@%s' %(self.net_node))
-        child.expect('#')
+        child.expect('#') #Expecting passwordless access
         child.sendline('hostname')
         child.expect('#')
         print child.before
@@ -107,20 +107,14 @@ class gbpExpTraff(object):
                             results[dest_ep]['tcp']=0
                    else:
 		        #Over-riding the label cmd_s,to run simple ncat
-		        count = 0
-		        for port in [22,80]:
-	                    cmd_s = "nc -w 1 -v %s -z %s" %(dest_ep,port)
-                            child.sendline(cmd_s)
-                            child.expect('#')
-                            print "Sent Only TCP SYN to %s" %(dest_ep)
-                            result=child.before
-                            print result
-                            if 'succeeded' in result:
-		      	        count += 1
-		        if count < 2:
-                            results[dest_ep]['tcp']=0
-                        else:
+	                cmd_s = "nc -w 1 -v %s -z 22" %(dest_ep)
+                        child.sendline(cmd_s)
+                        child.expect('#')
+                        result=child.before
+                        if 'succeeded' in result:
                             results[dest_ep]['tcp']=1
+                        else:
+                            results[dest_ep]['tcp']=0
                 if protocol=='udp' or protocol=='all':
                    cmd = "hping3 %s --udp -p %s -c %s --fast -q" %(dest_ep,port,self.pkt_cnt)
                    child.sendline(cmd)

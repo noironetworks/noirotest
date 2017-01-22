@@ -22,7 +22,7 @@ from mpcrud.mplibs import verify_libs
 def main():
 
     # Run the Testcases:
-    test = test_gbp_nsp_func()
+    test = test_gbp_nsp_func(sys.argv[1])
     if test.test_gbp_nsp_func_1() == 0:
         test.cleanup(tc_name='TESTCASE_GBP_NSP_FUNC_1')
     if test.test_gbp_nsp_func_2() == 0:
@@ -50,15 +50,15 @@ class test_gbp_nsp_func(object):
     _log.setLevel(logging.INFO)
     _log.setLevel(logging.DEBUG)
 
-    def __init__(self):
+    def __init__(self,controller_ip):
         """
         Init def
         """
         self._log.info(
             "\n## START OF GBP NETWORK_SERVICE_POLICY FUNCTIONALITY "
             "TESTSUITE\n")
-        self.gbpcfg = config_libs.Gbp_Config()
-        self.gbpverify = verify_libs.Gbp_Verify()
+        self.gbpcfg = config_libs.Gbp_Config(controller_ip)
+        self.gbpverify = verify_libs.Gbp_Verify(controller_ip)
         self.nsp_name = 'demo_nsp'
 
     def cleanup(self, tc_name=''):

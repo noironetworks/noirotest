@@ -16,7 +16,7 @@ import logging
 import string
 import re
 from fabric.api import cd,run,env, hide, get, settings
-from utils_libs import * #JISHNU, once it works it should import from gbp_utils
+from utils_libs import * 
 
 # Initialize logging
 logging.basicConfig(
@@ -290,6 +290,7 @@ class Gbp_Verify(object):
                         "for the PolicyObject == %s" %
                         (arg, val, verifyobj))
                     return 0
+	    return 1 
         else:
             return 1
 
