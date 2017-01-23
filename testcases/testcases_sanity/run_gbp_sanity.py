@@ -58,144 +58,55 @@ try:
     	LOG.info(
     	"GBP-SANITY: Test-6: INTRA-EPG traffic between VMs in an AutoPTG %s : PASS"
      	%(tnt1))
-    cleanup_gbp #JISHNU
-    sys.exit(1) #JISHNU 
+	LOG.info(
+    	"GBP-SANITY: Test-6: VMs b/w Networks/EPGs are reachable(ICMP & SSH) in tenant %s : PASS" %(tnt1))
+    	LOG.info(
+    	"GBP-SANITY: Test-6: VMs in different Networks/EPGs have DHCP addresses in tenant %s : PASS" %(tnt1))
+    	LOG.info(
+    	"GBP-SANITY: Test-6: VMs are reachable(ICMP & SSH) from netns(DHCP-server) for tenant %s : PASS" %(tnt1))
+
     #Step 7: 
     if test_conf.update_intra_bd_ptg_by_contract(PRS_ICMP_TCP) == 0:
     	raise TestError(
-    	"GBP-SANITY: Test-7: Attach router of tenant %s connects to shared External Ntk "
-     	%(tnt1))
+    	"GBP-SANITY: Test-7: Apply Contract %s between intra-BD EPGs by updation"
+     	%(PRS_ICMP_TCP))
     else:
     	LOG.info(
-    	"GBP-SANITY: Test-7: Attach router of tenant %s connects to shared External Ntk : PASS"
-    	%(tnt1))
+    	"GBP-SANITY: Test-7: Apply Contract %s between intra-BD EPGs by updation : PASS"
+    	%(PRS_ICMP_TCP))
 
     #Step 8:
-    if test_conf.install_tenant_vms(tnt1) == 0:
-    	raise TestError("GBP-SANITY: Test-8: Create VMs for tenant %s " %(tnt1))
+    if test_traff.traff_from_gbp_tenant(tnt1,'intra_bd') == 0:
+    	raise TestError(
+    	"GBP-SANITY: Test-8: INTRA-BD traffic between VMs across two EPGs")
     else:
-    	LOG.info("GBP-SANITY: Test-8: Create VMs for tenant %s : PASS" %(tnt1))
-
-    sleep(15)
-    #Initialize the Traffic Class
-    test_traff = sendTraffic()
+    	LOG.info(
+    	"GBP-SANITY: Test-8: INTRA-BD traffic between VMs across two EPGs : PASS")
 
     #Step 9:
-    if test_traff.traff_from_ml2_tenants(tnt1) == 0:
+    if test_conf.update_inter_bd_ptg_by_contract(PRS_ICMP_TCP) == 0:
     	raise TestError(
-    	"GBP-SANITY: Test-9: VMs b/w Networks/EPGs are reachable(ICMP & SSH) in tenant %s " %(tnt1))
+    	"GBP-SANITY: Test-9: Apply Contract %s between inter-BD EPGs by updation"
+     	%(PRS_ICMP_TCP))
     else:
     	LOG.info(
-    	"GBP-SANITY: Test-9: VMs b/w Networks/EPGs are reachable(ICMP & SSH) in tenant %s : PASS" %(tnt1))
-    	LOG.info(
-    	"GBP-SANITY: Test-9: VMs in different Networks/EPGs have DHCP addresses in tenant %s : PASS" %(tnt1))
-    	LOG.info(
-    	"GBP-SANITY: Test-9: VMs are reachable(ICMP & SSH) from netns(DHCP-server) for tenant %s : PASS" %(tnt1))
+    	"GBP-SANITY: Test-9: Apply Contract %s between inter-BD EPGs by updation : PASS"
+    	%(PRS_ICMP_TCP))
 
-    #Step 10:
-    if test_traff.traff_from_ml2_tenants(tnt1,ext=True) == 0:
+    #Step 10
+    if test_traff.traff_from_gbp_tenant(tnt1,'inter_bd') == 0:
     	raise TestError(
-    	"GBP-SANITY: Test-10: Using SNAT VMs' traffic in tenant %s reach Ext-Rtr " %(tnt1))
+    	"GBP-SANITY: Test-10: INTER-BD traffic between VMs across three EPGs")
     else:
     	LOG.info(
-    	"GBP-SANITY: Test-10: Using SNAT VMs' traffic in tenant %s reach Ext-Rtr : PASS" %(tnt1))
+    	"GBP-SANITY: Test-10: INTER-BD traffic between VMs across three EPGs : PASS")
 
-    #Step 11:
-    if test_conf.attach_fip_to_vms(tnt1) == 0:
-    	raise TestError(
-    	"GBP-SANITY: Test-11: Attach FIP to VMs in tenant %s " %(tnt1))
-    else:
-   	LOG.info(
-    	"GBP-SANITY: Test-11: Attach FIP to VMs in tenant %s : PASS" %(tnt1))
-    sleep(20) #For FIP to be learned in Fabric
-    #Step 12:
-    if test_traff.traff_from_ml2_tenants(tnt1,ext=True) == 0:
-    	raise TestError(
-    	"GBP-SANITY: Test-12: Using FIP VMs' traffic in tenant %s reach Ext-Rtr " %(tnt1))
-    else:
-    	LOG.info(
-    	"GBP-SANITY: Test-12: Using FIP VMs' traffic in tenant %s reach Ext-Rtr : PASS" %(tnt1))
-
-    LOG.info(
-    "###### WORKFLOW-2: Attaching router to networks AFTER VM creation:Tenant %s ######" 
-    %(tnt2))
-    #Step 13:
-    if test_conf.install_tenant_vms(tnt2) == 0:
-    	raise TestError("GBP-SANITY: Test-13: Create VMs for tenant %s " %(tnt2))
-    
-    else:
-    	LOG.info("GBP-SANITY: Test-13: Create VMs for tenant %s : PASS" %(tnt2))
-
-    sleep(15) #For VMs to get learned in Fabric
-
-    #Step 14:
-    if test_traff.traff_from_ml2_tenants(tnt2) == 1:
-    	raise TestError(
-    	"GBP-SANITY: Test-14: VMs b/w Networks/EPGs must NOT be reachable for tenant %s " %(tnt2))
-    else:
-    	LOG.info(
-    	"GBP-SANITY: Test-14: VMs in different Networks/EPGs have DHCP addresses in tenant %s : PASS" %(tnt2))
-    	LOG.info(
-    	"GBP-SANITY: Test-14: VMs are reachable(ICMP & SSH) from netns(DHCP-server) for tenant %s : PASS" %(tnt2))
-    	LOG.info(
-    	"GBP-SANITY: Test-14: VMs b/w Networks/EPGs must NOT be reachable for tenant %s : PASS" %(tnt2))
-
-    #Step 15:
-    if test_conf.attach_routers_to_networks(tnt2) == 0:
-    	raise TestError(
-    	"GBP-SANITY: Test-15: Attach Routers to two networks in tenant %s "
-     	%(tnt2))
-    else:
-    	LOG.info(
-    	"GBP-SANITY: Test-15: Attach Routers to two networks in tenant %s : PASS"
-     	%(tnt2))
-
-    #Step 16:
-    if test_traff.traff_from_ml2_tenants(tnt2) == 0:
-    	raise TestError(
-    	"GBP-SANITY: Test-16: VMs b/w Networks/EPGs are NOT reachable in tenant %s " %(tnt2))
-    else:
-    	LOG.info(
-    	"GBP-SANITY: Test-16: VMs b/w Networks/EPGs are reachable(ICMP & SSH) in tenant %s : PASS" %(tnt2))
-
-    #Step 17:
-    if test_conf.attach_router_to_extnw(tnt2) == 0:
-    	raise TestError(
-    	"GBP-SANITY: Test-17: Attach router of tenant %s connects to shared External Ntk " %(tnt2))
-    else:
-    	LOG.info(
-    	"GBP-SANITY: Test-17: Attach router of tenant %s connects to shared External Ntk : PASS" %(tnt2))
-
-    #Step 18:
-    if test_traff.traff_from_ml2_tenants(tnt2,ext=True) == 0:
-    	raise TestError(
-    	"GBP-SANITY: Test-18: Using SNAT VMs' traffic in tenant %s reach Ext-Rtr " %(tnt2))
-    else:
-    	LOG.info(
-    	"GBP-SANITY: Test-18: Using SNAT VMs' traffic in tenant %s reach Ext-Rtr : PASS" %(tnt2))
-
-    #Step 19:
-    if test_conf.attach_fip_to_vms(tnt2) == 0:
-    	raise TestError(
-    	"GBP-SANITY: Test-19: Attach FIP to VMs in tenant %s " %(tnt2))
-    else:
-    	LOG.info(
-    	"GBP-SANITY: Test-19: Attach FIP to VMs in tenant %s : PASS" %(tnt2))
-
-    sleep(20) #FIP to get learned at Fabric
-
-    #Step 20:
-    if test_traff.traff_from_ml2_tenants(tnt1,ext=True) == 0:
-    	raise TestError(
-    	"GBP-SANITY: Test-20: Using FIP VMs' traffic in tenant %s reach Ext-Rtr " %(tnt2))
-    else:
-    	LOG.info(
-    	"GBP-SANITY: Test-20: Using FIP VMs' traffic in tenant %s reach Ext-Rtr : PASS" %(tnt2))
 except TestError as e:
     LOG.error("%s : FAIL" %(e))
+    pdb.set_trace() #JISHNU
 finally:
     LOG.info("Cleanup being called finally")
     test_conf.cleanup_gbp()
-    LOG.info("THE EXECUTION OF ML2 SANITY TESTRUN COMPLETES")
+    LOG.info("THE EXECUTION OF GBP SANITY TESTRUN COMPLETES")
     
 

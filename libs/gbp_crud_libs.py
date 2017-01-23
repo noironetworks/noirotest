@@ -241,14 +241,15 @@ class GBPCrud(object):
         else:
            classifier_id = classifier
            action_id = action
-        body = {"policy_rule": {
-				"policy_actions": [action_id],
-				"policy_classifier_id": classifier_id,
-				"name": name
-			      }
-		}
+	policy_rule = { "policy_actions": [action_id],
+			"policy_classifier_id": classifier_id,
+			"name": name
+			}
         try:
-           self.client.create_policy_rule(body)
+            for arg,val in kwargs.items():
+               policy_rule[arg]=val
+            body = {"policy_rule":policy_rule}
+            self.client.create_policy_rule(body)
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
            _log.error("Creating Policy Rule = %s, failed" %(name))

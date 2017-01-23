@@ -88,7 +88,7 @@ class TestError(Exception):
 
 class crudML2(object):
     global ml2tnt1, ml2tnt2, ml2Ntks, ml2Subs, Cidrs, addscopename, \
-	   subpoolname, subpool
+	   subpoolname, subpool, ml2Fips
     ml2tnt1, ml2tnt2 = TNT_LIST_ML2[0],TNT_LIST_ML2[1]
     ml2Ntks,ml2Subs,Cidrs = {},{},{}
     ml2Ntks[ml2tnt1] = ['Net1', 'Net2']
@@ -99,10 +99,7 @@ class crudML2(object):
     subpoolname = 'subpool1'
     subpool = '22.22.22.0/24'
     Cidrs[ml2tnt1] = ['11.11.11.0/28', '21.21.21.0/28']
-    print "Before Keystone Add is invoked tenant-list == ", TNT_LIST_ML2 
-    print "Global ML2 vm list == ", ML2vms[ml2tnt1]
-    print "Global ML2 vm list == ", ML2vms[ml2tnt2]
-    print "Global ML2 Tnt networks & subnets == ", ml2Ntks, ml2Subs
+    ml2Fips = {}
 
     def create_ml2_tenants(self):
 	neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create')
@@ -254,7 +251,6 @@ class crudML2(object):
         "#### Create & Attach FIP to VMs for the Tenant %s ####\n"
         "###############################################\n"
 	%(tnt))
-	self.fips = {}
 	for vm in ML2vms[tnt]:
 	    cmd1 = 'nova --os-tenant-name %s' %(tnt)+\
                   ' floating-ip-create Management-Out'
@@ -263,7 +259,7 @@ class crudML2(object):
 					re.I)
 	    if match:
 		fip = match.group(1)
-		self.fips[tnt] = fip
+		ml2Fips[tnt] = fip
 	    cmd2 = 'nova --os-tenant-name %s ' %(tnt)+\
                    'floating-ip-associate %s %s' %(vm,fip)
 	    neutron.runcmd(cmd2)
@@ -276,8 +272,8 @@ class crudML2(object):
 		'nova --os-tenant-name %s delete %s' %(tnt,vm))
 	    #Delete FIPs
 	    try:
-	        if self.fips[tnt]:
-		    for fip in self.fips[tnt]:
+	        if ml2Fips[tnt]:
+		    for fip in ml2Fips[tnt]:
 		        neutron.runcmd(
 		        'nova --os-tenant-name %s floating-ip-delete %s'
  			 %(tnt,fip))
@@ -316,18 +312,20 @@ class crudGBP(object):
     #once 'shared' is supported, we will run
     #with two tenants sharing a single L3P
     from libs.gbp_nova_libs import gbpNova
-    global tnt1, tnt2, vms, gbpL3p, gbpL2p, ippool
+    global tnt1, tnt2, vms, gbpL3p, gbpL2p, ippool, gbpFips
     tnt1, tnt2 = TNT_LIST_GBP
     gbpL3p = 'L3P1'
     gbpL2p = {tnt1 : ['L2P1','L2P2']}
     ippool = {tnt1 : '70.70.70.0/24',
               tnt2 : '80.80.80.0/24'}
+    gbpFips = {}
     vms = {}
     vms[tnt1] = GBPvms[tnt1]
     vms[tnt2] = GBPvms[tnt2]
 
     def create_gbp_tenants(self):
         neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create')
+	from libs.gbp_nova_libs import gbpNova
         self.gbptnt1 = GBPCrud(CNTRLIP,tenant=tnt1)
         self.gbptnt2 = GBPCrud(CNTRLIP,tenant=tnt2)
         self.gbpadmin = GBPCrud(CNTRLIP)
@@ -419,7 +417,7 @@ class crudGBP(object):
 		tag = 'inter_bd'
 	    gbp_vm_ntk_ip[vm] = {'port' : self.gbptnt1.create_gbp_policy_target(
        			          pt, ptg, ptg_property='uuid')[1],
-				'netns' : ntk,
+				'netns' : 'qdhcp-%s' %(ntk),
 				'tag' : tag}
 	print gbp_vm_ntk_ip
 	if 0 in gbp_vm_ntk_ip.values():
@@ -602,8 +600,8 @@ class crudGBP(object):
 				self.reg_ptg,
 				property_type='uuid',
 				provided_policy_rulesets=[prs]
-				) and \
-		self.gbptnt1.update_gbp_policy_target_group(
+				) or \
+	   not self.gbptnt1.update_gbp_policy_target_group(
 				self.l2p1_autoptg,
 				property_type='uuid',
 				consumed_policy_rulesets=[prs]
@@ -635,8 +633,8 @@ class crudGBP(object):
 		'nova --os-tenant-name %s delete %s' %(tnt,vm))
 	    #Delete FIPs
 	    try:
-	        if self.fips[tnt]:
-		    for fip in self.fips[tnt]:
+	        if gbpFips:
+		    for fip in gbpFips[tnt]:
 		        neutron.runcmd(
 		        'nova --os-tenant-name %s floating-ip-delete %s'
  			 %(tnt,fip))
@@ -666,7 +664,27 @@ class crudGBP(object):
            	if len(extpol_list) :
               	    for extpol in extpol_list:
                  	gbpclean.delete_gbp_external_policy(extpol)
-	    except Exception:
+           	prs_list = gbpclean.get_gbp_policy_rule_set_list()
+        	if len(prs_list) > 0:
+           	    for prs in prs_list:
+               		gbpclean.delete_gbp_policy_rule_set(
+				   prs, property_type='uuid')
+        	pr_list = gbpclean.get_gbp_policy_rule_list()
+        	if len(pr_list) > 0:
+           	    for pr in pr_list:
+               		gbpclean.delete_gbp_policy_rule(
+					pr, property_type='uuid')
+        	cls_list = gbpclean.get_gbp_policy_classifier_list()
+        	if len(cls_list) > 0:
+           	    for cls in cls_list:
+               		gbpclean.delete_gbp_policy_classifier(
+					cls, property_type='uuid')
+        	act_list = gbpclean.get_gbp_policy_action_list()
+        	if len(act_list) > 0:
+           	    for act in act_list:
+               		gbpclean.delete_gbp_policy_action(
+				act, property_type='uuid')
+	    except Exception as e:
 		pass
 	return 1
 
@@ -734,7 +752,7 @@ class sendTraffic(object):
 		    prop['dest_ip'] = pingable_ips
 		    epg_vms[vm] = prop
 	    return epg_vms	    
-	if tag == 'inter_epg': 
+	if tag == 'inter_bd': 
 	    #NOTE: pingable IPs are all the VM_IPs in the same 
 	    for vm,prop in gbp_vm_ntk_ip.iteritems():
 		pingable_ips = [val['src_ip'] for val in gbp_vm_ntk_ip.values()]
@@ -744,18 +762,24 @@ class sendTraffic(object):
 		    epg_vms[vm] = prop
 	    return epg_vms	    
 		 
-    def traff_from_gbp_tenant(self,tnt,traffic_type,ext=False):
+    def traff_from_gbp_tenant(self,tnt,traffic_type,ext=False,
+				proto=['icmp','tcp']):
+	LOG.info(
+        "\n#############################################\n"
+        "## Sending Traffic from VMs in GBP-tenant %s ##\n"
+        "###############################################\n"
+        %(tnt))
 	# valid strings for traffic_type:: 'inter_bd', 'intra_bd', 'intra_epg'
 	test_vms = self.get_epg_vms(traffic_type)
 	print 'After EPG based classification of VMs ', test_vms	
 	for vm,vm_property in test_vms.iteritems():
 	    if ext:
-		target_ips = vm_property[vm]['dest_ip']+[EXTRTRIP1,EXTRTRIP2]
+		target_ips = vm_property['dest_ip']+[EXTRTRIP1,EXTRTRIP2]
 	    else:
-		target_ips = vm_property[vm]['dest_ip']
+		target_ips = vm_property['dest_ip']
 	    print "Target IPs for the VM ", vm, target_ips
-	    vm_traff = gbpExpTraff(COMPUTE1,vm_property[vm]['netns'],
-				vm_property[vm]['src_ip'],
+	    vm_traff = gbpExpTraff(COMPUTE1,vm_property['netns'],
+				vm_property['src_ip'],
 				target_ips)
 	    if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1):
 	        return 0
