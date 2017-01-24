@@ -28,7 +28,10 @@ class gbpExpTraff(object):
         else:
             return 0
 
-    def test_run(self,protocols=['icmp','tcp','udp'],port=80,tcp_syn_only=0,jumbo=0):
+    def test_run(self,
+	 	 protocols=['icmp','tcp','udp'],
+		 port=80,tcp_syn_only=0,
+		 jumbo=0):
         child = pexpect.spawn('ssh root@%s' %(self.net_node))
         child.expect('#') #Expecting passwordless access
         child.sendline('hostname')
@@ -73,6 +76,12 @@ class gbpExpTraff(object):
         child.expect('#')
         print child.before
         results = {}
+	child.sendline('curl http://169.254.169.254/latest/meta-data')
+	child.expect('#')
+	if 'hostname' in child.before:
+	    results['metadata']=1
+	else:
+	    results['metadata']=0
         if jumbo == 1:
            self.pkt_size = 9000
         else:
@@ -111,6 +120,7 @@ class gbpExpTraff(object):
                         child.sendline(cmd_s)
                         child.expect('#')
                         result=child.before
+			print result
                         if 'succeeded' in result:
                             results[dest_ep]['tcp']=1
                         else:
@@ -129,7 +139,8 @@ class gbpExpTraff(object):
         return results 
 
     def run_and_verify_traffic(self,proto,traff_results='',
-			       tcp_syn_only=0,jumbo=0):
+			       tcp_syn_only=0,jumbo=0,
+				metadata=False):
 	# This method just verify the traffic results
 	# OR
 	# Can be used to send traffic and verify the results
@@ -148,6 +159,9 @@ class gbpExpTraff(object):
                 dest_ip].iteritems() if val == 0 and key in allow_list}
             failed.update({key: val for key, val in results[
                           dest_ip].iteritems() if val == 1 and key not in allow_list})
+	if metadata:
+	    if not results['metadata']:
+	        failed['metadata']=0
         if len(failed) > 0:
                 print 'Following traffic_types %s = Failed' %(failed)
                 return 0

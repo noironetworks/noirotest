@@ -5,7 +5,6 @@ LOG.info("#### Start of GBP Sanity for the Tenant == %s #####"
          %(tnt1))
 #Initialize the GBP CRUD Class
 test_conf = crudGBP()
-
 LOG.info("Create Openstack Tenants for GBP ")
 test_conf.create_gbp_tenants()
 
@@ -101,9 +100,18 @@ try:
     	LOG.info(
     	"GBP-SANITY: Test-10: INTER-BD traffic between VMs across three EPGs : PASS")
 
+    #Step 11	
+    if test_conf.create_ext_seg() == 0:
+    	raise TestError(
+    	"GBP-SANITY: Test-11: Create of shared External-Segment in Tenant-Admin")
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-11: Create of shared External-Segment in Tenant-Admin : PASS")
+	
+    #Step 12
+    
 except TestError as e:
     LOG.error("%s : FAIL" %(e))
-    pdb.set_trace() #JISHNU
 finally:
     LOG.info("Cleanup being called finally")
     test_conf.cleanup_gbp()
