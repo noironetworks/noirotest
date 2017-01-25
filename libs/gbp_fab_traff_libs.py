@@ -2,10 +2,9 @@
 
 import datetime
 import logging
-import pexpect
 import re
 import sys
-from fabric.api import cd,run,env, hide, get, settings
+from fabric.api import cd,run,env, hide, get, settings, sudo
 
 class gbpFabTraff(object):
 
@@ -192,29 +191,13 @@ class gbpFabTraff(object):
                             user='noiro',
                             pwd='noir0123',
                             action='add'):
-      child = pexpect.spawn('ssh %s@%s' %(user,extrtrip))
-      child.expect('password:')
-      child.sendline(pwd)
-      child.expect('\$')
-      child.sendline('hostname')
-      child.expect('$')
-      print child.before
-      child.sendline('sudo -s')
-      child.expect('noiro:')
-      child.sendline('noir0123')
-      child.expect('#')
-      child.sendline('ip route')
-      child.expect('#')
-      print child.before
-      if action == 'add':
-         child.sendline("ip route add %s via %s" %(route,nexthop))
-         child.expect('#')
-      if action == 'update':
-         child.sendline("ip route del %s " %(route))
-         child.expect('#')
-         child.sendline("ip route add %s via %s" %(route,nexthop))
-         child.expect('#')
-      child.sendline('ip route')
-      child.expect('#')
-      print child.before
+	env.host_string = extrtrip
+	env.user = user
+	env.password = pwd
+	if action == 'add':
+	    sudo('ip route add %s via %s' %(route,nexthop))
+        if action == 'update':
+            sudo("ip route del %s " %(route))
+            sudo("ip route add %s via %s" %(route,nexthop))
+	run('ip route')
 

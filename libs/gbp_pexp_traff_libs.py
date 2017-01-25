@@ -139,8 +139,8 @@ class gbpExpTraff(object):
         return results 
 
     def run_and_verify_traffic(self,proto,traff_results='',
-			       tcp_syn_only=0,jumbo=0,
-				metadata=False):
+			       tcp_syn_only=0,jumbo=0
+				):
 	# This method just verify the traffic results
 	# OR
 	# Can be used to send traffic and verify the results
@@ -159,9 +159,6 @@ class gbpExpTraff(object):
                 dest_ip].iteritems() if val == 0 and key in allow_list}
             failed.update({key: val for key, val in results[
                           dest_ip].iteritems() if val == 1 and key not in allow_list})
-	if metadata:
-	    if not results['metadata']:
-	        failed['metadata']=0
         if len(failed) > 0:
                 print 'Following traffic_types %s = Failed' %(failed)
                 return 0

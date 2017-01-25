@@ -109,7 +109,61 @@ try:
     	"GBP-SANITY: Test-11: Create of shared External-Segment in Tenant-Admin : PASS")
 	
     #Step 12
-    
+    if test_conf.create_ext_pol() == 0:
+    	raise TestError(
+    	"GBP-SANITY: Test-12: Create of External Policy in tenant %s" %(tnt1))
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-12: Create of External Policy in tenant %s : PASS" %(tnt1))
+
+    #Step 13
+    if test_conf.attach_l3p_extseg() == 0:
+    	raise TestError(
+    	"GBP-SANITY: Test-13: Updating L3Policy to attach to External Segment in tenant %s"
+        %(tnt1))
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-13: Updating L3Policy to attach to External Segment in tenant %s : PASS"
+        %(tnt1))
+
+    #Step 14
+    if test_conf.update_allptgs_by_contract_for_extraff(PRS_ICMP_TCP) == 0:
+    	raise TestError(
+    	"GBP-SANITY: Test-14: Apply ICMP&TCP contract to all Private & External EPGs in tenant %s"
+        %(tnt1))
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-14: Apply ICMP&TCP contract to all Private & External EPGs in tenant %s : PASS"
+        %(tnt1))
+
+    #Step 15
+    if test_traff.traff_from_gbp_tenant(tnt1,'intra_epg',ext=True) == 0:
+    	raise TestError(
+    	"GBP-SANITY: Test-15: SNAT Traffic from %s VMs to External Router" %(tnt1))
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-15: SNAT Traffic from %s VMs to External Router : PASS" %(tnt1))
+
+    #Step 16
+    if attach_fip_to_vms(tnt1,'gbp') == 0:
+    	raise TestError(
+    	"GBP-SANITY: Test-16: Associate dynamically FIPs to VMs External Router in tenant %s"
+        %(tnt1))
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-16: SNAT Traffic from VMs to External Router in tenant %s: PASS"
+	%(tnt1))
+	
+    #Step 17
+    if test_traff.traff_from_extrtr_to_fips('gbp') == 0:
+    	raise TestError(
+    	"GBP-SANITY: Test-17: External Router can send traffic to VMs in tenant %s"
+        %(tnt1))
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-17: External Router can send traffic to VMs in tenant %s: PASS"
+	%(tnt1))
+
 except TestError as e:
     LOG.error("%s : FAIL" %(e))
 finally:

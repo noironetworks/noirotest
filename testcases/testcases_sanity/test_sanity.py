@@ -14,6 +14,7 @@ from libs.gbp_compute import *
 from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_pexp_traff_libs import gbpExpTraff
 from testcases.config import conf
+from testcases.testcases_nat_func.traff_from_extgw import *
 
 # Initialize logging
 LOG = logging.getLogger(__name__)
@@ -44,6 +45,8 @@ COMPUTE2 = conf['compute_2']
 pausetodebug = conf['pausetodebug']
 EXTDNATCIDR,FIPBYTES = '50.50.50.0/28', '50.50.50.'
 EXTSNATCIDR = '55.55.55.0/28'
+ML2Fips = {}
+GBPFips = {}
 EXTSUB1 = EXTSUB2 = ''
 ACT = 'ALLOW'
 CLS_ICMP = 'ICMP'
@@ -83,12 +86,38 @@ def create_external_network_subnets():
 	    LOG.error("Shared External Network Failed: "+repr(e))
             return 0
 
+def attach_fip_to_vms(tnt,mode):
+        LOG.info(
+        "\n#############################################\n"
+        "#### Create & Attach FIP to VMs for the Tenant %s ####\n"
+        "###############################################\n"
+	%(tnt))
+	if mode == 'ml2':
+	   vms = ML2vms[tnt]
+	else:
+	   vms = GBPvms[tnt]
+	for vm in vms:
+	    cmd1 = 'nova --os-tenant-name %s' %(tnt)+\
+                  ' floating-ip-create Management-Out'
+	    match = re.search('(%s\d+).*'%(FIPBYTES),
+                                        neutron.runcmd(cmd1),
+					re.I)
+	    if match:
+		fip = match.group(1)
+	    	if mode == 'ml2':
+		    ML2Fips[tnt] = fip
+		else:
+		    GBPFips[tnt] = fip
+	    cmd2 = 'nova --os-tenant-name %s ' %(tnt)+\
+                   'floating-ip-associate %s %s' %(vm,fip)
+	    neutron.runcmd(cmd2)
+
 class TestError(Exception):
 	pass
 
 class crudML2(object):
     global ml2tnt1, ml2tnt2, ml2Ntks, ml2Subs, Cidrs, addscopename, \
-	   subpoolname, subpool, ml2Fips
+	   subpoolname, subpool
     ml2tnt1, ml2tnt2 = TNT_LIST_ML2[0],TNT_LIST_ML2[1]
     ml2Ntks,ml2Subs,Cidrs = {},{},{}
     ml2Ntks[ml2tnt1] = ['Net1', 'Net2']
@@ -99,7 +128,6 @@ class crudML2(object):
     subpoolname = 'subpool1'
     subpool = '22.22.22.0/24'
     Cidrs[ml2tnt1] = ['11.11.11.0/28', '21.21.21.0/28']
-    ml2Fips = {}
 
     def create_ml2_tenants(self):
 	neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create')
@@ -245,25 +273,6 @@ class crudML2(object):
                 LOG.error('VM Creation for tnt %s Failed: ' %(tnt)+repr(e))
                 return 0
 
-    def attach_fip_to_vms(self,tnt):
-        LOG.info(
-        "\n#############################################\n"
-        "#### Create & Attach FIP to VMs for the Tenant %s ####\n"
-        "###############################################\n"
-	%(tnt))
-	for vm in ML2vms[tnt]:
-	    cmd1 = 'nova --os-tenant-name %s' %(tnt)+\
-                  ' floating-ip-create Management-Out'
-	    match = re.search('(%s\d+).*'%(FIPBYTES),
-                                        neutron.runcmd(cmd1),
-					re.I)
-	    if match:
-		fip = match.group(1)
-		ml2Fips[tnt] = fip
-	    cmd2 = 'nova --os-tenant-name %s ' %(tnt)+\
-                   'floating-ip-associate %s %s' %(vm,fip)
-	    neutron.runcmd(cmd2)
-
     def cleanup_ml2(self):
 	for tnt in TNT_LIST_ML2:
 	    #Delete VMs for a given ML2 tenant
@@ -272,8 +281,8 @@ class crudML2(object):
 		'nova --os-tenant-name %s delete %s' %(tnt,vm))
 	    #Delete FIPs
 	    try:
-	        if ml2Fips[tnt]:
-		    for fip in ml2Fips[tnt]:
+	        if ML2Fips[tnt]:
+		    for fip in ML2Fips[tnt]:
 		        neutron.runcmd(
 		        'nova --os-tenant-name %s floating-ip-delete %s'
  			 %(tnt,fip))
@@ -625,6 +634,25 @@ class crudGBP(object):
 				):
 		return 0
 				
+    def update_allptgs_by_contract_for_extraff(self,prs):
+	prs = self.prs_name_id[prs]
+	if not self.gbptnt1.update_gbp_policy_target_group(
+				self.extpol,
+				property_type='uuid',
+				provided_policy_rulesets=[prs]
+				):
+		return 0
+	for ptg in [self.reg_ptg,
+                    self.l2p1_autoptg,
+		    self.l2p2_autoptg]:
+	    if not self.gbptnt1.update_gbp_policy_target_group(
+				ptg,
+				property_type='uuid',
+				consumed_policy_rulesets=None,
+				provided_policy_rulesets=[prs]
+				):
+		return 0
+
     def cleanup_gbp(self):
 	for tnt in TNT_LIST_GBP:
 	    #Delete VMs for a given ML2 tenant
@@ -713,7 +741,7 @@ class sendTraffic(object):
 			     }
 	return properties
 	
-    def traff_from_ml2_tenants(self,tnt,ext=False,proto=['icmp','tcp']):
+    def traff_from_ml2_tenants(self,tnt,ext=False,proto=['icmp','tcp','metadata']):
 	LOG.info(
         "\n#############################################\n"
         "## Sending Traffic from VMs in ML2-tenant %s ##\n"
@@ -763,7 +791,8 @@ class sendTraffic(object):
 	    return epg_vms	    
 		 
     def traff_from_gbp_tenant(self,tnt,traffic_type,ext=False,
-				proto=['icmp','tcp']):
+				proto=['icmp','tcp','metadata']
+				):
 	LOG.info(
         "\n#############################################\n"
         "## Sending Traffic from VMs in GBP-tenant %s ##\n"
@@ -774,7 +803,7 @@ class sendTraffic(object):
 	print 'After EPG based classification of VMs ', test_vms	
 	for vm,vm_property in test_vms.iteritems():
 	    if ext:
-		target_ips = vm_property['dest_ip']+[EXTRTRIP1,EXTRTRIP2]
+		target_ips = [EXTRTRIP1,EXTRTRIP2]
 	    else:
 		target_ips = vm_property['dest_ip']
 	    print "Target IPs for the VM ", vm, target_ips
@@ -784,6 +813,26 @@ class sendTraffic(object):
 	    if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1):
 	        return 0
 	
+    def traff_from_extrtr_to_fips(self,mode,tnt):
+        """
+        Ping and TCP test from external router to VMs
+        """
+	LOG.info(
+        "\n#############################################\n"
+        "## Sending ICMP/TCP Traffic from EXT-RTR to VMs ##\n"
+        "###############################################\n"
+        )
+	if mode == 'ml2':
+	    fips = ML2Fips[tnt]
+	else:
+	    fips = GBPFips[tnt]
+	print "Target FIPs for the EXT-RTR", fips
+        run_traffic = traff_from_extgwrtr(
+                                          EXTRTR,
+                                          fips
+                                          )
+        if isinstance(run_traffic, dict):
+            return 0
 
 
 
