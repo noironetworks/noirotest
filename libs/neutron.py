@@ -216,7 +216,8 @@ class neutronCli(object):
 	          return rtrId
 	self.runcmd(cmd) 	   		
 	
-    def addscopecrud(self, name, action, tenant='admin', ip=4, shared=False):
+    def addscopecrud(self, name, action, tenant='admin', ip=4,
+		     shared=False, apicvrf=''):
         if action == 'create':
 	    if shared:
 	           cmd = 'neutron --os-tenant-name %s ' %(tenant)+\
@@ -224,6 +225,8 @@ class neutronCli(object):
 	    else:
 	           cmd = 'neutron --os-tenant-name %s ' %(tenant)+\
 			 'address-scope-create %s %s ' %(name,ip)
+	    if apicvrf:
+	    	cmd = cmd + ' %s' %(apicvrf)
 	    ascId = self.getuuid(self.runcmd(cmd))
 	    if ascId:
 	       #print 'Output of ID ==\n', ascId

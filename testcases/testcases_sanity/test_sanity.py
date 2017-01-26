@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
 import logging
-import pdb #JISHNU
 import pprint
 import re
 import string
 import sys
+import pdb 
 from time import sleep
 from libs.gbp_aci_libs import *
 from libs.gbp_utils import *
@@ -30,11 +30,13 @@ LOG.addHandler(hdlr)
 #NOTE:The external-segment is hardcoded to 'Management-Out'
 CNTRLIP = conf['controller_ip']
 APICIP = conf['apic_ip']
-TNT_LIST_ML2 =  ['FOO','BOOL']
-TNT_LIST_GBP = ['MANDRAKE','GARTH']
-ML2vms = {'FOO' : ['FVM1','FVM2'], 'BOOL' : ['BVM3', 'BVM4']}
+TNT_LIST_ML2 =  ['PENGUIN','OCTON','GARTH']
+TNT_LIST_GBP = ['MANDRAKE', 'BATMAN']
+ML2vms = {'PENGUIN' : ['PVM1','PVM2'],
+	  'OCTON' : ['OVM3', 'OVM4'],
+	  'GARTH' : ['GVM5', 'GVM6']}
 GBPvms = {'MANDRAKE' : ['MVM1','MVM2','MVM3','MVM4'],
-          'GARTH' : ['GVM3','GVM4']}
+          'BATMAN' : ['BVM3','BVM4']}
 EXTRTR = conf['ext_gw_rtr']
 EXTRTRIP1 = conf['fip1_of_extgw']
 EXTRTRIP2 = conf['fip2_of_extgw']
@@ -45,9 +47,9 @@ COMPUTE2 = conf['compute_2']
 pausetodebug = conf['pausetodebug']
 EXTDNATCIDR,FIPBYTES = '50.50.50.0/28', '50.50.50.'
 EXTSNATCIDR = '55.55.55.0/28'
+EXTNONATCIDR = '2.3.4.0/24' #Can be any cidr, jsut needed for neutron router
 ML2Fips = {}
 GBPFips = {}
-EXTSUB1 = EXTSUB2 = ''
 ACT = 'ALLOW'
 CLS_ICMP = 'ICMP'
 CLS_TCP = 'TCP'
@@ -64,24 +66,40 @@ neutron = neutronCli(CNTRLIP)
 neutron_api = neutronPy(CNTRLIP)
 apic = gbpApic(APICIP)
 
-def create_external_network_subnets():
+def create_external_network_subnets(nat):
 	#Needed for both GBP & ML2
         LOG.info(
         "\n#######################################################\n"
         "####  Create Shared External Network for ML2 Tenants   ####\n"
         "#########################################################\n"
         )
-        aimntkcfg = '--apic:distinguished_names type=dict'+\
+	#For nonat, use pre-existing Datacenter-Out
+	#Also just add one subnet to that nonat External-Network
+	if nat == 'nonat':
+            aimntkcfg = '--apic:distinguished_names type=dict'+\
+                 ' ExternalNetwork='+\
+                 'uni/tn-common/out-Datacenter-Out/instP-DcExtPol'+\
+		 " --apic:nat_type ''"
+	else:
+            aimntkcfg = '--apic:distinguished_names type=dict'+\
                  ' ExternalNetwork='+\
                  'uni/tn-common/out-Management-Out/instP-MgmtExtPol'
-        aimsnat = '--apic:snat_host_pool True'
+            aimsnat = '--apic:snat_host_pool True'
 	try:
-	    neutron.netcrud('Management-Out','create',external=True,
+	    if nat == 'nonat':
+	        neutron.netcrud('Datacenter-Out','create',external=True,
                             shared=True, aim = aimntkcfg)
-            EXTSUB1 = neutron.subnetcrud('extsub1','create','Management-Out',
+                EXTSUB3 = neutron.subnetcrud('extsub3','create','Datacenter-Out',
+ 			       cidr=EXTNONATCIDR,extsub=True)
+		return EXTSUB3
+	    else:
+	        neutron.netcrud('Management-Out','create',external=True,
+                            shared=True, aim = aimntkcfg)
+                EXTSUB1 = neutron.subnetcrud('extsub1','create','Management-Out',
  			       cidr=EXTDNATCIDR,extsub=True)
-            EXTSUB2 = neutron.subnetcrud('extsub2','create','Management-Out',
+                EXTSUB2 = neutron.subnetcrud('extsub2','create','Management-Out',
  			       cidr=EXTSNATCIDR,extsub=True,aim=aimsnat)
+	        return EXTSUB1, EXTSUB2
       	except Exception as e:
 	    LOG.error("Shared External Network Failed: "+repr(e))
             return 0
@@ -94,8 +112,10 @@ def attach_fip_to_vms(tnt,mode):
 	%(tnt))
 	if mode == 'ml2':
 	   vms = ML2vms[tnt]
+	   ML2Fips[tnt]= []
 	else:
 	   vms = GBPvms[tnt]
+	   GBPFips[tnt]=[]
 	for vm in vms:
 	    cmd1 = 'nova --os-tenant-name %s' %(tnt)+\
                   ' floating-ip-create Management-Out'
@@ -105,9 +125,9 @@ def attach_fip_to_vms(tnt,mode):
 	    if match:
 		fip = match.group(1)
 	    	if mode == 'ml2':
-		    ML2Fips[tnt] = fip
+		    ML2Fips[tnt].append(fip)
 		else:
-		    GBPFips[tnt] = fip
+		    GBPFips[tnt].append(fip)
 	    cmd2 = 'nova --os-tenant-name %s ' %(tnt)+\
                    'floating-ip-associate %s %s' %(vm,fip)
 	    neutron.runcmd(cmd2)
@@ -117,7 +137,8 @@ class TestError(Exception):
 
 class crudML2(object):
     global ml2tnt1, ml2tnt2, ml2Ntks, ml2Subs, Cidrs, addscopename, \
-	   subpoolname, subpool
+	   addscopename_shd, subpoolname, subpoolname_shd, subpool, \
+	   subpool_shd
     ml2tnt1, ml2tnt2 = TNT_LIST_ML2[0],TNT_LIST_ML2[1]
     ml2Ntks,ml2Subs,Cidrs = {},{},{}
     ml2Ntks[ml2tnt1] = ['Net1', 'Net2']
@@ -125,8 +146,11 @@ class crudML2(object):
     ml2Subs[ml2tnt1] = ['Subnet1', 'Subnet2']
     ml2Subs[ml2tnt2] = ['sub3', 'sub4']
     addscopename = 'asc1'
+    addscopename_shd = 'ascs'
     subpoolname = 'subpool1'
+    subpoolname_shd = 'sps'
     subpool = '22.22.22.0/24'
+    subpool_shd = '60.60.60.0/24'
     Cidrs[ml2tnt1] = ['11.11.11.0/28', '21.21.21.0/28']
 
     def create_ml2_tenants(self):
@@ -173,27 +197,47 @@ class crudML2(object):
 	       return 0
         return self.netIDnames, self.networkIDs , self.subnetIDs
 
-    def create_add_scope(self):
+    def create_add_scope(self,tnt,shared=False,vrf=False):
         LOG.info(
         "\n#############################################\n"
         "####  Create Address-Scope ONLY for Tenant %s ####\n"
         "###############################################\n"
-        %(TNT_LIST_ML2[1]))
-	self.addscopID = neutron.addscopecrud(addscopename,'create',
-					      tenant=TNT_LIST_ML2[1])
+        %(tnt))
+	if vrf: #Shared addresscope with attach VRF
+	    apicvrf = "--apic:distinguished_names type=dict"+\
+		     " VRF='uni/tn-common/ctx-PreExstDcVrf'"
+	    self.addscopID = neutron.addscopecrud(addscopename_shd,
+						'create',
+					         tenant=tnt,
+					         shared=shared,
+						 apicvrf=apicvrf)
+  	else:
+	    self.addscopID = neutron.addscopecrud(addscopename,
+						'create',
+					        tenant=tnt,
+					        shared=shared)
 	if not self.addscopID:
 	    	return 0
 	
-    def create_subnetpool(self):
+    def create_subnetpool(self,tnt,shared=False):
         LOG.info(
         "\n#############################################\n"
         "####  Create SubnetPool ONLY for Tenant %s ####\n"
         "###############################################\n"
-        %(TNT_LIST_ML2[1]))
-	self.subpoolID = neutron.subpoolcrud(subpoolname,'create',
-                                             address_scope=addscopename,
-					     pool=subpool,
-					     tenant=TNT_LIST_ML2[1])
+        %(tnt))
+	if shared:
+	    ads_name = addscopename_shd
+	    spname = subpoolname_shd
+	    sub_pool = subpool_shd
+	else:
+	    ads_name = addscopename
+	    spname = subpoolname
+	    sub_pool = subpool
+	self.subpoolID = neutron.subpoolcrud(spname,'create',
+                                             address_scope=ads_name,
+					     pool=sub_pool,
+					     tenant=tnt,
+					     shared=shared)
     	if not self.subpoolID:
 		return 0
 
@@ -281,7 +325,7 @@ class crudML2(object):
 		'nova --os-tenant-name %s delete %s' %(tnt,vm))
 	    #Delete FIPs
 	    try:
-	        if ML2Fips[tnt]:
+	        if ML2Fips:
 		    for fip in ML2Fips[tnt]:
 		        neutron.runcmd(
 		        'nova --os-tenant-name %s floating-ip-delete %s'
@@ -321,13 +365,12 @@ class crudGBP(object):
     #once 'shared' is supported, we will run
     #with two tenants sharing a single L3P
     from libs.gbp_nova_libs import gbpNova
-    global tnt1, tnt2, vms, gbpL3p, gbpL2p, ippool, gbpFips
+    global tnt1, tnt2, vms, gbpL3p, gbpL2p, ippool
     tnt1, tnt2 = TNT_LIST_GBP
     gbpL3p = 'L3P1'
     gbpL2p = {tnt1 : ['L2P1','L2P2']}
     ippool = {tnt1 : '70.70.70.0/24',
               tnt2 : '80.80.80.0/24'}
-    gbpFips = {}
     vms = {}
     vms[tnt1] = GBPvms[tnt1]
     vms[tnt2] = GBPvms[tnt2]
@@ -460,10 +503,10 @@ class crudGBP(object):
         "## Create External Segment as shared under tenant-Admin ##\n"
         "##########################################################\n"
         )
-	create_external_network_subnets()
+	extsub1, extsub2 = create_external_network_subnets(nat)
         self.extsegid = self.gbpadmin.create_gbp_external_segment(
                                         'Management-Out',
-					subnet_id = EXTSUB1,
+					subnet_id = extsub1,
 				       	shared=True
                                        )
         if self.extsegid == 0:
@@ -479,7 +522,7 @@ class crudGBP(object):
         %(tnt1))
 	self.extpol = self.gbptnt1.create_gbp_external_policy(
 					'MgmtExtPol',
-					external_segments=['Management-Out']
+					external_segments=[self.extsegid]
 					)
 	if self.extpol == 0:
             LOG.error(
@@ -605,52 +648,51 @@ class crudGBP(object):
 
     def update_intra_bd_ptg_by_contract(self,prs):
 	prs = self.prs_name_id[prs]
-	if not (self.gbptnt1.update_gbp_policy_target_group(
+	if self.gbptnt1.update_gbp_policy_target_group(
 				self.reg_ptg,
 				property_type='uuid',
 				provided_policy_rulesets=[prs]
-				) or \
-	   not self.gbptnt1.update_gbp_policy_target_group(
+				) == 0 or \
+	   self.gbptnt1.update_gbp_policy_target_group(
 				self.l2p1_autoptg,
 				property_type='uuid',
 				consumed_policy_rulesets=[prs]
-				)
-		):
+				) == 0:
 		return 0
 
     def update_inter_bd_ptg_by_contract(self,prs):
 	prs = self.prs_name_id[prs]
-	if not self.gbptnt1.update_gbp_policy_target_group(
+	if self.gbptnt1.update_gbp_policy_target_group(
 				self.l2p2_autoptg,
 				property_type='uuid',
 				provided_policy_rulesets=[prs]
-				):
+				) == 0:
 		return 0
 	for ptg in [self.reg_ptg,self.l2p1_autoptg]:
-	    if not self.gbptnt1.update_gbp_policy_target_group(
+	    if self.gbptnt1.update_gbp_policy_target_group(
 				ptg,
 				property_type='uuid',
 				consumed_policy_rulesets=[prs]
-				):
+				) == 0:
 		return 0
 				
     def update_allptgs_by_contract_for_extraff(self,prs):
 	prs = self.prs_name_id[prs]
-	if not self.gbptnt1.update_gbp_policy_target_group(
+	if self.gbptnt1.update_gbp_external_policy(
 				self.extpol,
 				property_type='uuid',
-				provided_policy_rulesets=[prs]
-				):
+				consumed_policy_rulesets=[prs]
+				) == 0:
 		return 0
 	for ptg in [self.reg_ptg,
                     self.l2p1_autoptg,
 		    self.l2p2_autoptg]:
-	    if not self.gbptnt1.update_gbp_policy_target_group(
+	    if self.gbptnt1.update_gbp_policy_target_group(
 				ptg,
 				property_type='uuid',
 				consumed_policy_rulesets=None,
 				provided_policy_rulesets=[prs]
-				):
+				) == 0:
 		return 0
 
     def cleanup_gbp(self):
@@ -661,11 +703,15 @@ class crudGBP(object):
 		'nova --os-tenant-name %s delete %s' %(tnt,vm))
 	    #Delete FIPs
 	    try:
-	        if gbpFips:
-		    for fip in gbpFips[tnt]:
+	        if GBPFips:
+		    for fip in GBPFips[tnt]:
 		        neutron.runcmd(
 		        'nova --os-tenant-name %s floating-ip-delete %s'
  			 %(tnt,fip))
+            except Exception:
+                print 'FIPs do not exist for ',tnt
+                pass
+	    try:
 		gbpclean = GBPCrud(CNTRLIP,tenant=tnt)
                 pt_list = gbpclean.get_gbp_policy_target_list()
             	if len(pt_list):
@@ -692,6 +738,10 @@ class crudGBP(object):
            	if len(extpol_list) :
               	    for extpol in extpol_list:
                  	gbpclean.delete_gbp_external_policy(extpol)
+           	extseg_list = gbpclean.get_gbp_external_segment_list()
+           	if len(extseg_list) :
+              	    for extseg in extseg_list:
+                 	gbpclean.delete_gbp_external_segment(extseg)
            	prs_list = gbpclean.get_gbp_policy_rule_set_list()
         	if len(prs_list) > 0:
            	    for prs in prs_list:
@@ -713,7 +763,9 @@ class crudGBP(object):
                		gbpclean.delete_gbp_policy_action(
 				act, property_type='uuid')
 	    except Exception as e:
+		print "Exception in Cleanup == ", repr(e)
 		pass
+	    neutron.runcmd('neutron net-delete Management-Out')
 	return 1
 
 class verifyML2(object):

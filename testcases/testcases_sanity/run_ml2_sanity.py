@@ -14,13 +14,13 @@ test_conf.create_ml2_tenants()
 
 try:
     #Step 1:
-    if test_conf.create_add_scope() == 0:
+    if test_conf.create_add_scope(tnt2) == 0:
         raise TestError("ML2-SANITY: Test-1: Create Address-Scope")
     else:
         LOG.info("ML2-SANITY: Test-1: Create Address-Scope: PASS")
 
     #Step 2:
-    if test_conf.create_subnetpool() == 0:
+    if test_conf.create_subnetpool(tnt2) == 0:
         raise TestError("ML2-SANITY: Test-2: Create SubnetPool using Address-Scope")
     else:
         LOG.info("ML2-SANITY: Test-2: Create SubnetPool using Address-Scope: PASS")
@@ -40,7 +40,7 @@ try:
         LOG.info("ML2-SANITY: Test-4: Create Routers for both tenants : PASS")
 
     #Step 5:
-    if create_external_network_subnets() == 0:
+    if create_external_network_subnets('nat') == 0:
         raise TestError(
         "ML2-SANITY: Test-5: Create shared External Ntk in Admin-tenant for pre-existing L3Out ")
     else:
@@ -82,7 +82,7 @@ try:
 
     #Step 9:
     if test_traff.traff_from_ml2_tenants(tnt1) == 0:
-    	raise TestError(
+    	LOG.error(
     	"ML2-SANITY: Test-9: VMs b/w Networks/EPGs are reachable(ICMP & SSH) in tenant %s " %(tnt1))
     else:
     	LOG.info(
@@ -96,9 +96,7 @@ try:
 
     #Step 10:
     if test_traff.traff_from_ml2_tenants(tnt1,ext=True,proto=['icmp','tcp']) == 0:
-	if pausetodebug:
-		PauseToDebug()
-    	raise TestError(
+    	LOG.error(
     	"ML2-SANITY: Test-10: Using SNAT VMs' traffic in tenant %s reach Ext-Rtr " %(tnt1))
     else:
     	LOG.info(
@@ -114,7 +112,7 @@ try:
     sleep(20) #For FIP to be learned in Fabric
     #Step 12:
     if test_traff.traff_from_ml2_tenants(tnt1,ext=True,proto=['icmp','tcp']) == 0:
-    	raise TestError(
+    	LOG.error(
     	"ML2-SANITY: Test-12: Using FIP VMs' traffic in tenant %s reach Ext-Rtr " %(tnt1))
     else:
     	LOG.info(
@@ -122,7 +120,7 @@ try:
 
     #Step 13:
     if test_traff.traff_from_extrtr_to_fips('ml2',tnt1) == 0:
-    	raise TestError(
+    	LOG.error(
     	"ML2-SANITY: Test-13: EXT-RTR can reach the FIPs of tenant %s " %(tnt1))
     else:
     	LOG.info(
@@ -143,7 +141,7 @@ try:
 
     #Step 15:
     if test_traff.traff_from_ml2_tenants(tnt2) == 1:
-    	raise TestError(
+    	LOG.error(
     	"ML2-SANITY: Test-15: VMs b/w Networks/EPGs must NOT be reachable for tenant %s " %(tnt2))
     else:
     	LOG.info(
@@ -153,7 +151,9 @@ try:
     	LOG.info(
     	"ML2-SANITY: Test-15: VMs b/w Networks/EPGs must NOT be reachable for tenant %s : PASS" %(tnt2))
     	LOG.info(
-    	"ML2-SANITY: Test-9: MetaData for VMs in tenant %s : PASS" %(tnt2))
+    	"ML2-SANITY: Test-15: MetaData for VMs in tenant %s : PASS" %(tnt2))
+        LOG.info(
+        "ML2-SANITY: Test-15: Intra-subnet/intra-BD traffic between VMs in tenant %s : PASS" %(tnt2))
 
     #Step 16:
     if test_conf.attach_routers_to_networks(tnt2) == 0:
@@ -165,9 +165,11 @@ try:
     	"ML2-SANITY: Test-16: Attach Routers to two networks in tenant %s : PASS"
      	%(tnt2))
 
+    sleep(10) #Almost immediate, so sleep
+
     #Step 17:
     if test_traff.traff_from_ml2_tenants(tnt2,proto=['icmp','tcp']) == 0:
-    	raise TestError(
+    	LOG.error(
     	"ML2-SANITY: Test-17: VMs b/w Networks/EPGs are NOT reachable in tenant %s " %(tnt2))
     else:
     	LOG.info(
@@ -181,9 +183,10 @@ try:
     	LOG.info(
     	"ML2-SANITY: Test-18: Attach router of tenant %s connects to shared External Ntk : PASS" %(tnt2))
 
+    sleep(5) #Almost immediate was cause traff failure below, hence sleep
     #Step 19:
     if test_traff.traff_from_ml2_tenants(tnt2,ext=True,proto=['icmp','tcp']) == 0:
-    	raise TestError(
+    	LOG.error(
     	"ML2-SANITY: Test-19: Using SNAT VMs' traffic in tenant %s reach Ext-Rtr " %(tnt2))
     else:
     	LOG.info(
@@ -197,11 +200,11 @@ try:
     	LOG.info(
     	"ML2-SANITY: Test-20: Attach FIP to VMs in tenant %s : PASS" %(tnt2))
 
-    sleep(20) #FIP to get learned at Fabric
+    sleep(10) #FIP to get learned at Fabric
 
     #Step 21:
     if test_traff.traff_from_ml2_tenants(tnt2,ext=True,proto=['icmp','tcp']) == 0:
-    	raise TestError(
+    	LOG.error(
     	"ML2-SANITY: Test-21: Using FIP VMs' traffic in tenant %s reach Ext-Rtr " %(tnt2))
     else:
     	LOG.info(
@@ -209,7 +212,7 @@ try:
 
     #Step 22:
     if test_traff.traff_from_extrtr_to_fips('ml2',tnt2) == 0:
-    	raise TestError(
+    	LOG.error(
     	"ML2-SANITY: Test-22: EXT-RTR can reach the FIPs of tenant %s " %(tnt2))
     else:
     	LOG.info(

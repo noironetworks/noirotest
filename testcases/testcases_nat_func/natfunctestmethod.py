@@ -113,7 +113,8 @@ class NatFuncTestMethods(object):
                                        extsegname,
                                        external_routes = [{
                                            'destination':'0.0.0.0/0',
-                                           'nexthop': None}]
+                                           'nexthop': None}],
+					shared=True
                                        )
         if self.extsegid == 0:
             self._log.error(

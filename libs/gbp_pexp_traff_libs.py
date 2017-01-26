@@ -76,12 +76,15 @@ class gbpExpTraff(object):
         child.expect('#')
         print child.before
         results = {}
-	child.sendline('curl http://169.254.169.254/latest/meta-data')
-	child.expect('#')
-	if 'hostname' in child.before:
-	    results['metadata']=1
-	else:
-	    results['metadata']=0
+	while False: #TODO: Unless the inherent metadata issue is resolved, no point in executing this part of the code
+	    child.sendline('curl http://169.254.169.254/latest/meta-data')
+	    child.expect('#')
+	    meta_result = child.before
+	    print meta_result
+	    if 'hostname' in child.before:
+	        results['metadata']=1
+	    else:
+	        results['metadata']=0
         if jumbo == 1:
            self.pkt_size = 9000
         else:

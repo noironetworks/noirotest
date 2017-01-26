@@ -1,6 +1,6 @@
 from test_sanity import *
 LOG.setLevel(logging.INFO)
-tnt1 = TNT_LIST_GBP
+tnt1,tnt2 = TNT_LIST_GBP
 LOG.info("#### Start of GBP Sanity for the Tenant == %s #####"
          %(tnt1))
 #Initialize the GBP CRUD Class
@@ -136,8 +136,10 @@ try:
     	"GBP-SANITY: Test-14: Apply ICMP&TCP contract to all Private & External EPGs in tenant %s : PASS"
         %(tnt1))
 
+    sleep(5)
     #Step 15
     if test_traff.traff_from_gbp_tenant(tnt1,'intra_epg',ext=True) == 0:
+	pdb.set_trace() #JISHNU
     	raise TestError(
     	"GBP-SANITY: Test-15: SNAT Traffic from %s VMs to External Router" %(tnt1))
     else:
@@ -151,11 +153,11 @@ try:
         %(tnt1))
     else:
     	LOG.info(
-    	"GBP-SANITY: Test-16: SNAT Traffic from VMs to External Router in tenant %s: PASS"
+    	"GBP-SANITY: Test-16: Associate dynamically FIPs to VMs External Router in tenant %s: PASS"
 	%(tnt1))
 	
     #Step 17
-    if test_traff.traff_from_extrtr_to_fips('gbp') == 0:
+    if test_traff.traff_from_extrtr_to_fips('gbp',tnt1) == 0:
     	raise TestError(
     	"GBP-SANITY: Test-17: External Router can send traffic to VMs in tenant %s"
         %(tnt1))
