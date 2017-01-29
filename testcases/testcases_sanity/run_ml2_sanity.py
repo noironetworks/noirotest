@@ -1,6 +1,6 @@
 from test_sanity import *
 LOG.setLevel(logging.INFO)
-tnt1,tnt2 = TNT_LIST_ML2
+tnt1,tnt2,tnt3 = TNT_LIST_ML2
 LOG.info("#### Start of ML2 Sanity for these Tenants == %s , %s #####"
          %(tnt1, tnt2))
 

@@ -97,8 +97,6 @@ def create_external_network_subnets(nat):
                             shared=True, aim = aimntkcfg)
                 EXTSUB1 = neutron.subnetcrud('extsub1','create','Management-Out',
  			       cidr=EXTDNATCIDR,extsub=True)
-                EXTSUB2 = neutron.subnetcrud('extsub2','create','Management-Out',
- 			       cidr=EXTSNATCIDR,extsub=True,aim=aimsnat)
 	        return EXTSUB1, EXTSUB2
       	except Exception as e:
 	    LOG.error("Shared External Network Failed: "+repr(e))
@@ -136,15 +134,17 @@ class TestError(Exception):
 	pass
 
 class crudML2(object):
-    global ml2tnt1, ml2tnt2, ml2Ntks, ml2Subs, Cidrs, addscopename, \
+    global ml2tnt1, ml2tnt2, ml2tnt3, ml2Ntks, ml2Subs, Cidrs, addscopename, \
 	   addscopename_shd, subpoolname, subpoolname_shd, subpool, \
 	   subpool_shd
-    ml2tnt1, ml2tnt2 = TNT_LIST_ML2[0],TNT_LIST_ML2[1]
+    ml2tnt1, ml2tnt2, ml2tnt3 = TNT_LIST_ML2[0],TNT_LIST_ML2[1],TNT_LIST_ML2[2]
     ml2Ntks,ml2Subs,Cidrs = {},{},{}
     ml2Ntks[ml2tnt1] = ['Net1', 'Net2']
     ml2Ntks[ml2tnt2] = ['ntk3', 'ntk4']
+    ml2Ntks[ml2tnt3] = ['gntk5', 'gntk6']
     ml2Subs[ml2tnt1] = ['Subnet1', 'Subnet2']
     ml2Subs[ml2tnt2] = ['sub3', 'sub4']
+    ml2Subs[ml2tnt3] = ['gsub5', 'gsub6']
     addscopename = 'asc1'
     addscopename_shd = 'ascs'
     subpoolname = 'subpool1'
