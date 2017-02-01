@@ -97,6 +97,8 @@ def create_external_network_subnets(nat):
                             shared=True, aim = aimntkcfg)
                 EXTSUB1 = neutron.subnetcrud('extsub1','create','Management-Out',
  			       cidr=EXTDNATCIDR,extsub=True)
+                EXTSUB2 = neutron.subnetcrud('extsub1','create','Management-Out',
+ 			       cidr=EXTSNATCIDR,extsub=True,aim=aimsnat)
 	        return EXTSUB1, EXTSUB2
       	except Exception as e:
 	    LOG.error("Shared External Network Failed: "+repr(e))
@@ -130,6 +132,11 @@ def attach_fip_to_vms(tnt,mode):
                    'floating-ip-associate %s %s' %(vm,fip)
 	    neutron.runcmd(cmd2)
 
+def dump_results(mode):
+    from commands import *
+    text = getoutput("grep -r %s-SANITY /tmp/test_sanity.log" %(mode)) 
+    LOG.info("####### %s TEST RESULTS #######\n%s" %(mode,text))
+
 class TestError(Exception):
 	pass
 
@@ -156,45 +163,56 @@ class crudML2(object):
     def create_ml2_tenants(self):
 	neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create')
 
-    def create_pvt_network_subnets(self):
+    def create_pvt_network_subnets(self,nonat=False):
         LOG.info(
         "\n#######################################################\n"
         "## Create Private Network & Subnet for both ML2 Tenants ##\n"
         "#########################################################\n"
         )
+	if nonat:
+	    tntlist = [ml2tnt3]
+	else:
+	    tntlist = [ml2tnt1,ml2tnt2]
 	self.subnetIDs = {}
 	self.networkIDs = {}
 	self.netIDnames = {}
-        for tnt in [ml2tnt1,ml2tnt2]:
+        for tnt in tntlist:
             try:
                 # Every Network has just one Subnet, 1:1
                 self.subnetIDs[tnt] = []
                 self.networkIDs[tnt] = []
                 self.netIDnames[tnt] = {}
                 for index in range(len(ml2Ntks[tnt])):
-                    network = ml2Ntks[tnt][index]
-                    subnet = ml2Subs[tnt][index]
-                    netID = neutron.netcrud(network,'create',tnt)
-                    self.netIDnames[tnt][network] = netID
-                    self.networkIDs[tnt].append(netID)
-		    if tnt == ml2tnt1:
-                        cidr = Cidrs[tnt][index]
-                        self.subnetIDs[tnt].append(
+                        network = ml2Ntks[tnt][index]
+                        subnet = ml2Subs[tnt][index]
+                        netID = neutron.netcrud(network,'create',tnt)
+                        self.netIDnames[tnt][network] = netID
+                        self.networkIDs[tnt].append(netID)
+		        if tnt == ml2tnt1:
+                            cidr = Cidrs[tnt][index]
+                            self.subnetIDs[tnt].append(
                                         neutron.subnetcrud(subnet,
                                                            'create',
                                                            netID,
                                                            cidr=cidr,
                                                            tenant=tnt))
-		    else:
-			self.subnetIDs[tnt].append( 
+		        elif tnt == ml2tnt3:
+			    self.subnetIDs[tnt].append( 
+                                        neutron.subnetcrud(subnet,
+                                                           'create',
+                                                           netID,
+                                                           subnetpool=self.subpoolID,
+                                                           tenant=tnt))
+		        else:
+			    self.subnetIDs[tnt].append( 
                                         neutron.subnetcrud(subnet,
                                                            'create',
                                                            netID,
                                                            subnetpool=self.subpoolID,
                                                            tenant=tnt))
             except Exception as e:
-               LOG.error('Create Network/Subnet Failed: '+repr(e))
-	       return 0
+                   LOG.error('Create Network/Subnet Failed: '+repr(e))
+	           return 0
         return self.netIDnames, self.networkIDs , self.subnetIDs
 
     def create_add_scope(self,tnt,shared=False,vrf=False):
@@ -226,13 +244,13 @@ class crudML2(object):
         "###############################################\n"
         %(tnt))
 	if shared:
-	    ads_name = addscopename_shd
 	    spname = subpoolname_shd
 	    sub_pool = subpool_shd
+	    ads_name=addscopename_shd
 	else:
-	    ads_name = addscopename
 	    spname = subpoolname
 	    sub_pool = subpool
+	    ads_name=addscopename
 	self.subpoolID = neutron.subpoolcrud(spname,'create',
                                              address_scope=ads_name,
 					     pool=sub_pool,
@@ -248,7 +266,7 @@ class crudML2(object):
         "###############################################\n"
         )
         self.rtrIDs = {}
-        for tnt in [ml2tnt1,ml2tnt2]:
+        for tnt in [ml2tnt1,ml2tnt2,ml2tnt3]:
             try:
                 _id = neutron.rtrcrud('RTR1', 'create', tenant=tnt)
                 self.rtrIDs[tnt] = _id
@@ -272,15 +290,19 @@ class crudML2(object):
 		LOG.error('Attach Router to Network Failed: '+repr(e))
 		return 0
     
-    def attach_router_to_extnw(self,tnt):
+    def attach_router_to_extnw(self,tnt,nonat=False):
         LOG.info(
         "\n#############################################\n"
         "####  Attach %s Router to the External Network ####\n"
         "###############################################\n"
 	%(tnt))
+	if not nonat:
+	    gw = 'Management-Out'
+	else:
+	    gw = 'Datacenter-Out'
  	try:
 	    neutron.rtrcrud(self.rtrIDs[tnt], 'set', rtrprop='gateway',
-	   		    gw='Management-Out', tenant=tnt)
+	   		    gw=gw, tenant=tnt)
 	except Exception as e:
 	    LOG.error('Setting GW for the Router Failed: ' + repr(e))
 	    return 0
@@ -351,14 +373,20 @@ class crudML2(object):
   	    for ntk in ml2Ntks[tnt]:
 		    neutron.runcmd('neutron net-delete %s' %(ntk))
 	#Delete subnetpool,address-scope,external-network
-	try:
-	    neutron.runcmd('neutron subnetpool-delete %s'
-		           %(self.subpoolID))
-	    neutron.runcmd('neutron address-scope-delete %s'
-			   %(self.addscopID))
-	    neutron.runcmd('neutron net-delete Management-Out')
-	except Exception:
-	    pass
+ 	for obj in [subpoolname,subpoolname_shd]:
+	    try:
+	        neutron.runcmd('neutron subnetpool-delete %s'
+		           %(obj))
+	    except Exception:
+	        pass
+	for obj in [addscopename,addscopename_shd]:
+	    try:    
+	        neutron.runcmd('neutron address-scope-delete %s'
+			   %(obj))
+	    except Exception:
+	        pass
+	neutron.runcmd('neutron net-delete Management-Out')
+	neutron.runcmd('neutron net-delete Datacenter-Out')
 
 class crudGBP(object):
     #For now we will run with single tenant,
@@ -806,7 +834,8 @@ class sendTraffic(object):
 	    vm_traff = gbpExpTraff(COMPUTE1,vm_property[vm]['netns'],
 				vm_property[vm]['src_ip'],
 				vm_property[vm]['dest_ip'])
-	    return vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1)
+	    if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1):
+	    	return 0
 
     def get_epg_vms(self,tag):
 	"""

@@ -1,7 +1,7 @@
 from test_sanity import *
 LOG.setLevel(logging.INFO)
 tnt1,tnt2 = TNT_LIST_GBP
-LOG.info("#### Start of GBP Sanity for the Tenant == %s #####"
+LOG.info("#### Start of GBP SANITY #####"
          %(tnt1))
 #Initialize the GBP CRUD Class
 test_conf = crudGBP()
@@ -139,7 +139,6 @@ try:
     sleep(5)
     #Step 15
     if test_traff.traff_from_gbp_tenant(tnt1,'intra_epg',ext=True) == 0:
-	pdb.set_trace() #JISHNU
     	raise TestError(
     	"GBP-SANITY: Test-15: SNAT Traffic from %s VMs to External Router" %(tnt1))
     else:
@@ -172,5 +171,6 @@ finally:
     LOG.info("Cleanup being called finally")
     test_conf.cleanup_gbp()
     LOG.info("THE EXECUTION OF GBP SANITY TESTRUN COMPLETES")
+    dump_results('GBP')
     
 
