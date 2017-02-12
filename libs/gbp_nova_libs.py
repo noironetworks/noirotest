@@ -20,7 +20,6 @@ import logging
 import re
 import datetime
 from time import sleep
-import keystoneclient.v2_0.client as ksclient
 from novaclient.client import Client
 from gbp_utils import *
 
@@ -42,8 +41,8 @@ class gbpNova(object):
         self.cred = {}
         self.cred['version'] = '2'
         self.cred['username'] = keystone_user
-        self.cred['api_key'] = keystone_password
-        self.cred['project_id'] = tenant
+        self.cred['password'] = keystone_password
+        self.cred['project_name'] = tenant
         self.cred['auth_url'] = "http://%s:5000/v2.0/" % self.cntrlrip
         self.nova = Client(**self.cred)
         self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown','Exception']

@@ -54,7 +54,10 @@ class gbp_main_config(object):
 	self.plugin = plugin
         self.gbpnova = gbpNova(self.cntlr_ip)
         self.gbpheat = gbpHeat(self.cntlr_ip)
-	self.gbpaci = gbpApic(self.apic_ip,
+	if self.plugin: #Incase of MergedPlugin
+	    self.gbpaci = gbpApic(self.apic_ip, mode='aim')
+	else:
+	    self.gbpaci = gbpApic(self.apic_ip,
 			       apicsystemID=self.apicsystemID) 
 	self.vmlist = ['VM1','VM2','VM3','VM4',
 		       'VM5','VM6','VM7','VM8',
@@ -133,15 +136,14 @@ class gbp_main_config(object):
         self._log.info(
             "\n Adding SSH-Filter to Svc_epg created for every dhcp_agent")
         try:
-	    if self.plugin: #i.e. if 'aim'
-	       tnt_id = self.keyst.get_tenant_attribute('admin','id')
+	    if not self.plugin: #i.e. if 'classical plugin'
+	        if not self.gbpaci.create_add_filter(self.tntDN):
+			raise Exception("Adding filter to SvcEpg failed")
+	    else: #i.e. if MergedPlugin
 	       if isinstance (run_remote_cli(
-                              "python add_ssh_filter.py %s create" %(tnt_id),
+                              "python add_ssh_filter.py create",
                                self.cntlr_ip, 'root', 'noir0123'), tuple):
 		        raise Exception("adding filter to SvcEpg failed in AIM")
-            else:
-	        if not self.gbpaci.create_add_filter(self.tntDN):
-			raise Exception("adding filter to SvcEpg failed")
 	except Exception as e:
                  self._log.error(
                  "\nABORTING THE TESTSUITE RUN: " + repr(e))
@@ -177,17 +179,49 @@ class gbp_main_config(object):
 			     'vm %s NOT found in APIC' %(vm))
             #Verify the BDs in OperState of Service EPGs
             #pop them out of the operEpgs
-            for bd in self.L2plist:
-		svcEpg = 'Shd-%s' %(bd)
-		if svcEpg in operEpgs.keys():
-		    svcVal = operEpgs.pop(svcEpg)
-		    if svcVal['bdname'] != bd \
-			or svcVal['bdstate'] != 'formed':
-			    raise Exception(
-			    'epg %s has Unresolved BD' %(svcEpg))
-		else:
-		    raise Exception(
-		       'SvcEpg %s NOT found in APIC' %(svcEpg))
+	    if not self.plugin: #Classical
+                for bd in self.L2plist:
+		    svcEpg = 'Shd-%s' %(bd)
+		    if svcEpg in operEpgs.keys():
+		        svcVal = operEpgs.pop(svcEpg)
+		        if svcVal['bdname'] != bd \
+			    or svcVal['bdstate'] != 'formed':
+			        raise Exception(
+			        'epg %s has Unresolved BD' %(svcEpg))
+		    else:
+		        raise Exception(
+		        'SvcEpg %s NOT found in APIC' %(svcEpg))
+	    else: #Merged-Plugin, verify sync-status of all BDs
+		def aimcheck(obj,objtype):
+		    tntname = self.gbpaci.getTenant(getName='admin')
+		    if objtype == 'epg':
+			cmd = "aimctl manager endpoint-group-get " +\
+			 	"%s OpenStack %s | grep sync_status" \
+				%(tntname, obj)
+		    if objtype == 'bd':
+		        cmd = "aimctl manager bridge-domain-get %s %s"\
+			       %(tntname, obj) + " | grep sync_status" 
+		    if not "synced" in run_remote_cli(cmd,
+						      self.cntlr_ip,
+						      'root',
+						      'noir0123'
+							):
+			return 0
+		    return 1
+		for epg in operEpgs.keys():
+		    if not aimcheck(epg,'epg'):
+			raise Exception("AIM Univ: EPG %s NOT synced"
+					%(epg))
+	  	bdlist = [obj for obj in operEpgs.keys() if 'net_' in obj]
+		apic_bd_state = self.gbpaci.getBdOper('admin')
+	 	for bd in bdlist:
+		    if not aimcheck(bd,'bd'):
+			raise Exception("AIM Univ: BD %s NOT synced"
+					%(bd))
+		    if apic_bd_state[bd]['vrfstate'] != 'formed':
+			raise Exception("APIC Univ: Vrf of BD %s NOT resolved"
+					%(bd))
+		
 	except Exception as e:
 	    self._log.error(
             '\nSetup Verification Failed Because of this Issue: '+repr(e))
@@ -227,7 +261,7 @@ class gbp_main_config(object):
            self.gbpheat.cfg_all_cli(0, self.heat_stack_name)
 	   if self.plugin:
 	       # Remove the noiro-ssh filter from AIM
-	       run_remote_cli("python add_ssh_filter.py %s create" %(tnt_id),
+	       run_remote_cli("python add_ssh_filter.py delete",
                             self.cntlr_ip, 'root', 'noir0123')
            # Ntk namespace cleanup in Network-Node.. VM names are static
            # throughout the test-cycle

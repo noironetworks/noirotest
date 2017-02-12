@@ -14,7 +14,7 @@ key_name: 'gbpkey' #Ensure that it is same as mentioned in heat template
 apic_system_id: 'noirolab'
 # User editable config params
 num_comp_nodes: 2
-apic_ip: '172.28.184.40'
+apic_ip: '172.28.184.30'
 apic_passwd: 'noir0123'
 leaf1_ip: '172.28.184.31'
 leaf2_ip: '172.28.184.32'

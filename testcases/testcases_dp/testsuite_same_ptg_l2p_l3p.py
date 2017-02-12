@@ -46,7 +46,6 @@ class test_same_ptg_same_l2p_same_l3p(object):
         self.apic_passwd = super_hdr.apic_passwd
         self.pausetodebug = super_hdr.pausetodebug
         self.gbpaci = gbpApic(self.apic_ip,
-                              'gbp',
                                apicsystemID=super_hdr.apicsystemID)
         self.ptg = objs_uuid['demo_same_ptg_l2p_l3p_ptg_id']
         self.test_2_prs = objs_uuid['demo_ruleset_norule_id']
@@ -83,15 +82,15 @@ class test_same_ptg_same_l2p_same_l3p(object):
             if flag == 'enforced':
                expectedRetVal = 0
 	       if self.plugin_mode == 'aim':
-                  self.gbpcfg.gbp_policy_cfg_all(2, 'group', self.ptg, intra_ptg_allow="True")
+                  self.gbpcfg.gbp_policy_cfg_all(2, 'group', self.ptg, intra_ptg_allow="False")
 	       else:
                    self.gbpaci.addEnforcedToPtg(
                    		                ptg_name,
                                 		tenant='admin',
                                 		) #Cant use self.ptg as its a UUID instead of namestring
             else:
-	       if self.plugin_mode == 'aim':
-                  self.gbpcfg.gbp_policy_cfg_all(2, 'group', self.ptg, intra_ptg_allow="False")
+	       if self.plugin_mode: #Incase of MergedPlugin
+                  self.gbpcfg.gbp_policy_cfg_all(2, 'group', self.ptg, intra_ptg_allow="True")
 	       else:
                    self.gbpaci.addEnforcedToPtg(
                    		                ptg_name,

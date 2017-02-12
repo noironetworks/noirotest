@@ -1,8 +1,7 @@
 from test_sanity import *
 LOG.setLevel(logging.INFO)
 tnt1,tnt2 = TNT_LIST_GBP
-LOG.info("#### Start of GBP SANITY #####"
-         %(tnt1))
+LOG.info("#### Start of GBP SANITY #####")
 #Initialize the GBP CRUD Class
 test_conf = crudGBP()
 LOG.info("Create Openstack Tenants for GBP ")

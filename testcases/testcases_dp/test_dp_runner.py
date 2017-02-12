@@ -45,19 +45,17 @@ def main():
     objs_uuid = gbpheat.get_uuid_from_stack(
         super_hdr.heat_temp, super_hdr.stack_name)
     objs_uuid['plugin_mode'] = options.mode
-    """ #TBD: JISHNU: removed until verification Libs are fixed for aim-aid
     # Verify the configuration on ACI
     print "Verification .. sleep 30s, allowing DP learning"
-    sleep(30)
+    sleep(30) 
     if not testbed_cfg.verifySetup():
            testbed_cfg.cleanup()
            sys.exit(1)
-    """
+    
     header_to_suite_map = {'header1': [header1, test_same_ptg_same_l2p_same_l3p],
                            'header2': [header2, test_diff_ptg_same_l2p_l3p],
                             'header3': [header3, test_diff_ptg_diff_l2p_same_l3p],
                            'header4': [header4, test_diff_ptg_diff_l2p_diff_l3p]}
- 
     def run(reboot=''):
         for val in header_to_suite_map.itervalues():
             # Initialize Testsuite specific config setup/cleanup class
@@ -114,6 +112,6 @@ def main():
 	run(reboot=reboot)
     testbed_cfg.cleanup() 
     print "\nDataPath TestSuite executed Successfully\n"
-
+    
 if __name__ == "__main__":
     main()

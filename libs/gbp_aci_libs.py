@@ -34,17 +34,19 @@ _log.setLevel(logging.INFO)
 _log.setLevel(logging.DEBUG)
 
 class gbpApic(object):
-    def __init__(self, addr, apicsystemID='noirolab',\
+    def __init__(self, addr,mode='gbp',apicsystemID='noirolab',\
                  username='admin', password='noir0123', ssl=True):
-        self.err_strings=['Unable','Conflict',\
-                          'Bad Request','Error',\
-                          'Unknown','Exception']
         self.addr = addr
         self.ssl = ssl
         self.user = username
         self.passwd = password
 	self.apicsystemID = apicsystemID
-        self.appProfile = '%s_app' %(self.apicsystemID)
+	if mode == 'aim':
+	    self.appProfile = 'ap-OpenStack' #By default comes in aim.conf in controller
+	elif mode == 'ml2':
+            self.appProfile = 'ap-%s' %(self.apicsystemID)
+	else:
+            self.appProfile = 'ap-%s_app' %(self.apicsystemID)
         self.cookies = None
         self.login()
       
@@ -196,11 +198,13 @@ class gbpApic(object):
 		print e
 		return None
 
-    def getTenant(self,getDN=True):
+    def getTenant(self,getName=''):
         """
-        Method to get the tenant from APIC
+        Method to get the tenantDN from APIC
         which will correspond to an openstack project/tenant
-        ostack_tenant :: openstack tenant/project-name
+        get_name :: Pass the displayname(i.e. the Openstack Project
+		    Name) and in return get the tntname(prj_*).
+		    This flag is useful ONLY for MergedPlugin
         """
         tenants = {}
         pathtenants = '/api/node/mo/uni.json?'+\
@@ -216,11 +220,14 @@ class gbpApic(object):
                 #tntname will be UUID for Ostack projects
                 tntname = item['fvTenant']['attributes']['name']
                 if tntname not in ['common','mgmt','infra']:
-                   tntdn = item['fvTenant']['attributes']['dn']
-                   if item['fvTenant']['attributes']['nameAlias']:
+		    if getName and\
+		      getName == item['fvTenant']['attributes']['nameAlias']:
+			return tntname
+                    tntdn = item['fvTenant']['attributes']['dn']
+                    if item['fvTenant']['attributes']['nameAlias']:
                         tntdispname = item['fvTenant']['attributes']['nameAlias']
                         tenants[tntdispname]=tntdn
-                   else:
+                    else:
 		       tenants[tntname]=tntdn
                        raise Exception(
                        "nameAlias is NOT FOUND in APIC for Tenant %s" %(tntname))
@@ -229,18 +236,19 @@ class gbpApic(object):
                 pass
         return tenants
 
-    def getEpgOper(self,tntdn):
+    def getEpgOper(self,tnt):
 	"""
         Method to fetch EPG and their Endpoints iand BD for a given tenant
         tntdn: tenant's DN, incase of 'common' tenant, pass tntdn as 'common'
 	"""
 	finaldictEpg = {}
-        if tntdn == 'common':
+        if tnt == 'common':
                tntdn = 'uni/tn-common'
+	else:
+	    tntdn = self.getTenant()[tnt]
 	tenantepgdict = {}
 	pathtenantepg = '/api/node/mo/%s/%s.json?query-target=children&target-subtree-class=fvAEPg'\
                             %(tntdn,self.appProfile)
-	#print 'Tenant EPG Path', pathtenantepg
 	reqforepgs = self.get(pathtenantepg)
         tntDetails = reqforepgs.json()['imdata']
   	for item in tntDetails:
@@ -255,7 +263,6 @@ class gbpApic(object):
 	        for dn,epgname in tenantepgdict.iteritems():
 		    finaldictEpg[epgname] = {}
 	            pathepfromepg = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvCEp' %(dn)
-	            #print 'PATH == ',pathepfromepg
 	            reqforeps = self.get(pathepfromepg)
                     epgDetails = reqforeps.json()['imdata']
                     for item in epgDetails:
@@ -270,16 +277,18 @@ class gbpApic(object):
 		    detail = reqforbd.json()['imdata']
 		    finaldictEpg[epgname]['bdname'] = detail[0]['fvRsBd']['attributes']['tnFvBDName'].encode()
 		    finaldictEpg[epgname]['bdstate'] = detail[0]['fvRsBd']['attributes']['state'].encode()
-        #print 'EPG Details == \n', finaldictEpg
+        print 'EPG Details == \n', finaldictEpg
 	return finaldictEpg
            
-    def getBdOper(self,tntdn):
+    def getBdOper(self,tnt):
 	"""
 	Method to fetch subnets,their scopes,L3out association
 	"""
         finaldictBD = {}
-        if tntdn == 'common':
+        if tnt == 'common':
                tntdn = 'tn-common'
+	else:
+	    tntdn = self.getTenant()[tnt]
 	tenantbddict = {}
 	pathtenantbd = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvBD'\
 			   %(tntdn)
@@ -332,15 +341,17 @@ class gbpApic(object):
 	return finaldictBD
 
     
-    def getL3Out(self,tntdn):
+    def getL3Out(self,tnt):
 	"""
 	Method to fetch the L3Out, its associated VRF and External Ntk
 	for a given Tenant/s
 	"""
 	finaldictL3Out = {}
 	tenantdictL3Out = {}
-	if tntdn == 'common':
-	      tntdn = 'tn-common'
+        if tnt == 'common':
+               tntdn = 'tn-common'
+	else:
+	    tntdn = self.getTenant()[tnt]
 	pathtenantL3Outs = '/api/node/mo/%s.json?query-target=children&target-subtree-class=l3extOut' %(tntdn)
 	#print 'Tenant L3Out Path', pathtenantL3Outs
 	reqforL3Outs = self.get(pathtenantL3Outs)
@@ -363,13 +374,15 @@ class gbpApic(object):
 	#print 'L3 Out Details == \n', finaldictL3Out
 	return finaldictL3Out
 
-    def getVrfs(self,tntdn):
+    def getVrfs(self,tnt):
 	"""
 	Fetch VRF for tenant/s
 	"""
 	finalvrfprops = []
-	if tntdn == 'common':
+        if tnt == 'common':
                tntdn = 'tn-common'
+	else:
+	    tntdn = self.getTenant()[tnt]
         pathtenantvrf = '/api/node/mo/%s.json?query-target=children&target-subtree-class=fvCtx' %(tntdn)
 	reqforvrfs = self.get(pathtenantvrf)
 	tntDetails = reqforvrfs.json()['imdata']

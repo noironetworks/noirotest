@@ -65,7 +65,6 @@ class nat_dp_main_config(object):
         self.gbpnova = gbpNova(self.cntlr_ip)
         self.gbpheat = gbpHeat(self.cntlr_ip)
 	self.gbpaci = gbpApic(self.apic_ip,
-                              'gbp',
 			      apicsystemID=self.apicsystemID)
         self.gbpcrud = GBPCrud(self.cntlr_ip)
         self.hostpoolcidrL3OutA = '50.50.50.1/24'

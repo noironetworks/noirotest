@@ -613,7 +613,7 @@ class NatFuncTestMethods(object):
         Adds SSH contract between NS and EPG
         Needed for SNAT Tests
         """
-        aci=gbpApic(apicip,'gbp')
+        aci=gbpApic(apicip)
         self._log.info(
             "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
         svcepglist = [

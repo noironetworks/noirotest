@@ -64,7 +64,6 @@ comp1 = Compute(COMPUTE1)
 comp2 = Compute(COMPUTE2)
 neutron = neutronCli(CNTRLIP)
 neutron_api = neutronPy(CNTRLIP)
-apic = gbpApic(APICIP)
 
 def create_external_network_subnets(nat):
 	#Needed for both GBP & ML2
@@ -531,7 +530,7 @@ class crudGBP(object):
         "## Create External Segment as shared under tenant-Admin ##\n"
         "##########################################################\n"
         )
-	extsub1, extsub2 = create_external_network_subnets(nat)
+	extsub1, extsub2 = create_external_network_subnets('nat')
         self.extsegid = self.gbpadmin.create_gbp_external_segment(
                                         'Management-Out',
 					subnet_id = extsub1,

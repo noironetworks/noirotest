@@ -9,17 +9,10 @@ from libs.gbp_conf_libs import gbpCfgCli
 from libs.gbp_heat_libs import gbpHeat
 from libs.gbp_nova_libs import gbpNova
 from libs.raise_exceptions import *
-
+from testcases.config import conf
 
 class super_hdr(object):
     # Name of the config file is static
-    name = 'testconfig.yaml'
-    path = path='../'
-    for root,dirs,files in os.walk(path):
-         if name in files:
-	    result = os.path.join(root, name)
-    with open(result, 'rt') as f:
-        conf = yaml.load(f)
     nova_az = conf['nova_az_name']
     cntlr_ip = conf['controller_ip']
     apic_ip = conf['apic_ip']

@@ -7,19 +7,16 @@ from aim import config as aim_config
 from aim.db import api as db_api
 
 class aimcrud(object):
-
-    def find_tenant(self):	
-	for tenant in mgr.find(aim_ctx,resource.Tenant):
-	    if tenant.name == admin_tnt_id:
-		self.tnt = tenant
+    global tnt
+    tnt = 'common'
 
     def act_filter(self,action):
 	try:
 	     if action == 'create':
-	         mgr.create(aim_ctx,resource.Filter(tenant_name=self.tnt.name,
+	         mgr.create(aim_ctx,resource.Filter(tenant_name=tnt,
 			    name='noiro-ssh'))
 	     if action == 'delete':
-	         mgr.delete(aim_ctx,resource.Filter(tenant_name=self.tnt.name,
+	         mgr.delete(aim_ctx,resource.Filter(tenant_name=tnt,
 			    name='noiro-ssh'))
 		
 	except Exception as e:
@@ -30,17 +27,17 @@ class aimcrud(object):
 	try:
 	     if action == 'create':
  	         mgr.create(aim_ctx,resource.FilterEntry(
-			tenant_name=self.tnt.name, filter_name='noiro-ssh',
+			tenant_name=tnt, filter_name='noiro-ssh',
 			name='ssh', ether_type='ip', ip_protocol='tcp',
 			source_from_port=22, source_to_port=22))
  	     	 mgr.create(aim_ctx,resource.FilterEntry(
-			tenant_name=self.tnt.name, filter_name='noiro-ssh',
+			tenant_name=tnt, filter_name='noiro-ssh',
 			name='rev-ssh',ether_type='ip',	ip_protocol='tcp',
 			dest_from_port=22,dest_to_port=22))
 	     if action == 'delete':
 		 for name in ['ssh','rev-ssh']:
  	             mgr.delete(aim_ctx,resource.FilterEntry(
-				tenant_name=self.tnt.name, filter_name='noiro-ssh',
+				tenant_name=tnt, filter_name='noiro-ssh',
 			        name=name))
 	except Exception as e:
 	    print '\n Filter-Entry ssh %s failed: ' %(action)+repr(e)
@@ -62,8 +59,7 @@ class aimcrud(object):
 	    return 0
 
 ## Get Global instances/variables
-admin_tnt_id = sys.argv[1]
-action = sys.argv[2]
+action = sys.argv[1]
 aim_config.init(['--config-file', '/etc/aim/aim.conf'])
 session = db_api.get_session(expire_on_commit=True)
 aim_ctx = aim_context.AimContext(db_session=session)
@@ -71,7 +67,6 @@ mgr = aim_manager.AimManager()
 
 ## Instantiate crud class
 crud = aimcrud()
-crud.find_tenant()
 if action == 'create':
     # Create a filter
     print "\nCreating the Filter noiro-ssh"
