@@ -15,6 +15,17 @@ class neutronPy(object):
         cred['auth_url'] = "http://%s:5000/v2.0/" % controllerIp
         self.client = nclient.Client(**cred)
 
+    def create_router(self,name):
+	body_value = {'router': {
+    			'name' : name,
+    			'admin_state_up': True,
+		     }}
+	try:
+	    router = self.client.create_router(body=body_value)
+	    return router['router']['id']
+	except Exception as e:
+	    print "Router Create failed: ", repr(e)
+	
     def get_router_list(self):
         """ returns list of routers """
         return self.client.list_routers()['routers']
@@ -28,6 +39,34 @@ class neutronPy(object):
                     ret = r[attribute]
                     break
         return ret
+
+    def router_set_rem_gw(self,rtr_name,action,ext_net_name=''):
+	#Pass ext_net_name ONLY when action is 'set'
+	try:
+	    rtr_id = self.get_router_attribute(rtr_name,'id')
+	    if action == 'set':
+	    	ext_net_id = self.get_network_attribute(ext_net_name,'id')
+	    	rtr_id = self.get_router_attribute(rtr_name,'id')
+	    	print ext_net_id, rtr_id
+	    	rtr_dict = {'network_id':ext_net_id}
+	    	self.client.add_gateway_router(rtr_id, rtr_dict)
+	     if action == 'rem':
+		self.client.remove_gateway_router(rtr_id)
+	except Exception as e:
+	    print "Set/Removal router-gateway failed: ",repr(e)
+	    return 0
+
+    def attach_detach_router_subnet(self,rtr_name,subnetID,action):
+	try:
+	    rtr_id = self.get_router_attribute(rtr_name,'id')
+	    rtr_dict = {'subnet_id':subnetID}
+	    if action == 'add':
+		self.client.add_interface_router(rtr_id, rtr_dict)
+	    if action == 'rem':
+		self.client.remove_interface_router(rtr_id, rtr_dict)
+	except Exception as e:
+	    print "Attach/Detach router from network failed: ",repr(e)
+		
 
     def create_net(self, netname):
         cn = {'network': {'name': netname, 'admin_state_up': True}}
@@ -124,8 +163,10 @@ class neutronCli(object):
     def addDelkeystoneTnt(self,tenantList,action):
 	'''
 	Add/Delete Tenants in Openstack
-	action: vlaid strings are 'create','delete'
+	action: valid strings are 'create','delete'
 	'''
+	if not isinstance(tenantList,list):
+	    tenantList = [tenantList]
 	for tnt in tenantList:
 	    if action == 'create':
 	       cmd1 = 'keystone tenant-create --name %s' %(tnt)

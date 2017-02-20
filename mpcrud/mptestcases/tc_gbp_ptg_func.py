@@ -13,7 +13,7 @@
 import commands
 import logging
 import sys
-
+import pdb
 from mpcrud.mplibs import config_libs
 from mpcrud.mplibs import utils_libs
 from mpcrud.mplibs import verify_libs
@@ -24,7 +24,7 @@ def main():
     # Run the Testcases:
     env_flag = sys.argv[2]
     controller_ip = sys.argv[1]
-    test = test_gbp_ptg_func(env_flag,controller_ip)
+    test = test_gbp_ptg_func(controller_ip,env_flag)
     test.global_cfg()
     if test.test_gbp_ptg_func_1() == 0:
         test.cleanup(tc_name='TESTCASE_GBP_PTG_FUNC_1')
@@ -70,12 +70,6 @@ class test_gbp_ptg_func(object):
         self.l3p_name = 'test_ptg_l3p'
         self.pt_name = 'test_pt'
         self.env_flag = env_flag
-        if self.env_flag == 'aci':
-            self.def_ip_pool = '192.168.0.0/16'
-            self.cidr = '192.168.0.0/24'
-        else:
-            self.def_ip_pool = '10.0.0.0/8'
-            self.cidr = '10.0.0.0/24'
 
     def global_cfg(self):
         self._log.info('\n## Step 1: Create a PC needed for PTG Testing ##')
@@ -114,11 +108,10 @@ class test_gbp_ptg_func(object):
             return 0
         l3p_uuid = self.gbpcfg.gbp_policy_cfg_all(
             1, 'l3p', self.l3p_name, ip_pool='20.20.0.0/24',
-            subnet_prefix_length='28', _proxy_ip_pool='20.20.1.0/24',
-            _proxy_subnet_prefix_length='28')
+            subnet_prefix_length='28')[0]
         if l3p_uuid == 0:
             self._log.info(
-                "\n## Reqd L3Policy Create Failed, hence GBP Policy "
+                "\n## Step 1: Reqd L3Policy Create Failed, hence GBP Policy "
                 "Target-Group Functional Test Suite Run ABORTED\n")
             return 0
         self.gbpcfg.gbp_policy_cfg_all(
@@ -207,11 +200,10 @@ class test_gbp_ptg_func(object):
                 ret='default',
                 id=l3pid,
                 name='default',
-                ip_pool=self.def_ip_pool,
                 l2_policies=l2pid,
                 subnet_prefix_length='24',
-                ip_version='4')
-            if rtr_uuid != 0 and isinstance(rtr_uuid, str) == 0:
+                ip_version='4')[0]
+            if rtr_uuid == 0:
                 self._log.info(
                     "# Step 2D: Verify By-Default L3Policy == Failed")
                 return 0
@@ -229,7 +221,6 @@ class test_gbp_ptg_func(object):
             if self.gbpverify.neut_ver_all(
                     'subnet',
                     subnetid,
-                    cidr=self.cidr,
                     enable_dhcp='True',
                     network_id=ntkid) == 0:
                 self._log.info(
@@ -383,7 +374,6 @@ class test_gbp_ptg_func(object):
             "TEST_STEPS::\n"
             "Create Policy Target-Group using L2P and NO PRS\n"
             "Create a Policy Target using the above Policy-Target-Group\n"
-            "Delete the neutron port corresponding to the Policy-Target\n"
             "Update the Policy-Target-Group with a PRS\n"
             "Verify Policy Target-Group successfully updated\n"
             "##############################################################\n")
@@ -414,15 +404,6 @@ class test_gbp_ptg_func(object):
             self._log.info(
                 "\n## Step 2A: Implicit creation neutron port-object "
                 "== Failed")
-            return 0
-        self._log.info(
-            '\n## Step 3: Delete the neutron port corresponding to the '
-            'Policy-Target\n')
-        cmd = 'neutron port-delete %s' % (neutron_port_id)
-        if self.gbpcfg.cmd_error_check(commands.getoutput(cmd)) == 0:
-            self._log.info(
-                "\n## Step 3: Deletion of the neutron port corresponding "
-                "to the Policy-Target = Failed")
             return 0
         self._log.info(
             '\n## Step 4: Update the Policy-Target-Group with a PRS\n')

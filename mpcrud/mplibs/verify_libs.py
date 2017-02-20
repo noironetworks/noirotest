@@ -250,11 +250,19 @@ class Gbp_Verify(object):
             for arg, val in kwargs.items():
                 if re.search("\\b%s\\b\s+\| \\b%s\\b.*" %
                              (arg, val), cmd_out, re.I) is None:
-                    _log.info(
+		    #incase of attribute has more than one value then
+		    #then below function will help us validating the values
+		    #or the only value among all for the given attr.
+		    #Example: L2P can have multiple PTGs, L3P can have multi
+		    #L2Ps
+		    if not self.gbp_obj_ver_attr_all_values(verifyobj,
+						        name_uuid,
+						        arg, [val]):
+                        _log.info(
                         "The Attribute== %s and its Value== %s DID NOT MATCH "
                         "for the PolicyObject == %s" %
                         (arg, val, verifyobj))
-                    return 0
+                    	return 0
             if verifyobj == "l2p":
                 match = re.search(
                     "\\bl3_policy_id\\b\s+\| (.*) \|", cmd_out, re.I)
@@ -364,12 +372,8 @@ class Gbp_Verify(object):
         # Execute the policy-object-verify-cmd
         cmd_out = self.exe_command(cmd)
         # Catch for non-exception error strings
-        for err in self.err_strings:
-            if re.search('\\b%s\\b' % (err), cmd_out, re.I):
-                _log.info(
-                    "Cmd execution failed! with this Return Error: \n%s" %
-                    (cmd_out))
-                return 0
+	if not cmd_out:
+	    return 0
         _misses = []
         for val in values:
             if cmd_out.find(val) == -1:

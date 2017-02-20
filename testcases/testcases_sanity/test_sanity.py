@@ -1,11 +1,9 @@
 #!/usr/bin/python
 
 import logging
-import pprint
 import re
 import string
 import sys
-import pdb 
 from time import sleep
 from libs.gbp_aci_libs import *
 from libs.gbp_utils import *

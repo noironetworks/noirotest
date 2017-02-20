@@ -24,7 +24,7 @@ class GbpAllCleanup(object):
     def __init__(self,cntlrip,apicip):
         self.gbpcrud = GBPCrud(cntlrip)
         self.gbpnova = gbpNova(cntlrip)
-	self.gbpapic = GbpApic(apicip,'gbp')
+	self.gbpapic = gbpApic(apicip)
 
     def cleanupAll(self):
            Log.info("\nStep: Blind CleanUp to be executed")

@@ -4,364 +4,109 @@
 | TESTCASE_GBP_L2P_FUNC_2 |  PASSED |     TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs    |
 | TESTCASE_GBP_L2P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L2POLICY with DEFAULT ATTRIB VALUE |
 +-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  PASSED |     TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs    |
-| TESTCASE_GBP_L2P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L2POLICY with DEFAULT ATTRIB VALUE |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  PASSED |     TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs    |
-| TESTCASE_GBP_L2P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L2POLICY with DEFAULT ATTRIB VALUE |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  PASSED |     TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs    |
-| TESTCASE_GBP_L2P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L2POLICY with DEFAULT ATTRIB VALUE |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  PASSED |     TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs    |
-| TESTCASE_GBP_L2P_FUNC_1 |  FAILED | TO CREATE/VERIFY/DELETE/VERIFY a L2POLICY with DEFAULT ATTRIB VALUE |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  PASSED |     TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs    |
-| TESTCASE_GBP_L2P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L2POLICY with DEFAULT ATTRIB VALUE |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  FAILED |   TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY   |
-| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |    TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs    |
-| TESTCASE_GBP_L3P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE |
-| TESTCASE_GBP_L3P_FUNC_4 |  FAILED |   TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE L3POLICY  |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |   TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY   |
-| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |    TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs    |
-| TESTCASE_GBP_L3P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE |
-| TESTCASE_GBP_L3P_FUNC_4 |  FAILED |   TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE L3POLICY  |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |   TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY   |
-| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |    TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs    |
-| TESTCASE_GBP_L3P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE |
-| TESTCASE_GBP_L3P_FUNC_4 |  PASSED |   TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE L3POLICY  |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |   TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY   |
-| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |    TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs    |
-| TESTCASE_GBP_L3P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE |
-| TESTCASE_GBP_L3P_FUNC_4 |  FAILED |   TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE L3POLICY  |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                         TESTCASE_HEADER                          |
-+-------------------------+---------+------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_4 |  FAILED | TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE L3POLICY |
-+-------------------------+---------+------------------------------------------------------------------+
-+-------------------------+---------+------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                         TESTCASE_HEADER                          |
-+-------------------------+---------+------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_4 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE L3POLICY |
-+-------------------------+---------+------------------------------------------------------------------+
-+-------------------------+---------+------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                         TESTCASE_HEADER                          |
-+-------------------------+---------+------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_4 |  FAILED | TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE L3POLICY |
-+-------------------------+---------+------------------------------------------------------------------+
-+-------------+---------+-----------------+
-| TESTCASE_ID | RESULTS | TESTCASE_HEADER |
-+-------------+---------+-----------------+
-+-------------+---------+-----------------+
-+-------------+---------+-----------------+
-| TESTCASE_ID | RESULTS | TESTCASE_HEADER |
-+-------------+---------+-----------------+
-+-------------+---------+-----------------+
-+-------------+---------+-----------------+
-| TESTCASE_ID | RESULTS | TESTCASE_HEADER |
-+-------------+---------+-----------------+
-+-------------+---------+-----------------+
 +-------------------------+---------+----------------------------------------------------------------------------+
 |       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
 +-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_5 |  FAILED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |      TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY       |
-| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |       TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs        |
-| TESTCASE_GBP_L3P_FUNC_1 |  PASSED |    TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE     |
-| TESTCASE_GBP_L3P_FUNC_6 |  FAILED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-| TESTCASE_GBP_L3P_FUNC_4 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE SHARED L3POLICY   |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |      TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY       |
-| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |       TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs        |
-| TESTCASE_GBP_L3P_FUNC_1 |  PASSED |    TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE     |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-| TESTCASE_GBP_L3P_FUNC_4 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE SHARED L3POLICY   |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |      TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY       |
+| TESTCASE_GBP_L3P_FUNC_3 |  FAILED |      TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY       |
 | TESTCASE_GBP_L3P_FUNC_2 |  PASSED |       TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs        |
 | TESTCASE_GBP_L3P_FUNC_1 |  PASSED |    TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE     |
 | TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
 | TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
 | TESTCASE_GBP_L3P_FUNC_4 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE SHARED L3POLICY   |
 +-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |      TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY       |
-| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |       TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs        |
-| TESTCASE_GBP_L3P_FUNC_1 |  PASSED |    TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE     |
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-| TESTCASE_GBP_L3P_FUNC_4 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE SHARED L3POLICY   |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |      TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY       |
-| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |       TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs        |
-| TESTCASE_GBP_L3P_FUNC_1 |  PASSED |    TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE     |
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-| TESTCASE_GBP_L3P_FUNC_4 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE SHARED L3POLICY   |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |      TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY       |
-| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |       TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs        |
-| TESTCASE_GBP_L3P_FUNC_1 |  PASSED |    TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE     |
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-| TESTCASE_GBP_L3P_FUNC_4 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE SHARED L3POLICY   |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |      TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY       |
-| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |       TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs        |
-| TESTCASE_GBP_L3P_FUNC_1 |  PASSED |    TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE     |
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-| TESTCASE_GBP_L3P_FUNC_4 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE SHARED L3POLICY   |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |      TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY       |
-| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |       TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs        |
-| TESTCASE_GBP_L3P_FUNC_1 |  PASSED |    TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE     |
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-| TESTCASE_GBP_L3P_FUNC_4 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE SHARED L3POLICY   |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  PASSED |     TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs    |
-| TESTCASE_GBP_L2P_FUNC_1 |  FAILED | TO CREATE/VERIFY/DELETE/VERIFY a L2POLICY with DEFAULT ATTRIB VALUE |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  FAILED |     TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs    |
-| TESTCASE_GBP_L2P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L2POLICY with DEFAULT ATTRIB VALUE |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  FAILED |     TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs    |
-| TESTCASE_GBP_L2P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L2POLICY with DEFAULT ATTRIB VALUE |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  FAILED |     TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs    |
-| TESTCASE_GBP_L2P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L2POLICY with DEFAULT ATTRIB VALUE |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+--------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                       TESTCASE_HEADER                        |
-+-------------------------+---------+--------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  FAILED | TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs |
-+-------------------------+---------+--------------------------------------------------------------+
-+-------------------------+---------+--------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                       TESTCASE_HEADER                        |
-+-------------------------+---------+--------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  FAILED | TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs |
-+-------------------------+---------+--------------------------------------------------------------+
-+-------------------------+---------+--------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                       TESTCASE_HEADER                        |
-+-------------------------+---------+--------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  FAILED | TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs |
-+-------------------------+---------+--------------------------------------------------------------+
-+-------------------------+---------+--------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                       TESTCASE_HEADER                        |
-+-------------------------+---------+--------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs |
-+-------------------------+---------+--------------------------------------------------------------+
-+-------------------------+---------+---------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
-+-------------------------+---------+---------------------------------------------------------------------+
-| TESTCASE_GBP_L2P_FUNC_2 |  PASSED |     TO CREATE/UPDATE/DELETE/VERIFY a L2POLICY with MULTIPLE PTGs    |
-| TESTCASE_GBP_L2P_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a L2POLICY with DEFAULT ATTRIB VALUE |
-+-------------------------+---------+---------------------------------------------------------------------+
-+-------------------------+---------+----------------------------------------------------------------------------+
-|       TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
-+-------------------------+---------+----------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_FUNC_3 |  PASSED |      TO CREATE/UPDATE/DELETE/VERIFY L3POLICY AND ASSOCIATED L2POLICY       |
-| TESTCASE_GBP_L3P_FUNC_2 |  PASSED |       TO CREATE/UPDATE/DELETE/VERIFY a L3POLICY with EDITABLE ATTRs        |
-| TESTCASE_GBP_L3P_FUNC_1 |  PASSED |    TO CREATE/VERIFY/DELETE/VERIFY a L3POLICY with DEFAULT ATTRIB VALUE     |
-| TESTCASE_GBP_L3P_FUNC_6 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED SUBNETPOOL   |
-| TESTCASE_GBP_L3P_FUNC_5 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY L3POLICY ASSOCIATED TO SHARED ADDRESS-SCOPE |
-| TESTCASE_GBP_L3P_FUNC_4 |  PASSED |  TO CREATE/UPDATE/DELETE/VERIFY MULTI L2POLICY to SINGLE SHARED L3POLICY   |
-+-------------------------+---------+----------------------------------------------------------------------------+
-+------------------------+---------+--------------------------------------------------------------------------------------+
-|      TESTCASE_ID       | RESULTS |                                   TESTCASE_HEADER                                    |
-+------------------------+---------+--------------------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_NEG_1 |  PASSED |                    TO CREATE/VERIFY L3POLICY with INVALID IP-POOL                    |
-| TESTCASE_GBP_L3P_NEG_2 |  PASSED |              TO CREATE/VERIFY L3POLICY with INVALID SUBNET-PREF-LENGTH               |
-| TESTCASE_GBP_L3P_NEG_3 |  PASSED |             TO CREATE/VERIFY L3POLICY with mix of VALID & INVALID ATTRs              |
-| TESTCASE_GBP_L3P_NEG_4 |  FAILED |                     TO UPDATE/VERIFY L3POLICY with INVALID ATTRs                     |
-| TESTCASE_GBP_L3P_NEG_5 |  FAILED | TO CREATE/UPDATE L3POLICY with SUBNET-PREF-LENGTH GREATER than IP-POOL's MASK-LENGTH |
-+------------------------+---------+--------------------------------------------------------------------------------------+
-+------------------------+---------+--------------------------------------------------------------------------------------+
-|      TESTCASE_ID       | RESULTS |                                   TESTCASE_HEADER                                    |
-+------------------------+---------+--------------------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_NEG_4 |  FAILED |                     TO UPDATE/VERIFY L3POLICY with INVALID ATTRs                     |
-| TESTCASE_GBP_L3P_NEG_5 |  FAILED | TO CREATE/UPDATE L3POLICY with SUBNET-PREF-LENGTH GREATER than IP-POOL's MASK-LENGTH |
-+------------------------+---------+--------------------------------------------------------------------------------------+
-+------------------------+---------+--------------------------------------------------------------------------------------+
-|      TESTCASE_ID       | RESULTS |                                   TESTCASE_HEADER                                    |
-+------------------------+---------+--------------------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_NEG_4 |  PASSED |                     TO UPDATE/VERIFY L3POLICY with INVALID ATTRs                     |
-| TESTCASE_GBP_L3P_NEG_5 |  PASSED | TO CREATE/UPDATE L3POLICY with SUBNET-PREF-LENGTH GREATER than IP-POOL's MASK-LENGTH |
-+------------------------+---------+--------------------------------------------------------------------------------------+
-+------------------------+---------+--------------------------------------------------------------------------------------+
-|      TESTCASE_ID       | RESULTS |                                   TESTCASE_HEADER                                    |
-+------------------------+---------+--------------------------------------------------------------------------------------+
-| TESTCASE_GBP_L3P_NEG_1 |  PASSED |                    TO CREATE/VERIFY L3POLICY with INVALID IP-POOL                    |
-| TESTCASE_GBP_L3P_NEG_2 |  PASSED |              TO CREATE/VERIFY L3POLICY with INVALID SUBNET-PREF-LENGTH               |
-| TESTCASE_GBP_L3P_NEG_3 |  PASSED |             TO CREATE/VERIFY L3POLICY with mix of VALID & INVALID ATTRs              |
-| TESTCASE_GBP_L3P_NEG_4 |  PASSED |                     TO UPDATE/VERIFY L3POLICY with INVALID ATTRs                     |
-| TESTCASE_GBP_L3P_NEG_5 |  PASSED | TO CREATE/UPDATE L3POLICY with SUBNET-PREF-LENGTH GREATER than IP-POOL's MASK-LENGTH |
-+------------------------+---------+--------------------------------------------------------------------------------------+
 +-------------------------+---------+-----------------------------------------------------------------------------+
 |       TESTCASE_ID       | RESULTS |                               TESTCASE_HEADER                               |
 +-------------------------+---------+-----------------------------------------------------------------------------+
-| TESTCASE_GBP_NSP_FUNC_1 |  FAILED |             TO CREATE/REFER/DELETE/VERIFY NTK-SVC-POLICY in PTG             |
-| TESTCASE_GBP_NSP_FUNC_3 |  FAILED |        TO CREATE/DELETE/VERIFY NTK-SVC-POLICY while REFERENCED IN PTG       |
-| TESTCASE_GBP_NSP_FUNC_2 |  FAILED | TO CREATE/UPDATE/DELETE/VERIFY a PTG with NTK-SVC-POLICY with MULTIPLE PTGs |
+| TESTCASE_GBP_NSP_FUNC_1 |  PASSED |             TO CREATE/REFER/DELETE/VERIFY NTK-SVC-POLICY in PTG             |
+| TESTCASE_GBP_NSP_FUNC_3 |  PASSED |        TO CREATE/DELETE/VERIFY NTK-SVC-POLICY while REFERENCED IN PTG       |
+| TESTCASE_GBP_NSP_FUNC_2 |  PASSED | TO CREATE/UPDATE/DELETE/VERIFY a PTG with NTK-SVC-POLICY with MULTIPLE PTGs |
 +-------------------------+---------+-----------------------------------------------------------------------------+
 +------------------------+---------+---------------------------------------------------------------------+
 |      TESTCASE_ID       | RESULTS |                           TESTCASE_HEADER                           |
 +------------------------+---------+---------------------------------------------------------------------+
 | TESTCASE_GBP_PA_FUNC_1 |  PASSED | CREATE/VERIFY/DELETE/VERIFY a POLICY ACTION with DEFAULT ATTR VALUE |
 +------------------------+---------+---------------------------------------------------------------------+
++------------------------+---------+---------------------------------------------------------------------------+
+|      TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                              |
++------------------------+---------+---------------------------------------------------------------------------+
+| TESTCASE_GBP_PC_FUNC_4 |  PASSED |    CREATE/SHARE/DELETE/ POLICY CLASSIFIER among MULTIPLE POLICY RULES     |
+| TESTCASE_GBP_PC_FUNC_2 |  PASSED |       UPDATE/VERIFY/DELETE/VERIFY EACH ATTRIB of a POLICY CLASSIFIER      |
+| TESTCASE_GBP_PC_FUNC_3 |  PASSED |   UPDATE/VERIFY/DELETE/VERIFY ALL ATTRIB of a POLICY CLASSIFIER @ ONCE    |
+| TESTCASE_GBP_PC_FUNC_1 |  PASSED | CREATE/VERIFY/DELETE/VERIFY a POLICY CLASSIFIER with DEFAULT ATTRIB VALUE |
++------------------------+---------+---------------------------------------------------------------------------+
++------------------------+---------+------------------------------------------------------------------------------+
+|      TESTCASE_ID       | RESULTS |                               TESTCASE_HEADER                                |
++------------------------+---------+------------------------------------------------------------------------------+
+| TESTCASE_GBP_PR_FUNC_1 |  PASSED |    TO CREATE/VERIFY/DELETE/VERIFY a POLICY RULE with DEFAULT ATTRIB VALUE    |
+| TESTCASE_GBP_PR_FUNC_3 |  PASSED |         TO UPDATE/VERIFY/DELETE/VERIFY EACH ATTRIB of a POLICY RULE          |
+| TESTCASE_GBP_PR_FUNC_2 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a POLICY RULE with POLICY ACTION & CLASSIFIER |
+| TESTCASE_GBP_PR_FUNC_5 |  PASSED |      CREATE/SHARE/DELETE/ POLICY RULE among MULTIPLE POLICY RULE-SETs        |
+| TESTCASE_GBP_PR_FUNC_4 |  PASSED |      TO UPDATE/VERIFY/DELETE/VERIFY ALL ATTRIB of a POLICY RULE @ ONCE       |
+| TESTCASE_GBP_PR_FUNC_6 |  PASSED |      TO UPDATE ALL ATTRIB of a POLICY CLASSIFIER USED IN A POLICY RULE       |
++------------------------+---------+------------------------------------------------------------------------------+
++-------------------------+---------+-------------------------------------------------------------------------------+
+|       TESTCASE_ID       | RESULTS |                                TESTCASE_HEADER                                |
++-------------------------+---------+-------------------------------------------------------------------------------+
+| TESTCASE_GBP_PRS_FUNC_6 |  FAILED |         TO CHANGE/UPDATE/DELETE/VERIFY PARENT and CHILD POLICY RULESET        |
+| TESTCASE_GBP_PRS_FUNC_5 |  FAILED |        TO CREATE/VERIFY/DELETE/VERIFY a PARENT and CHILD POLICY RULESET       |
+| TESTCASE_GBP_PRS_FUNC_4 |  PASSED | TO CREATE/UPDATE/VERIFY/DELETE/ ASSOCIATING MULTIPLE PRs to 1 POLICY RULESET  |
+| TESTCASE_GBP_PRS_FUNC_3 |  PASSED |         TO UPDATE/VERIFY/DELETE/VERIFY EACH ATTRIB of a POLICY RULESET        |
+| TESTCASE_GBP_PRS_FUNC_2 |  PASSED |        TO CREATE/VERIFY/DELETE/VERIFY a POLICY RULESET with POLICY RULE       |
+| TESTCASE_GBP_PRS_FUNC_1 |  PASSED |   TO CREATE/VERIFY/DELETE/VERIFY a POLICY RULESET with DEFAULT ATTRIB VALUE   |
++-------------------------+---------+-------------------------------------------------------------------------------+
++-------------------------+---------+--------------------------------------------------------------------------------+
+|       TESTCASE_ID       | RESULTS |                                TESTCASE_HEADER                                 |
++-------------------------+---------+--------------------------------------------------------------------------------+
+| TESTCASE_GBP_PTG_FUNC_1 |  PASSED | TO CREATE/VERIFY/DELETE/VERIFY a POLICY TARGET-GROUP with DEFAULT ATTRIB VALUE |
+| TESTCASE_GBP_PTG_FUNC_3 |  PASSED |       TO UPDATE A POLICY TARGET-GROUP AFTER DELETING PT's NEUTRON PORT         |
+| TESTCASE_GBP_PTG_FUNC_2 |  PASSED |    TO CREATE/VERIFY/DELETE/VERIFY a POLICY TARGET-GROUP with POLICY RULESET    |
++-------------------------+---------+--------------------------------------------------------------------------------+
++------------------------+---------+---------------------------------------------------------+
+|      TESTCASE_ID       | RESULTS |                     TESTCASE_HEADER                     |
++------------------------+---------+---------------------------------------------------------+
+| TESTCASE_GBP_RI_FUNC_1 |  PASSED | RESOURCE INTEGRITY AMONG GBP's PA,PC,PR,PRS,PTG,PT OBJs |
++------------------------+---------+---------------------------------------------------------+
++------------------------+---------+--------------------------------------------------------------------------------------+
+|      TESTCASE_ID       | RESULTS |                                   TESTCASE_HEADER                                    |
++------------------------+---------+--------------------------------------------------------------------------------------+
+| TESTCASE_GBP_L3P_NEG_1 |  PASSED |                    TO CREATE/VERIFY L3POLICY with INVALID IP-POOL                    |
+| TESTCASE_GBP_L3P_NEG_2 |  PASSED |              TO CREATE/VERIFY L3POLICY with INVALID SUBNET-PREF-LENGTH               |
+| TESTCASE_GBP_L3P_NEG_3 |  PASSED |             TO CREATE/VERIFY L3POLICY with mix of VALID & INVALID ATTRs              |
+| TESTCASE_GBP_L3P_NEG_4 |  PASSED |                     TO UPDATE/VERIFY L3POLICY with INVALID ATTRs                     |
+| TESTCASE_GBP_L3P_NEG_5 |  PASSED | TO CREATE/UPDATE L3POLICY with SUBNET-PREF-LENGTH GREATER than IP-POOL's MASK-LENGTH |
++------------------------+---------+--------------------------------------------------------------------------------------+
 +-----------------------+---------+------------------------------------------------------------+
 |      TESTCASE_ID      | RESULTS |                      TESTCASE_HEADER                       |
 +-----------------------+---------+------------------------------------------------------------+
-| TESTCASE_GBP_PA_NEG_1 |  PASSED |                    INVALID Action TYPE                     |
+| TESTCASE_GBP_PA_NEG_1 |  FAILED |                    INVALID Action TYPE                     |
 | TESTCASE_GBP_PA_NEG_3 |  PASSED |                   INVALID Action VALUE                     |
 | TESTCASE_GBP_PA_NEG_2 |  PASSED |          INVALID Action VALUE for VALID act_type           |
 | TESTCASE_GBP_PA_NEG_5 |  PASSED | UPDATE act_value with Invalid value for act-type=redirect  |
 | TESTCASE_GBP_PA_NEG_4 |  PASSED |               UPDATE Immutable ATTR act_type               |
 | TESTCASE_GBP_PA_NEG_6 |  PASSED |         DELETE NON-EXISTENT/INVALID POLICY ACTION          |
 +-----------------------+---------+------------------------------------------------------------+
-+------------------------+---------+---------------------------------------------------------------------------+
-|      TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                              |
-+------------------------+---------+---------------------------------------------------------------------------+
-| TESTCASE_GBP_PC_FUNC_4 |  PASSED |    CREATE/SHARE/DELETE/ POLICY CLASSIFIER among MULTIPLE POLICY RULES     |
-| TESTCASE_GBP_PC_FUNC_2 |  FAILED |       UPDATE/VERIFY/DELETE/VERIFY EACH ATTRIB of a POLICY CLASSIFIER      |
-| TESTCASE_GBP_PC_FUNC_3 |  FAILED |   UPDATE/VERIFY/DELETE/VERIFY ALL ATTRIB of a POLICY CLASSIFIER @ ONCE    |
-| TESTCASE_GBP_PC_FUNC_1 |  PASSED | CREATE/VERIFY/DELETE/VERIFY a POLICY CLASSIFIER with DEFAULT ATTRIB VALUE |
-+------------------------+---------+---------------------------------------------------------------------------+
++-----------------------+---------+------------------------------------------------------------+
+|      TESTCASE_ID      | RESULTS |                      TESTCASE_HEADER                       |
++-----------------------+---------+------------------------------------------------------------+
+| TESTCASE_GBP_PC_NEG_6 |  PASSED | UPDATE/VERIFY/ POLICY CLASSIFIER with INVALID PORT-RANGE   |
+| TESTCASE_GBP_PC_NEG_5 |  PASSED |  UPDATE/VERIFY/ POLICY CLASSIFIER with INVALID PROTOCOL    |
+| TESTCASE_GBP_PC_NEG_4 |  PASSED |  CREATE/VERIFY POLICY CLASSIFIER with INVALID DIRECTION    |
+| TESTCASE_GBP_PC_NEG_3 |  PASSED |       DELETE NON-EXISTENT/INVALID POLICY CLASSIFICER       |
+| TESTCASE_GBP_PC_NEG_2 |  PASSED | CREATE/VERIFY a POLICY CLASSIFIER with INVALID PORT-RANGE  |
+| TESTCASE_GBP_PC_NEG_1 |  PASSED |   CREATE/VERIFY a POLICY CLASSIFIER with INVALID PROTO     |
++-----------------------+---------+------------------------------------------------------------+
++-----------------------+---------+----------------------------------------------------------------+
+|      TESTCASE_ID      | RESULTS |                        TESTCASE_HEADER                         |
++-----------------------+---------+----------------------------------------------------------------+
+| TESTCASE_GBP_PR_NEG_2 |  PASSED |   TO CREATE/VERIFY/ POLICY RULE with VALIC PC but INVALID PA   |
+| TESTCASE_GBP_PR_NEG_3 |  PASSED | TO CREATE/UPDATE/VERIFY/ POLICY RULE with Invalid PC and PA ## |
+| TESTCASE_GBP_PR_NEG_1 |  PASSED |         TO CREATE/VERIFY a POLICY RULE with INVALID PC         |
+| TESTCASE_GBP_PR_NEG_4 |  PASSED |            DELETE NON-EXISTENT/INVALID POLICY RULE             |
++-----------------------+---------+----------------------------------------------------------------+
++------------------------+---------+----------------------------------------------------------------------------+
+|      TESTCASE_ID       | RESULTS |                              TESTCASE_HEADER                               |
++------------------------+---------+----------------------------------------------------------------------------+
+| TESTCASE_GBP_PRS_NEG_1 |  PASSED |          TO CREATE/VERIFY POLICY RULESET with INVALID POLICY RULE          |
+| TESTCASE_GBP_PRS_NEG_2 |  PASSED | TO CREATE/VERIFY POLICY RULESET with mix of VALID and  INVALID POLICY RULE |
+| TESTCASE_GBP_PRS_NEG_3 |  PASSED |           TO UPDATE/VERIFY POLICY RULE with VALID and INVALID PR           |
++------------------------+---------+----------------------------------------------------------------------------+

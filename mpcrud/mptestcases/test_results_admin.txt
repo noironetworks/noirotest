@@ -1,0 +1,42 @@
++--------------------------------------+---------+-------------------------------------------------------------------------------+
+|             TESTCASE_ID              | RESULTS |                                TESTCASE_HEADER                                |
++--------------------------------------+---------+-------------------------------------------------------------------------------+
+| TESTCASE_GBP_PR_PC_PA_SHARED_INTEG_4 |  PASSED | TO CREATE/VERIFY/UPDATE/VERIFY a POLICY ACTION & CLASSIFIER for a POLICY RULE |
+| TESTCASE_GBP_PR_PC_PA_SHARED_INTEG_2 |  PASSED |         TO CREATE/UPDATE/ POLICY RULE with shared/non-shared PA & PCs         |
+| TESTCASE_GBP_PR_PC_PA_SHARED_INTEG_3 |  PASSED |     TO CREATE/VERIFY//VERIFY a POLICY RULE with POLICY ACTION & CLASSIFIER    |
+| TESTCASE_GBP_PR_PC_PA_SHARED_INTEG_1 |  PASSED |      TO CREATE/VERIFY/UPDATEE/VERIFY INTEGRITY B/W PR,PC,PA as 'shared'       |
++--------------------------------------+---------+-------------------------------------------------------------------------------+
++------------------------------------+---------+-------------------------------------------------------------------------------+
+|            TESTCASE_ID             | RESULTS |                                TESTCASE_HEADER                                |
++------------------------------------+---------+-------------------------------------------------------------------------------+
+| TESTCASE_GBP_PRS_PR_SHARED_INTEG_2 |  PASSED |  TO CREATE/UPDATE/VERIFY/DELETE/ ASSOCIATING MULTIPLE PRs to 1 POLICY RULESET |
+| TESTCASE_GBP_PRS_PR_SHARED_INTEG_1 |  FAILED | TO CREATE/UPDATE/VERIFY/DELETE/ ASSOCIATING MULTIPLE PRs to 1 POLICY RULESET  |
++------------------------------------+---------+-------------------------------------------------------------------------------+
++--------------------------------------+---------+-------------------------------------------------------------------------------+
+|             TESTCASE_ID              | RESULTS |                                TESTCASE_HEADER                                |
++--------------------------------------+---------+-------------------------------------------------------------------------------+
+| TESTCASE_GBP_PR_PC_PA_SHARED_INTEG_4 |  PASSED | TO CREATE/VERIFY/UPDATE/VERIFY a POLICY ACTION & CLASSIFIER for a POLICY RULE |
+| TESTCASE_GBP_PR_PC_PA_SHARED_INTEG_2 |  PASSED |         TO CREATE/UPDATE/ POLICY RULE with shared/non-shared PA & PCs         |
+| TESTCASE_GBP_PR_PC_PA_SHARED_INTEG_3 |  PASSED |     TO CREATE/VERIFY//VERIFY a POLICY RULE with POLICY ACTION & CLASSIFIER    |
+| TESTCASE_GBP_PR_PC_PA_SHARED_INTEG_1 |  PASSED |      TO CREATE/VERIFY/UPDATEE/VERIFY INTEGRITY B/W PR,PC,PA as 'shared'       |
++--------------------------------------+---------+-------------------------------------------------------------------------------+
++------------------------------------+---------+-------------------------------------------------------------------------------+
+|            TESTCASE_ID             | RESULTS |                                TESTCASE_HEADER                                |
++------------------------------------+---------+-------------------------------------------------------------------------------+
+| TESTCASE_GBP_PRS_PR_SHARED_INTEG_2 |  PASSED |  TO CREATE/UPDATE/VERIFY/DELETE/ ASSOCIATING MULTIPLE PRs to 1 POLICY RULESET |
+| TESTCASE_GBP_PRS_PR_SHARED_INTEG_1 |  FAILED | TO CREATE/UPDATE/VERIFY/DELETE/ ASSOCIATING MULTIPLE PRs to 1 POLICY RULESET  |
++------------------------------------+---------+-------------------------------------------------------------------------------+
++--------------------------------------+---------+-------------------------------------------------------------------------------+
+|             TESTCASE_ID              | RESULTS |                                TESTCASE_HEADER                                |
++--------------------------------------+---------+-------------------------------------------------------------------------------+
+| TESTCASE_GBP_PR_PC_PA_SHARED_INTEG_4 |  PASSED | TO CREATE/VERIFY/UPDATE/VERIFY a POLICY ACTION & CLASSIFIER for a POLICY RULE |
+| TESTCASE_GBP_PR_PC_PA_SHARED_INTEG_2 |  PASSED |         TO CREATE/UPDATE/ POLICY RULE with shared/non-shared PA & PCs         |
+| TESTCASE_GBP_PR_PC_PA_SHARED_INTEG_3 |  PASSED |     TO CREATE/VERIFY//VERIFY a POLICY RULE with POLICY ACTION & CLASSIFIER    |
+| TESTCASE_GBP_PR_PC_PA_SHARED_INTEG_1 |  PASSED |      TO CREATE/VERIFY/UPDATEE/VERIFY INTEGRITY B/W PR,PC,PA as 'shared'       |
++--------------------------------------+---------+-------------------------------------------------------------------------------+
++------------------------------------+---------+-------------------------------------------------------------------------------+
+|            TESTCASE_ID             | RESULTS |                                TESTCASE_HEADER                                |
++------------------------------------+---------+-------------------------------------------------------------------------------+
+| TESTCASE_GBP_PRS_PR_SHARED_INTEG_2 |  PASSED |  TO CREATE/UPDATE/VERIFY/DELETE/ ASSOCIATING MULTIPLE PRs to 1 POLICY RULESET |
+| TESTCASE_GBP_PRS_PR_SHARED_INTEG_1 |  FAILED | TO CREATE/UPDATE/VERIFY/DELETE/ ASSOCIATING MULTIPLE PRs to 1 POLICY RULESET  |
++------------------------------------+---------+-------------------------------------------------------------------------------+

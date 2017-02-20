@@ -42,7 +42,7 @@ def run_openstack_cli(cmdList,cntrlrip,
             for cmd in cmdList:
                 results = run(cmd,quiet=True)
                 if not results.succeeded:
-		    #print "Unsuccessfull cmd-run output, bailing out ==\n",results
+		    print "Unsuccessfull cmd-run output, bailing out ==\n",results 
    		    return 0
     return results
 
