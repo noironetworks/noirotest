@@ -14,19 +14,19 @@ key_name: 'gbpkey' #Ensure that it is same as mentioned in heat template
 apic_system_id: 'noirolab'
 # User editable config params
 num_comp_nodes: 2
-apic_ip: '172.28.184.40'
+apic_ip: '10.30.120.110'
 apic_passwd: 'noir0123'
-leaf1_ip: '172.28.184.41'
-leaf2_ip: '172.28.184.42'
-spine_ip: '172.28.184.43'
-controller_ip: '172.28.184.45'
+leaf1_ip: '10.30.120.112'
+leaf2_ip: '10.30.120.112'
+spine_ip: '10.30.120.112'
+controller_ip: '10.30.120.117'
 neutronconffile: '/etc/neutron/neutron.conf' #Ensure it has the VALID apic_external_network config section defined
-ntk_node: '172.28.184.46' #in our lab env, compute-1=network-node
-az_comp_node: 'f3-compute-1.noiro.lab'
-compute_2: '172.28.184.47'
-ext_gw_rtr: '172.28.184.48'
-fip1_of_extgw: '1.103.1.1'
-fip2_of_extgw: '1.102.3.1'
+ntk_node: '10.30.120.115' #in our lab env, compute-1=network-node
+az_comp_node: 'fab8-compute-1.noiro.lab'
+compute_2: '10.30.120.116'
+ext_gw_rtr: '10.30.120.118'
+fip1_of_extgw: '1.108.1.1'
+fip2_of_extgw: '1.108.2.1'
 #NOTE:Below Flag 'preexist' if True,then ensure 'Datacenter-Out' & 'Management-Out' are configured in APIC
 #with their resp external-policies as 'DcExtPol' & 'MgmtExtPol' << ensure name staring are as EXACT as given
 #here

@@ -4,6 +4,8 @@ tnt1,tnt2 = TNT_LIST_GBP
 LOG.info("#### Start of GBP SANITY #####")
 #Initialize the GBP CRUD Class
 test_conf = crudGBP()
+#Initialize Traffic Class
+test_traff = sendTraffic()
 LOG.info("Create Openstack Tenants for GBP ")
 test_conf.create_gbp_tenants()
 
@@ -11,7 +13,7 @@ test_conf.create_gbp_tenants()
 
 try:
     #Step 1:
-    if test_conf.create_l2p() == 0:
+    if test_conf.create_l2p_l3p(tnt1) == 0:
         raise TestError("GBP-SANITY: Test-1: Create L2Policies, AutoPTGs, Implicit L3Policies")
     else:
         LOG.info("GBP-SANITY: Test-1: Create L2Policies, AutoPTGs, Implicit L3Policies : PASS")
@@ -23,7 +25,7 @@ try:
         LOG.info("GBP-SANITY: Test-2: Create Regular PTG using existing L2P : PASS")
 
     #Step 3:
-    if test_conf.create_policy_target() == 0:
+    if test_conf.create_policy_target(tnt1) == 0:
         raise TestError(
         "GBP-SANITY: Test-3: Create Policy-Targets on Regular & AutoPTGs")
     else:
@@ -37,19 +39,16 @@ try:
         LOG.info("GBP-SANITY: Test-4: Create Shared Contracts & Relational resources : PASS")
 
     #Step 5:
-    if test_conf.install_tenant_vms() == 0:
+    if test_conf.install_tenant_vms(tnt1) == 0:
         raise TestError(
         "GBP-SANITY: Test-5: Spawning VMs off the Regular and AutoPTGs")
     else:
         LOG.info(
         "GBP-SANITY: Test-5: Spawning VMs off the Regular and AutoPTGs : PASS")
     
-    #Initialize Traffic Class
-    test_traff = sendTraffic()
-
     #Step 6:
     if test_traff.traff_from_gbp_tenant(tnt1,'intra_epg') == 0:
-    	raise TestError(
+    	LOG.error(
     	"GBP-SANITY: Test-6: INTRA-EPG traffic between VMs in an AutoPTG %s"
      	%(tnt1))
     else:
@@ -75,7 +74,7 @@ try:
 
     #Step 8:
     if test_traff.traff_from_gbp_tenant(tnt1,'intra_bd') == 0:
-    	raise TestError(
+    	LOG.error(
     	"GBP-SANITY: Test-8: INTRA-BD traffic between VMs across two EPGs")
     else:
     	LOG.info(
@@ -93,14 +92,14 @@ try:
 
     #Step 10
     if test_traff.traff_from_gbp_tenant(tnt1,'inter_bd') == 0:
-    	raise TestError(
+    	LOG.error(
     	"GBP-SANITY: Test-10: INTER-BD traffic between VMs across three EPGs")
     else:
     	LOG.info(
     	"GBP-SANITY: Test-10: INTER-BD traffic between VMs across three EPGs : PASS")
 
     #Step 11	
-    if test_conf.create_ext_seg() == 0:
+    if test_conf.create_ext_seg('nat') == 0:
     	raise TestError(
     	"GBP-SANITY: Test-11: Create of shared External-Segment in Tenant-Admin")
     else:
@@ -108,7 +107,7 @@ try:
     	"GBP-SANITY: Test-11: Create of shared External-Segment in Tenant-Admin : PASS")
 	
     #Step 12
-    if test_conf.create_ext_pol() == 0:
+    if test_conf.create_ext_pol(tnt1) == 0:
     	raise TestError(
     	"GBP-SANITY: Test-12: Create of External Policy in tenant %s" %(tnt1))
     else:
@@ -116,7 +115,7 @@ try:
     	"GBP-SANITY: Test-12: Create of External Policy in tenant %s : PASS" %(tnt1))
 
     #Step 13
-    if test_conf.attach_l3p_extseg() == 0:
+    if test_conf.attach_l3p_extseg(tnt1) == 0:
     	raise TestError(
     	"GBP-SANITY: Test-13: Updating L3Policy to attach to External Segment in tenant %s"
         %(tnt1))
@@ -138,7 +137,7 @@ try:
     sleep(5)
     #Step 15
     if test_traff.traff_from_gbp_tenant(tnt1,'intra_epg',ext=True) == 0:
-    	raise TestError(
+    	LOG.error(
     	"GBP-SANITY: Test-15: SNAT Traffic from %s VMs to External Router" %(tnt1))
     else:
     	LOG.info(
@@ -156,7 +155,7 @@ try:
 	
     #Step 17
     if test_traff.traff_from_extrtr_to_fips('gbp',tnt1) == 0:
-    	raise TestError(
+    	LOG.error(
     	"GBP-SANITY: Test-17: External Router can send traffic to VMs in tenant %s"
         %(tnt1))
     else:
@@ -164,6 +163,70 @@ try:
     	"GBP-SANITY: Test-17: External Router can send traffic to VMs in tenant %s: PASS"
 	%(tnt1))
 
+    ############# BELOW IS THE WORKFLOW for GBP NO-NAT ###################
+    #Step 18:
+    if test_conf.create_l2p_l3p(tnt2) == 0:
+        raise TestError("GBP-SANITY: Test-18: Create AddressScope, Explicit L3Policy & L2Policy")
+    else:
+        LOG.info("GBP-SANITY: Test-18: Create AddressScope, Explicit L3Policy & L2Policy : PASS")
+
+    #Step 19:
+    if test_conf.create_policy_target(tnt2) == 0:
+        raise TestError(
+        "GBP-SANITY: Test-19: Create Policy-Targets on AutoPTGs")
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-19: Create Policy-Targets on AutoPTGs : PASS")
+
+    #Step 20:
+    if test_conf.install_tenant_vms(tnt2) == 0:
+        raise TestError(
+        "GBP-SANITY: Test-20: Spawning VMs off the AutoPTG")
+    else:
+        LOG.info(
+        "GBP-SANITY: Test-20: Spawning VMs off the AutoPTG : PASS")
+
+    #Step 21	
+    if test_conf.create_ext_seg('nonat') == 0:
+    	raise TestError(
+    	"GBP-SANITY: Test-21: Create of shared External-Segment for NoNAT in Tenant-Admin")
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-21: Create of shared External-Segment for NoNAT in Tenant-Admin : PASS")
+	
+    #Step 22
+    if test_conf.create_ext_pol(tnt2) == 0:
+    	raise TestError(
+    	"GBP-SANITY: Test-22: Create of External Policy for NoNAT in tenant %s" %(tnt2))
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-22: Create of External Policy for NoNAT in tenant %s : PASS" %(tnt2))
+
+    #Step 23
+    if test_conf.attach_l3p_extseg(tnt2) == 0:
+    	raise TestError(
+    	"GBP-SANITY: Test-23: Updating L3Policy to attach to NoNAT External Segment in tenant %s"
+        %(tnt2))
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-23: Updating L3Policy to attach to NoNAT External Segment in tenant %s : PASS"
+        %(tnt2))
+
+    #Step 24
+    if test_conf.update_ptg_extptg_nonat_traff(PRS_ICMP_TCP):
+    	raise TestError(
+    	"GBP-SANITY: Test-24: Apply contract onf ExtPol & AutoPtg got NoNAT")
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-24: Apply contract onf ExtPol & AutoPtg got NoNAT : PASS")
+
+    #Step 25
+    if test_traff.traff_from_gbp_tenant(tnt2,'intra_epg',ext=True) == 0:
+    	LOG.error(
+    	"GBP-SANITY: Test-25: NoNAT Traffic from %s VMs to External Router" %(tnt2))
+    else:
+    	LOG.info(
+    	"GBP-SANITY: Test-25: NoNAT Traffic from %s VMs to External Router : PASS" %(tnt2))
 except TestError as e:
     LOG.error("%s : FAIL" %(e))
 finally:

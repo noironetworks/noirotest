@@ -46,6 +46,10 @@ pausetodebug = conf['pausetodebug']
 EXTDNATCIDR,FIPBYTES = '50.50.50.0/28', '50.50.50.'
 EXTSNATCIDR = '55.55.55.0/28'
 EXTNONATCIDR = '2.3.4.0/24' #Can be any cidr, jsut needed for neutron router
+#We want to re-purpose the CIDR of PvtNtk for VMs participating in NO-NAT
+NONATCIDR = '60.60.60.0/24'
+APICVRF = "--apic:distinguished_names type=dict"+\
+	  " VRF='uni/tn-common/ctx-DcExtVrf'"
 ML2Fips = {}
 GBPFips = {}
 ACT = 'ALLOW'
@@ -130,8 +134,8 @@ def attach_fip_to_vms(tnt,mode):
 	    neutron.runcmd(cmd2)
 
 def dump_results(mode):
-    from commands import *
-    text = getoutput("grep -r %s-SANITY /tmp/test_sanity.log" %(mode)) 
+    import commands
+    text = commands.getoutput("grep -r %s-SANITY /tmp/test_sanity.log" %(mode)) 
     LOG.info("####### %s TEST RESULTS #######\n%s" %(mode,text))
 
 class TestError(Exception):
@@ -154,7 +158,7 @@ class crudML2(object):
     subpoolname = 'subpool1'
     subpoolname_shd = 'sps'
     subpool = '22.22.22.0/24'
-    subpool_shd = '60.60.60.0/24'
+    subpool_shd = NONATCIDR #Repurposing subpool_shd for NONAT
     Cidrs[ml2tnt1] = ['11.11.11.0/28', '21.21.21.0/28']
 
     def create_ml2_tenants(self):
@@ -219,13 +223,11 @@ class crudML2(object):
         "###############################################\n"
         %(tnt))
 	if vrf: #Shared addresscope with attach VRF
-	    apicvrf = "--apic:distinguished_names type=dict"+\
-		     " VRF='uni/tn-common/ctx-PreExstDcVrf'"
 	    self.addscopID = neutron.addscopecrud(addscopename_shd,
 						'create',
 					         tenant=tnt,
 					         shared=shared,
-						 apicvrf=apicvrf)
+						 apicvrf=APICVRF)
   	else:
 	    self.addscopID = neutron.addscopecrud(addscopename,
 						'create',
@@ -386,16 +388,18 @@ class crudML2(object):
 	neutron.runcmd('neutron net-delete Datacenter-Out')
 
 class crudGBP(object):
-    #For now we will run with single tenant,
-    #once 'shared' is supported, we will run
-    #with two tenants sharing a single L3P
     from libs.gbp_nova_libs import gbpNova
-    global tnt1, tnt2, vms, gbpL3p, gbpL2p, ippool
+    global tnt1, tnt2, vms, gbpL3p, gbpL2p, ippool,\
+	   gbp_nonat_ads, gbp_nonat_sps
     tnt1, tnt2 = TNT_LIST_GBP
-    gbpL3p = 'L3P1'
-    gbpL2p = {tnt1 : ['L2P1','L2P2']}
+    #tnt2 is primarily used for the purpose of NO-NAT
+    gbpL3p = 'L3P1' #tnt2 is using it, while tnt1 uses implicit L3P
+    gbpL2p = {tnt1 : ['L2P1','L2P2'],
+	      tnt2 : ['L2P3']}
     ippool = {tnt1 : '70.70.70.0/24',
-              tnt2 : '80.80.80.0/24'}
+              tnt2 : NONATCIDR}
+    gbp_nonat_ads = "nonat_ads"
+    gbp_nonat_sps = "nonat_sps"
     vms = {}
     vms[tnt1] = GBPvms[tnt1]
     vms[tnt2] = GBPvms[tnt2]
@@ -409,34 +413,76 @@ class crudGBP(object):
         self.novatnt1 = gbpNova(CNTRLIP,tenant=tnt1)
         self.novatnt2 = gbpNova(CNTRLIP,tenant=tnt2)
     
-    def create_l2p(self):
-        LOG.info(
-        "\n################################################################\n"
-        "## Create Explicit L2Policies, Auto-PTGs & implicit L3Policy for Tenant %s ##\n"
-        "##################################################################\n"
-	%(tnt1))
-	self.l2p1_uuid,self.l2p1_impl3p,self.l2p1_autoptg,self.l2p1_ntkid = \
-             self.gbptnt1.create_gbp_l2policy(gbpL2p[tnt1][0],getl3p=True,autoptg=True)
-        LOG.info(
-        "\n## Create explcit L2Policy associated to above implicit L3Policy ##\n"
-	)
-	self.l2p2_uuid,self.l2p2_autoptg,self.l2p2_ntkid = \
-             self.gbptnt1.create_gbp_l2policy(gbpL2p[tnt1][1],
+    def create_l2p_l3p(self,tnt):
+	if tnt == tnt1:
+            LOG.info(
+            "\n################################################################\n"
+            "## Create Explicit L2Policies, Auto-PTGs & implicit L3Policy for Tenant %s ##\n"
+            "##################################################################\n"
+	    %(tnt))
+            LOG.info(
+            "\n## Create L2Policy along with it implicit L3Policy ##\n"
+	    )
+	    self.l2p1_uuid,self.l2p1_impl3p,self.l2p1_autoptg,self.l2p1_ntkid = \
+             self.gbptnt1.create_gbp_l2policy(gbpL2p[tnt1][0],
+					      getl3p=True,
+					      autoptg=True)
+            LOG.info(
+            "\n## Create L2Policy explicitly associated to above implicit L3Policy ##\n"
+	    )
+	    self.l2p2_uuid,self.l2p2_autoptg,self.l2p2_ntkid = \
+             self.gbptnt1.create_gbp_l2policy(gbpL2p[tnt][1],
                                               autoptg=True,
    				              l3_policy_id=self.l2p1_impl3p)
-	if not self.l2p2_uuid or not self.l2p2_autoptg\
-	   or not self.l2p1_uuid or not self.l2p1_impl3p\
-	   or not self.l2p1_autoptg:
-	     return 0
-	else:
-	    LOG.info(
-	    "\n## Following resources have been created for Tenant %s:\n"
-	    "Implicitly-created L3Policy = %s\n"
-	    "Explicit L2Policy_1 = %s and its AutoPTG = %s\n"
-	    "Explicit L2Policy_2 = %s and its AutoPTG = %s\n"
-	    %(tnt1, self.l2p1_impl3p, self.l2p1_uuid, self.l2p1_autoptg,
-	    self.l2p2_uuid, self.l2p2_autoptg))
-  	
+	    if not self.l2p2_uuid or not self.l2p2_autoptg\
+	       or not self.l2p1_uuid or not self.l2p1_impl3p\
+	       or not self.l2p1_autoptg:
+	         return 0
+	    else:
+	        LOG.info(
+	        "\n## Following resources have been created for Tenant %s:\n"
+	        "Implicitly-created L3Policy = %s\n"
+	        "Explicit L2Policy_1 = %s and its AutoPTG = %s\n"
+	        "Explicit L2Policy_2 = %s and its AutoPTG = %s\n"
+	        %(tnt, self.l2p1_impl3p, self.l2p1_uuid, self.l2p1_autoptg,
+	        self.l2p2_uuid, self.l2p2_autoptg))
+  	if tnt == tnt2:
+            LOG.info(
+            "\n################################################################\n"
+            "## Create Address Scope, Explicit L3Policy, L2Policy for Tenant %s ##\n"
+            "##################################################################\n"
+	    %(tnt))
+	    self.addscopID = neutron.addscopecrud(gbp_nonat_ads,
+						'create',
+					         shared=True,
+						 apicvrf=APICVRF)
+	    if self.addscopID:
+	        self.subpoolID = neutron.subpoolcrud(gbp_nonat_sps,'create',
+                                             address_scope=gbp_nonat_ads,
+					     pool=NONATCIDR,
+					     shared=True)
+    	        if not self.subpoolID:
+		    LOG.info("Create of Subnetpool Failed for GBP")
+		    return 0
+	    else:
+		LOG.info("Create of AddressScope Failed for GBP")
+		return 0
+	    self.l3p_uuid = self.gbptnt2.create_gbp_l3policy(gbpL3p,
+					     subnetpools_v4=[self.subpoolID]
+						)
+	    self.l2p3_uuid,self.l2p3_autoptg,self.l2p3_ntkid = \
+             self.gbptnt2.create_gbp_l2policy(gbpL2p[tnt][0],
+					      l3_policy_id=self.l3p_uuid,
+					      autoptg=True)
+	    if not self.l2p3_uuid or not self.l2p3_autoptg:
+	         return 0
+	    else:
+	        LOG.info(
+	        "\n## Following resources have been created for Tenant %s:\n"
+	        "Explicitly-created L3Policy using AddressScope = %s\n"
+	        "Explicit L2Policy = %s and its AutoPTG = %s\n"
+	        %(tnt, self.l3p_uuid, self.l2p3_uuid, self.l2p3_autoptg))
+
     def create_ptg(self):
         LOG.info(
         "\n################################################\n"
@@ -450,13 +496,15 @@ class crudGBP(object):
 	if not self.reg_ptg:
 		 return 0
 
-    def create_policy_target(self):
-        LOG.info(
-        "\n################################################\n"
-        "## Create Policy-Targets for two Auto-PTGs and one\n"
-        "## Regular PTG for Tenant %s ##\n"
-        "##################################################\n"
-	%(tnt1))
+    def create_policy_target(self,tnt):
+	gbp_vm_ntk_ip[tnt]={}
+	if tnt == tnt1:
+            LOG.info(
+            "\n################################################\n"
+            "## Create Policy-Targets for two Auto-PTGs and one\n"
+            "## Regular PTG for Tenant %s ##\n"
+            "##################################################\n"
+	    %(tnt))
 
 	#NOTE: 2 PTs/VMs will be created out of self.l2p1_autoptg,
 	#so repeating the element in the list, such that this list
@@ -468,49 +516,69 @@ class crudGBP(object):
 	#for traffic, all PTGs in L2P1 will have the same neutron-ntk
 	# i.e. self.reg_ptg,self.l2p1_autoptg = self.l2p1_ntkid
 
-	if self.reg_ptg and self.l2p1_autoptg and self.l2p2_autoptg:
-	    self.ptgs = [self.reg_ptg, self.l2p1_autoptg, self.l2p1_autoptg,\
+	    if self.reg_ptg and self.l2p1_autoptg and self.l2p2_autoptg:
+	        self.ptgs = [self.reg_ptg, self.l2p1_autoptg, self.l2p1_autoptg,\
 		         self.l2p2_autoptg]
-	else:
-	    LOG.error(
+	    else:
+	        LOG.error(
 		    "Cannot create PTs since some PTGs are not yet initialized"
 		     )
-	    return 0
-        self.vms = GBPvms[tnt1]
-	self.ptlist = ['pt1','pt2','pt3','pt4']
-	for i in range(len(self.ptlist)):
-	    pt = self.ptlist[i]
-	    vm = self.vms[i]
-	    ptg = self.ptgs[i]
+	        return 0
+            self.vms = GBPvms[tnt1]
+	    self.ptlist = ['pt1','pt2','pt3','pt4']
+	    for i in range(len(self.ptlist)):
+	        pt = self.ptlist[i]
+	        vm = self.vms[i]
+	        ptg = self.ptgs[i]
 	    #NOTE:First all 3 PTs/VMs belong to L2P1 BD
-	    if i < 3:
-		if i == 0:
-		   tag = 'intra_bd'
-		else:
-		   tag = 'intra_epg'
-		ntk = self.l2p1_ntkid
-	    else:
-	    	ntk = self.l2p2_ntkid
-		tag = 'inter_bd'
-	    gbp_vm_ntk_ip[vm] = {'port' : self.gbptnt1.create_gbp_policy_target(
+	        if i < 3:
+		    if i == 0:
+		       tag = 'intra_bd'
+		    else:
+		       tag = 'intra_epg'
+		    ntk = self.l2p1_ntkid
+	        else:
+	    	    ntk = self.l2p2_ntkid
+		    tag = 'inter_bd'
+	        gbp_vm_ntk_ip[tnt][vm] = {'port' : self.gbptnt1.create_gbp_policy_target(
        			          pt, ptg, ptg_property='uuid')[1],
 				'netns' : 'qdhcp-%s' %(ntk),
 				'tag' : tag}
+	if tnt == tnt2:
+            LOG.info(
+            "\n######################################################\n"
+            "## Create Two Policy-Targets from an Auto-PTGs for Tenant %s\n"
+            "########################################################\n"
+	    %(tnt))
+	    self.vms = GBPvms[tnt2]
+	    for vm,pt in {self.vms[0]:'pt5',self.vms[1]:'pt6'}.iteritems():
+	        gbp_vm_ntk_ip[tnt][vm] = {'port' : self.gbptnt2.create_gbp_policy_target(
+						   pt,self.l2p3_autoptg,
+						   ptg_property='uuid')[1],
+					  'netns' : 'qdhcp-%s' %(self.l2p3_ntkid),
+					  'tag' : 'intra_epg'
+					}
 	print gbp_vm_ntk_ip
 	if 0 in gbp_vm_ntk_ip.values():
 	    LOG.error("\nNot all PTs are created properly = %s"
-                     %(gbp_vm_ntk_ip))
+                 %(gbp_vm_ntk_ip))
 	    return 0
-	    
-    def install_tenant_vms(self):
+    def install_tenant_vms(self,tnt):
         LOG.info(
         "\n################################################\n"
         "## Create VMs for Tenant %s ##\n"
         "##################################################\n"
-        %(tnt1))
+        %(tnt))
         az = neutron.alternate_az(AVZONE)
-        for vm,prop in gbp_vm_ntk_ip.iteritems():
-            vm_ip = self.novatnt1.vm_create_api(vm,
+        for vm,prop in gbp_vm_ntk_ip[tnt].iteritems():
+	    if tnt == tnt1:
+                vm_ip = self.novatnt1.vm_create_api(vm,
+                                      'ubuntu_multi_nics',
+                                      prop['port'],
+                                      avail_zone=az.next(),
+				      ret_ip = True)
+	    if tnt == tnt2:
+                vm_ip = self.novatnt2.vm_create_api(vm,
                                       'ubuntu_multi_nics',
                                       prop['port'],
                                       avail_zone=az.next(),
@@ -519,52 +587,71 @@ class crudGBP(object):
                 LOG.error("\n//// %s Create failed ////" %(vm))
                 return 0
 	    else:
-		gbp_vm_ntk_ip[vm]['src_ip'] = vm_ip 
+		gbp_vm_ntk_ip[tnt][vm]['src_ip'] = vm_ip 
 	print "VM_property after VM install == ",gbp_vm_ntk_ip
 
-    def create_ext_seg(self):
+    def create_ext_seg(self,nattype):
         LOG.info(
         "\n########################################################\n"
         "## Create External Segment as shared under tenant-Admin ##\n"
         "##########################################################\n"
         )
-	extsub1, extsub2 = create_external_network_subnets('nat')
+	self.extsegid = {}
+	if nattype == 'nat':
+	    es_name = 'Management-Out'
+	    extsub = create_external_network_subnets('nat')[0]
+	if nattype == 'nonat': 
+	    es_name = 'Datacenter-Out'
+	    extsub = create_external_network_subnets('nonat')
         self.extsegid = self.gbpadmin.create_gbp_external_segment(
-                                        'Management-Out',
-					subnet_id = extsub1,
+                                        es_name,
+					subnet_id = extsub,
 				       	shared=True
                                        )
+	    
         if self.extsegid == 0:
             LOG.error(
-            "\nCreation of External Segment Management-Out failed")
+            "\nCreation of %s External Segment %s failed" %(nattype, es_name))
             return 0
 
-    def create_ext_pol(self):
+    def create_ext_pol(self,tnt):
         LOG.info(
-        "\n########################################################\n"
-        "## Create External Policy MgmtExtPol in tenant %s ##\n"
-        "##########################################################\n"
-        %(tnt1))
-	self.extpol = self.gbptnt1.create_gbp_external_policy(
-					'MgmtExtPol',
+        "\n########################################\n"
+        "## Create External Policy in tenant %s ##\n"
+        "###########################################\n"
+        %(tnt)) 
+	if tnt == tnt1:
+	    extpolname = 'MgmtExtPol'
+	if tnt == tnt2:
+	    extpolname = 'DcExtPol'
+	gbptnt = GBPCrud(CNTRLIP,tenant=tnt)
+	self.extpol = gbptnt.create_gbp_external_policy(
+					extpolname,
 					external_segments=[self.extsegid]
 					)
 	if self.extpol == 0:
             LOG.error(
-            "\nCreation of External Segment Management-Out failed")
+            "\nCreation of External Policy failed")
             return 0
 
-    def attach_l3p_extseg(self):
+    def attach_l3p_extseg(self,tnt):
         LOG.info(
         "\n########################################################\n"
         "## Updating L3Policy in tenant %s to attach to ExtSegments ##\n"
         "##########################################################\n"
-        %(tnt1))
-	if self.gbptnt1.update_gbp_l3policy(self.l2p1_impl3p,
+        %(tnt))
+	if tnt == tnt1:
+	    l3p = self.l2p1_impl3p
+	if tnt == tnt2:
+	    l3p = self.l3p_uuid
+	gbptnt = GBPCrud(CNTRLIP,tenant=tnt)
+	if gbptnt.update_gbp_l3policy(l3p,
 					    property_type='uuid',
 					    external_segments=self.extsegid
 					    ) == 0:
-	    LOG.error("\nUpdating L3Policy to attach ExtSegment failed")
+            LOG.error(
+	    "\nUpdating L3Policy to attach ExtSegment failed for Tenant %s"
+	    %(tnt))
 	    return 0
 
     def create_shared_contracts(self):
@@ -720,6 +807,22 @@ class crudGBP(object):
 				) == 0:
 		return 0
 
+    def update_ptg_extptg_nonat_traff(self,prs):
+	prs = self.prs_name_id[prs]
+	if self.gbptnt2.update_gbp_external_policy(
+				self.extpol,
+				property_type='uuid',
+				consumed_policy_rulesets=[prs]
+				) == 0:
+		return 0
+	if self.gbptnt2.update_gbp_policy_target_group(
+				self.l2p3_autoptg,			
+				property_type='uuid',
+				consumed_policy_rulesets=None,
+				provided_policy_rulesets=[prs]
+				) == 0:
+		return 0
+
     def cleanup_gbp(self):
 	for tnt in TNT_LIST_GBP:
 	    #Delete VMs for a given ML2 tenant
@@ -790,7 +893,10 @@ class crudGBP(object):
 	    except Exception as e:
 		print "Exception in Cleanup == ", repr(e)
 		pass
+	    neutron.runcmd('neutron subnetpool-delete %s' %(gbp_nonat_sps))
+	    neutron.runcmd('neutron address-scope-delete %s' %(gbp_nonat_ads))
 	    neutron.runcmd('neutron net-delete Management-Out')
+	    neutron.runcmd('neutron net-delete Datacenter-Out')
 	return 1
 
 class verifyML2(object):
@@ -834,25 +940,25 @@ class sendTraffic(object):
 	    if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1):
 	    	return 0
 
-    def get_epg_vms(self,tag):
+    def get_epg_vms(self,tnt,tag):
 	"""
 	The intent of this method is to return a dict of VMs
 	based on their EPG or BD locations
 	"""
 	epg_vms = {}
 	if tag == 'intra_epg':
-	    for vm,prop in gbp_vm_ntk_ip.iteritems():
+	    for vm,prop in gbp_vm_ntk_ip[tnt].iteritems():
 		#NOTE: pingable IPs are ONLY the VM_IPs in the same EPG
-		pingable_ips = [val['src_ip'] for val in gbp_vm_ntk_ip.values() if val['tag'] == tag]
+		pingable_ips = [val['src_ip'] for val in gbp_vm_ntk_ip[tnt].values() if val['tag'] == tag]
 	        if prop['tag'] == tag:
 		    pingable_ips.remove(prop['src_ip'])
 		    prop['dest_ip'] = pingable_ips
 		    epg_vms[vm] = prop
 	    return epg_vms	    
 	if tag == 'intra_bd':
-	    for vm,prop in gbp_vm_ntk_ip.iteritems():
+	    for vm,prop in gbp_vm_ntk_ip[tnt].iteritems():
 		#NOTE: pingable IPs are ONLY the VM_IPs in the same BD
-		pingable_ips = [val['src_ip'] for val in gbp_vm_ntk_ip.values() if val['tag'] == 'intra_epg' or 'intra_bd']
+		pingable_ips = [val['src_ip'] for val in gbp_vm_ntk_ip[tnt].values() if val['tag'] == 'intra_epg' or 'intra_bd']
 	        if prop['tag'] == tag:
 		    pingable_ips.remove(prop['src_ip'])
 		    prop['dest_ip'] = pingable_ips
@@ -860,8 +966,8 @@ class sendTraffic(object):
 	    return epg_vms	    
 	if tag == 'inter_bd': 
 	    #NOTE: pingable IPs are all the VM_IPs in the same 
-	    for vm,prop in gbp_vm_ntk_ip.iteritems():
-		pingable_ips = [val['src_ip'] for val in gbp_vm_ntk_ip.values()]
+	    for vm,prop in gbp_vm_ntk_ip[tnt].iteritems():
+		pingable_ips = [val['src_ip'] for val in gbp_vm_ntk_ip[tnt].values()]
 	        if prop['tag'] == tag:
 		    pingable_ips.remove(prop['src_ip'])
 		    prop['dest_ip'] = pingable_ips
@@ -877,7 +983,7 @@ class sendTraffic(object):
         "###############################################\n"
         %(tnt))
 	# valid strings for traffic_type:: 'inter_bd', 'intra_bd', 'intra_epg'
-	test_vms = self.get_epg_vms(traffic_type)
+	test_vms = self.get_epg_vms(tnt,traffic_type)
 	print 'After EPG based classification of VMs ', test_vms	
 	for vm,vm_property in test_vms.iteritems():
 	    if ext:
@@ -889,7 +995,10 @@ class sendTraffic(object):
 				vm_property['src_ip'],
 				target_ips)
 	    if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1):
-	        return 0
+		#Sleep for 5s and re-run traffic again
+		sleep(5)
+		if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1):
+	            return 0
 	
     def traff_from_extrtr_to_fips(self,mode,tnt):
         """
@@ -910,7 +1019,10 @@ class sendTraffic(object):
                                           fips
                                           )
         if isinstance(run_traffic, dict):
-            return 0
+	    #Sleep for 5s and re-run traffic again
+	    sleep(5)
+	    if isinstance(run_traffic, dict):
+                return 0
 
 
 

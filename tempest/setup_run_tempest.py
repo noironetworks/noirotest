@@ -11,7 +11,7 @@ def main():
     usage = "usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
     parser.add_option("-a", "--action",
-                      help="Run or Install, valid string: run or ins",
+                      help="Run or Install, valid string: run <or> ins",
                       default='',
                       dest='action')
     parser.add_option("-c", "--contrlr",
@@ -44,11 +44,12 @@ class Tempest(object):
 		'yum install -y gcc python-devel libffi-devel openssl-devel',
                 'git clone https://github.com/openstack/tempest.git',
                 'curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"',
+		'python get-pip.py'
                 ]:
 		run(cmd)
    
     	    #Step-2: Install venv & tempest in the virtual environment
-            #run('pip install virtualenv')
+            run('pip install virtualenv')
 	    with cd('/root/tempest/'):
 		run('virtualenv .venv')
 		cmd_src = 'source .venv/bin/activate'
@@ -91,7 +92,8 @@ class Tempest(object):
     	env.password = self.pwd
 	try:
 	    with cd('/root/tempest'):
-	     	with prefix('source  .venv/bin/activate'):
+	     	with prefix('source .venv/bin/activate'):
+	     	     with prefix('source /root/keystonerc_admin'):
 			run('ostestr')
   	except Exception as e:
 		print "Exception Raised during TempestRun = ",repr(e) 

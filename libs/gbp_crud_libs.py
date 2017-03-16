@@ -771,7 +771,7 @@ class GBPCrud(object):
         """
         Create a GBP L2Policy
         Supported  keyword based attributes and their values/type:
-        'l3_policy_id' = string (eg:'1.2.3.0/24')
+        'l3_policy_id' = string (uuid/name)
         'subnet_prefix_length' = integer
         'shared': True, False
         'description': string

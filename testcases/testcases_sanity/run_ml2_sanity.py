@@ -5,13 +5,14 @@ LOG.info("#### Start of ML2 Sanity #####")
 
 #Initialize the ML2 CRUD Class
 test_conf = crudML2()
+#Initialize the Traffic Class
+test_traff = sendTraffic()
 LOG.info("#### Create Openstack Tenants for ML2 ####")
 test_conf.create_ml2_tenants()
 
 ### Every Step is a Test by itself, so it will log as Test instead of Step ###
 
 try:
-    
     #Step 1:
     if test_conf.create_add_scope(tnt2) == 0:
         raise TestError("ML2-SANITY: Test-1: Create Address-Scope")
@@ -45,7 +46,7 @@ try:
     else:
         LOG.info(
         "ML2-SANITY: Test-5: Create shared External Ntk in Admin-tenant for pre-existing L3Out : PASS")
-
+    '''
     LOG.info(
     "####### WORKFLOW-1: Attaching router to networks BEFORE VM creation:Tenant %s ######" 
     %(tnt1))
@@ -76,8 +77,6 @@ try:
     	LOG.info("ML2-SANITY: Test-8: Create VMs for tenant %s : PASS" %(tnt1))
 
     sleep(15)
-    #Initialize the Traffic Class
-    test_traff = sendTraffic()
 
     #Step 9:
     if test_traff.traff_from_ml2_tenants(tnt1) == 0:
@@ -215,7 +214,7 @@ try:
     else:
     	LOG.info(
     	"ML2-SANITY: Test-22: EXT-RTR can reach the FIPs of tenant %s : PASS" %(tnt2))
-    
+    '''
     # NO-NAT Test
     LOG.info(
     "####### WORKFLOW-3: NO-NAT with Shared Address-Scope and Tenant-specific subnetpool %s ######" 

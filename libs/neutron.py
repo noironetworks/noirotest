@@ -50,7 +50,7 @@ class neutronPy(object):
 	    	print ext_net_id, rtr_id
 	    	rtr_dict = {'network_id':ext_net_id}
 	    	self.client.add_gateway_router(rtr_id, rtr_dict)
-	     if action == 'rem':
+	    if action == 'rem':
 		self.client.remove_gateway_router(rtr_id)
 	except Exception as e:
 	    print "Set/Removal router-gateway failed: ",repr(e)
