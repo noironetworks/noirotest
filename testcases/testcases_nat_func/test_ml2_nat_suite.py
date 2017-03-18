@@ -45,7 +45,7 @@ class NatML2TestSuite(object):
         self.avhost = conf['az_comp_node']
         self.novahost = conf['az_nova_comp_node']
         self.netnode = conf['network_node']
-        self.comp1 = Compute(conf['compute-1'])
+        self.comp1 = Compute(conf['network_node'])
         self.comp2 = Compute(conf['compute-2'])
         self.neutron = neutronCli(self.cntlrip)
         self.apic = gbpApic(self.apicip, mode='ml2')

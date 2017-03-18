@@ -40,7 +40,7 @@ class test_diff_ptg_same_l2p_l3p(object):
         self.gbpdeftraff = gbpFabTraff()
         stack_name = super_hdr.stack_name
         heat_temp = super_hdr.heat_temp
-        self.ntk_node = super_hdr.ntk_node
+        self.ntk_node = super_hdr.network_node
         self.pausetodebug = super_hdr.pausetodebug
         self.ptg_1 = objs_uuid['demo_diff_ptg_same_l2p_l3p_ptg1_id']
         self.ptg_2 = objs_uuid['demo_diff_ptg_same_l2p_l3p_ptg2_id']

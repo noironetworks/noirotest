@@ -34,7 +34,7 @@ class DNAT_VMs_to_VMs(object):
         """
         self.extgwrtr = objs_uuid['external_gw']
         self.ostack_controller = objs_uuid['ostack_controller']
-        self.ntk_node = objs_uuid['ntk_node']
+        self.network_node = objs_uuid['network_node']
         self.external_pol_1 = objs_uuid['mgmt_external_policy_id']
         self.external_pol_2 = objs_uuid['dc_external_policy_id']
         self.ext_seg_1 = objs_uuid['mgmt_external_segment_id']
@@ -64,7 +64,7 @@ class DNAT_VMs_to_VMs(object):
         self.gbpcrud = GBPCrud(self.ostack_controller)
         self.gbpnova = gbpNova(self.ostack_controller)
         self.nat_traffic = NatTraffic(
-            self.ostack_controller, self.vmfortraff, self.ntk_node)
+            self.ostack_controller, self.vmfortraff, self.network_node)
 
     def test_runner(self, preexist):
         """

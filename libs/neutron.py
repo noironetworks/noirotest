@@ -169,12 +169,12 @@ class neutronCli(object):
 	    tenantList = [tenantList]
 	for tnt in tenantList:
 	    if action == 'create':
-	       cmd1 = 'keystone tenant-create --name %s' %(tnt)
-	       cmd2 = 'keystone user-role-add --user admin --tenant %s --role admin' %(tnt)
-	       for cmd in [cmd1,cmd2]:
+		cmd_tnt = 'openstack project create %s' %(tnt)
+		cmd_user = 'openstack role add --user admin --project %s admin' %(tnt)
+	        for cmd in [cmd_tnt,cmd_user]:
 		   self.runcmd(cmd)
 	    if action == 'delete':
-		cmd = 'keystone tenant-delete --name %s' %(tnt)
+		cmd = 'openstack project delete %s' %(tnt)
 
     def getuuid(self,cmd_out):
         '''

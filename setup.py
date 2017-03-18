@@ -2,10 +2,16 @@
 import sys
 from fabric.api import cd, run, env, hide, get, settings, local ,put
 from fabric.context_managers import *
+from testcases.config import conf
 
 def main():
-    controller_ip = sys.argv[1]
-    apic_ip = sys.argv[2]
+    check_ssh = raw_input(
+               'Passwordless ssh setup to nodes done(YES/NO): ')
+    if check_ssh == 'NO':
+	print ('ENSURE to SETUP Passwordless SSH to nodes in your setup')
+	sys.exit(0)
+    controller_ip = conf['controller_ip']
+    apic_ip = conf['apic_ip']
     setup(controller_ip,apic_ip)
 
 def setup(controller_ip,apic_ip,cntlr_user='root',apic_user='admin',

@@ -22,9 +22,10 @@ class super_hdr(object):
     stack_name = conf['heat_dp_stack_name']
     vm_image = conf['vm_image']
     sshkeyname = conf['key_name']
-    ntk_node = conf['ntk_node']
+    network_node = conf['network_node']
     apicsystemID = conf['apic_system_id']
     pausetodebug = conf['pausetodebug']
+    plugin = conf['plugin-type']
     gbpcfg = gbpCfgCli(cntlr_ip)
     gbpnova = gbpNova(cntlr_ip)
     gbpheat = gbpHeat(cntlr_ip)

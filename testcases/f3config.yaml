@@ -1,6 +1,7 @@
 #!highlight yaml
 
 # Mandatory: User must not change the below config params
+plugin-type: 'merged' # OR keep it null string
 dnat_heat_temp: 'heat_dnat_only.yaml'
 snat_heat_temp: 'heat_snat_only.yaml'
 preexist_dnat_temp: 'preexist_dnat_only.yaml'
@@ -12,6 +13,8 @@ heat_dp_stack_name: 'dpstack'
 heat_dp_nat_stack_name: 'dpnatstack'
 key_name: 'gbpkey' #Ensure that it is same as mentioned in heat template
 apic_system_id: 'noirolab'
+primary_L3out: 'Management-Out' #Ensure to keep these names as is
+secondary_L3out: 'Datacenter-Out'
 # User editable config params
 num_comp_nodes: 2
 apic_ip: '172.28.184.40'
@@ -21,12 +24,14 @@ leaf2_ip: '172.28.184.42'
 spine_ip: '172.28.184.43'
 controller_ip: '172.28.184.45'
 neutronconffile: '/etc/neutron/neutron.conf' #Ensure it has the VALID apic_external_network config section defined
-ntk_node: '172.28.184.46' #in our lab env, compute-1=network-node
+network_node: '172.28.184.46' #in our lab env, compute-1=network_node
 az_comp_node: 'f3-compute-1.noiro.lab'
-compute_2: '172.28.184.47'
-ext_gw_rtr: '172.28.184.48'
-fip1_of_extgw: '1.103.1.1'
-fip2_of_extgw: '1.102.3.1'
+compute-2: '172.28.184.47'
+ext_rtr: '172.28.184.48'
+gwip1_extrtr: '1.103.1.254'
+gwip2_extrtr: '1.103.2.254'
+extrtr_ip1: '1.103.1.1'
+extrtr_ip2: '1.103.2.1'
 #NOTE:Below Flag 'preexist' if True,then ensure 'Datacenter-Out' & 'Management-Out' are configured in APIC
 #with their resp external-policies as 'DcExtPol' & 'MgmtExtPol' << ensure name staring are as EXACT as given
 #here

@@ -37,10 +37,10 @@ class nat_dp_main_config(object):
         self.nova_agg = conf['nova_agg_name']
         self.nova_az = conf['nova_az_name']
         self.az_node = conf['az_comp_node']
-        self.ntk_node = conf['ntk_node']
-	self.comp_node = conf['compute_2']
+        self.network_node = conf['network_node']
+	self.comp_node = conf['compute-2']
         self.cntlr_ip = conf['controller_ip']
-        self.extgw = conf['ext_gw_rtr']
+        self.extgw = conf['ext_rtr']
         self.apic_ip = conf['apic_ip']
         self.leaf1_ip = conf['leaf1_ip']
         self.leaf2_ip = conf['leaf2_ip']
@@ -56,10 +56,10 @@ class nat_dp_main_config(object):
         self.snat_heat_temp = conf['snat_heat_temp']
         self.num_hosts = conf['num_comp_nodes']
         self.heat_stack_name = conf['heat_dp_nat_stack_name']
-        self.ips_of_extgw = [conf['fip1_of_extgw'],
-                             conf['fip2_of_extgw'], self.extgw]
+        self.ips_of_extgw = [conf['extrtr_ip1'],
+                             conf['extrtr_ip2'], self.extgw]
         self.routeforsnat = re.search(
-        '\\b(\d+.\d+.\d+.)\d+' '',conf['fip2_of_extgw'], re.I).group(1)+'0/24'
+        '\\b(\d+.\d+.\d+.)\d+' '',conf['extrtr_ip2'], re.I).group(1)+'0/24'
         self.pausetodebug = conf['pausetodebug']
         self.neutronconffile = conf['neutronconffile']
         self.gbpnova = gbpNova(self.cntlr_ip)
@@ -326,7 +326,7 @@ class nat_dp_main_config(object):
                if nat_type == 'snat':
 	        self._log.info(
 		"\n Verify L3Out EPs created and Learned for SNAT")
-	        for node in [self.comp_node,self.ntk_node]:
+	        for node in [self.comp_node,self.network_node]:
 		    comp = Compute(node)
 	            for l3out in self.L3Outlist:
 	                 intf,ip,psn,epg,vmname = \
@@ -349,7 +349,7 @@ class nat_dp_main_config(object):
 	       if nat_type == 'dnat':
 	          self._log.info(
 		  "\n Verify L3Out EPs NOT created for DNAT")
-                  for node in [self.comp_node,self.ntk_node]:
+                  for node in [self.comp_node,self.network_node]:
                       comp = Compute(node)
                       for l3out in self.L3Outlist:
                           if comp.getSNATEp(l3out):
@@ -397,7 +397,7 @@ class nat_dp_main_config(object):
         """
         Restart Agent OVS
         """
-        for node in [self.ntk_node,self.comp_node]:
+        for node in [self.network_node,self.comp_node]:
             state = action_service(node)
             if state:
                sleep(5)
@@ -430,7 +430,7 @@ class nat_dp_main_config(object):
            self.gbpheat.cfg_all_cli(0, self.heat_stack_name)
            # Ntk namespace cleanup in Network-Node.. VM names are static
            # throughout the test-cycle
-           del_netns(self.ntk_node)
+           del_netns(self.network_node)
         if not avail:
            self.gbpnova.avail_zone('cli',
                                    'removehost',

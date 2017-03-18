@@ -11,54 +11,45 @@ from time import sleep
 from libs.gbp_utils import *
 from libs.gbp_fab_traff_libs import gbpFabTraff
 from natfuncglobalcfg import GbpNatFuncGlobalCfg
-from natfunctestmethod import NatFuncTestMethods
+from natfunctestmethod import *
 
 def main():
     usage = "usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
-    parser.add_option("-c", "--configfile",
-                      help="Mandatory Arg: Name of Config File with location",
-                      dest='configfile')
     parser.add_option("-d", "--flag",
                       help="default_ext_seg_name "\
                       "Valid strings: <yes>",
                       dest='defextsegname')
     (options, args) = parser.parse_args()
 
-    if not options.configfile:
-        print "Please provide the ConfigFile with location"
-        sys.exit(1)
-    cfgfile = options.configfile
     if options.defextsegname == 'yes':
        flag = 'default_external_segment_name'
-       suite=NatGbpTestSuite(cfgfile,flag=flag)
+       suite=NatGbpTestSuite()
     else:
        suite=NatGbpTestSuite(cfgfile)
     suite.test_runner()
 
 class NatGbpTestSuite(object):
     
-    def __init__(self,cfgfile,flag=''):
-        with open(cfgfile, 'rt') as f:
-            conf = yaml.load(f)
-        self.cntlrip = conf['controller_ip']
-        self.extrtr = conf['ext_rtr']
-        self.extrtr_ip1 = conf['extrtr_ip1']
-        self.extrtr_ip2 = conf['extrtr_ip2']
-	self.gwip1_extrtr = conf['gwip1_extrtr']
-	self.gwip2_extrtr = conf['gwip2_extrtr']
+    def __init__(self,flag=''):
+        self.extrtr = EXTRTR
+        self.extrtr_ip1 = EXTRTR_IP1
+        self.extrtr_ip2 = EXTRTR_IP2
+	self.gwip1_extrtr = GWIP1_EXTRTR
+	self.gwip2_extrtr = GWIP2_EXTRTR
+        self.ntknode = NTKNODE
+        self.apicip = APICIP
+        self.avail_zone = AVAIL_ZONE
+        self.pausetodbg = PAUSETODEBG
+        self.natpoolname = NATPOOLNAME2
+        self.fipsubnet1 = NATIPPOOL1
+        self.fipsubnet2 = NATIPPOOL2
         self.targetiplist = [self.extrtr_ip1, self.extrtr_ip2]
-        self.ntknode = conf['network_node']
-        self.apicip = conf['apic_ip']
-        self.avail_zone = conf['nova_az_name']
-        self.pausetodbg = conf['pausetodebug']
-        self.globalcfg = GbpNatFuncGlobalCfg(self.cntlrip)
-        self.steps = NatFuncTestMethods(self.cntlrip,self.ntknode)
-        self.natpoolname = self.steps.natpoolname2
-        self.fipsubnet1 = self.steps.natippool1
-        self.fipsubnet2 = self.steps.natippool2
+        self.globalcfg = GbpNatFuncGlobalCfg()
+        self.steps = NatFuncTestMethods()
         self.forextrtr = gbpFabTraff()
         self.flag=flag
+	self.plugin = PLUGIN_TYPE
         
     def test_runner(self):
         """
@@ -97,7 +88,8 @@ class NatGbpTestSuite(object):
                 #so that on subsequent SNAT TCs you need not add host_pool
                     matchsnat += 1
                     if matchsnat == 1:
-                       self.steps.addhostpoolcidr()
+			if not self.plugin:
+                            self.steps.addhostpoolcidr()
                 if test() == 0: #Explicit check since test_func does not return 1/True
                     test_results[string.upper(test.__name__.lstrip('self.'))] = 'FAIL'
                     self.steps._log.error("\n///// %s_%s == FAIL ////" % (
@@ -382,7 +374,7 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testDisassociateFipFromVMs():
            return 0
-        DcExtsegid = self.steps.testCreateExtSegWithDefault('Datacenter-Out')
+        DcExtsegid = self.steps.testCreateExtSegWithDefault(EXTSEG_SEC)
         if not DcExtsegid:
            return 0
         print 'DcExtSegID ==',DcExtsegid
@@ -392,7 +384,7 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testCreateUpdateExternalPolicy(update=1,extseg=DcExtsegid):
            return 0
-        if not self.steps.testAssociateFipToVMs(ExtSegName='Datacenter-Out'):
+        if not self.steps.testAssociateFipToVMs(ExtSegName=EXTSEG_SEC):
            return 0
         sleep(10)
         self.forextrtr.add_route_in_extrtr(
@@ -737,7 +729,7 @@ class NatGbpTestSuite(object):
         #while remove it from Management-Out(this was already added by
         #test_runner func).Ensure to list this TC as the last TC to run
         self.steps.addhostpoolcidr(delete=True,flag=self.flag)
-        self.steps.addhostpoolcidr(l3out='Datacenter-Out')
+        self.steps.addhostpoolcidr(l3out=EXTSEG_SEC)
         if not self.steps.testCreateExtSegWithDefault('Management-Out'):
            return 0
         if not self.steps.testCreatePtgDefaultL3p():
@@ -781,7 +773,7 @@ class NatGbpTestSuite(object):
         self.steps._log.info("\n DNATed Traffic from ExtRTR to VMs")
         if not self.steps.testTrafficFromExtRtrToVmFip(self.extrtr):
            return 0
-        DcExtsegid = self.steps.testCreateExtSegWithDefault('Datacenter-Out')
+        DcExtsegid = self.steps.testCreateExtSegWithDefault(EXTSEG_SEC)
         if not DcExtsegid:
            return 0
         print 'DcExtSegID ==',DcExtsegid

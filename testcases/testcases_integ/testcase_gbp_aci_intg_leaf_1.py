@@ -39,7 +39,7 @@ class testcase_gbp_aci_intg_leaf_1(object):
       self.gbpnova = gbpNova(cntlr_ip)
       self.leaf_ip = params['leaf1_ip']
       self.apic_ip = params['apic_ip']
-      self.ntk_node = params['ntk_node']
+      self.network_node = params['network_node']
       self.az_comp_node = params['az_comp_node']
       self.nova_agg = params['nova_agg']
       self.nova_az = params['nova_az']
@@ -120,7 +120,7 @@ class testcase_gbp_aci_intg_leaf_1(object):
         Send and Verify traffic
         """
         self._log.info("\nSend and Verify Traffic\n")
-        return verify_traff(self.ntk_node)
+        return verify_traff(self.network_node)
 
     def test_CleanUp(self):
         """

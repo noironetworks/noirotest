@@ -130,7 +130,7 @@ def main():
         objs_uuid['external_gw'] = testbed_cfg.extgw
         objs_uuid['ostack_controller'] = testbed_cfg.cntlr_ip
         objs_uuid['ipsofextgw'] = testbed_cfg.ips_of_extgw
-        objs_uuid['ntk_node'] = testbed_cfg.ntk_node
+        objs_uuid['network_node'] = testbed_cfg.network_node
         objs_uuid['pausetodebug'] = testbed_cfg.pausetodebug
         # Verify the config setup on the ACI
 	print 'Sleeping for the EP learning on ACI Fab'
@@ -199,7 +199,7 @@ def main():
         objs_uuid['external_gw'] = testbed_cfg.extgw
         objs_uuid['ostack_controller'] = testbed_cfg.cntlr_ip
         objs_uuid['ipsofextgw'] = testbed_cfg.ips_of_extgw
-        objs_uuid['ntk_node'] = testbed_cfg.ntk_node
+        objs_uuid['network_node'] = testbed_cfg.network_node
         objs_uuid['pausetodebug'] = testbed_cfg.pausetodebug
         # Verify the config setup on the ACI
 	print 'Sleeping for the EP learning on ACI Fab'

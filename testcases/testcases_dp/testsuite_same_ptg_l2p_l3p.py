@@ -41,10 +41,11 @@ class test_same_ptg_same_l2p_same_l3p(object):
         self.gbpdeftraff = gbpFabTraff()
         stack_name = super_hdr.stack_name
         heat_temp = super_hdr.heat_temp
-        self.ntk_node = super_hdr.ntk_node
+        self.ntk_node = super_hdr.network_node
         self.apic_ip = super_hdr.apic_ip
         self.apic_passwd = super_hdr.apic_passwd
         self.pausetodebug = super_hdr.pausetodebug
+	self.plugin_mode = super_hdr.plugin
         self.gbpaci = gbpApic(self.apic_ip,
                                apicsystemID=super_hdr.apicsystemID)
         self.ptg = objs_uuid['demo_same_ptg_l2p_l3p_ptg_id']
@@ -54,7 +55,6 @@ class test_same_ptg_same_l2p_same_l3p(object):
         self.test_5_prs = objs_uuid['demo_ruleset_icmp_tcp_id']
         self.test_6_prs = objs_uuid['demo_ruleset_icmp_udp_id']
         self.test_7_prs = objs_uuid['demo_ruleset_all_id']
-	self.plugin_mode = objs_uuid['plugin_mode']
         self.vm1_ip = self.gbpcfg.get_vm_subnet('VM1')[0]
         self.vm1_subn = self.gbpcfg.get_vm_subnet('VM1')[1]
         self.dhcp_ns = self.gbpcfg.get_netns(self.ntk_node, self.vm1_subn)

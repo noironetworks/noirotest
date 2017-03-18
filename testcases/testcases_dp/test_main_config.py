@@ -31,7 +31,7 @@ class gbp_main_config(object):
     # Add the handler to the logger
     _log.addHandler(hdlr)
 
-    def __init__(self, plugin):
+    def __init__(self):
         """
         Iniatizing the test-cfg variables & classes
         """
@@ -39,7 +39,7 @@ class gbp_main_config(object):
         self.nova_agg = conf['nova_agg_name']
         self.nova_az = conf['nova_az_name']
         self.comp_node = conf['az_comp_node']
-        self.ntk_node = conf['ntk_node']
+        self.network_node = conf['network_node']
         self.cntlr_ip = conf['controller_ip']
         self.apic_ip = conf['apic_ip']
         self.leaf1_ip = conf['leaf1_ip']
@@ -51,7 +51,7 @@ class gbp_main_config(object):
         self.heat_stack_name = conf['heat_dp_stack_name']
 	self.pausetodebug = conf['pausetodebug']
         self.test_parameters = conf['test_parameters']
-	self.plugin = plugin
+	self.plugin = conf['plugin-type']
         self.gbpnova = gbpNova(self.cntlr_ip)
         self.gbpheat = gbpHeat(self.cntlr_ip)
 	if self.plugin: #Incase of MergedPlugin
@@ -265,7 +265,7 @@ class gbp_main_config(object):
                             self.cntlr_ip, 'root', 'noir0123')
            # Ntk namespace cleanup in Network-Node.. VM names are static
            # throughout the test-cycle
-           del_netns(self.ntk_node)
+           del_netns(self.network_node)
         if avail == 0:
            self.gbpnova.avail_zone('cli', 'removehost',
                                    self.nova_agg, hostname=self.comp_node)

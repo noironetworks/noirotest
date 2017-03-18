@@ -35,13 +35,13 @@ ML2vms = {'PENGUIN' : ['PVM1','PVM2'],
 	  'GARTH' : ['GVM5', 'GVM6']}
 GBPvms = {'MANDRAKE' : ['MVM1','MVM2','MVM3','MVM4'],
           'BATMAN' : ['BVM3','BVM4']}
-EXTRTR = conf['ext_gw_rtr']
-EXTRTRIP1 = conf['fip1_of_extgw']
-EXTRTRIP2 = conf['fip2_of_extgw']
+EXTRTR = conf['ext_rtr']
+EXTRTRIP1 = conf['extrtr_ip1']
+EXTRTRIP2 = conf['extrtr_ip2']
 AVZONE = conf['nova_az_name']
 AVHOST = conf['az_comp_node']
-COMPUTE1 = conf['ntk_node']
-COMPUTE2 = conf['compute_2']
+COMPUTE1 = conf['network_node']
+COMPUTE2 = conf['compute-2']
 pausetodebug = conf['pausetodebug']
 EXTDNATCIDR,FIPBYTES = '50.50.50.0/28', '50.50.50.'
 EXTSNATCIDR = '55.55.55.0/28'
@@ -98,7 +98,7 @@ def create_external_network_subnets(nat):
                             shared=True, aim = aimntkcfg)
                 EXTSUB1 = neutron.subnetcrud('extsub1','create','Management-Out',
  			       cidr=EXTDNATCIDR,extsub=True)
-                EXTSUB2 = neutron.subnetcrud('extsub1','create','Management-Out',
+                EXTSUB2 = neutron.subnetcrud('extsub2','create','Management-Out',
  			       cidr=EXTSNATCIDR,extsub=True,aim=aimsnat)
 	        return EXTSUB1, EXTSUB2
       	except Exception as e:
@@ -162,8 +162,8 @@ class crudML2(object):
     Cidrs[ml2tnt1] = ['11.11.11.0/28', '21.21.21.0/28']
 
     def create_ml2_tenants(self):
-	neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create')
-
+	#neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create') #JISHNU
+	return None
     def create_pvt_network_subnets(self,nonat=False):
         LOG.info(
         "\n#######################################################\n"
@@ -405,7 +405,7 @@ class crudGBP(object):
     vms[tnt2] = GBPvms[tnt2]
 
     def create_gbp_tenants(self):
-        neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create')
+        #neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create') #JISHNU
 	from libs.gbp_nova_libs import gbpNova
         self.gbptnt1 = GBPCrud(CNTRLIP,tenant=tnt1)
         self.gbptnt2 = GBPCrud(CNTRLIP,tenant=tnt2)

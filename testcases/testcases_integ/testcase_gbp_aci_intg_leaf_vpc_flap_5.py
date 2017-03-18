@@ -42,7 +42,7 @@ class testcase_gbp_aci_intg_leaf_vpc_flap_5(object):
       self.az_comp_node = params['az_comp_node']
       self.nova_agg = params['nova_agg']
       self.nova_az = params['nova_az']
-      self.ntk_node = params['ntk_node']
+      self.network_node = params['network_node']
       self.leaf1_port_comp_node1 = params['leaf1_port1'] #This connects Leaf1 to Comp-node1
       self.leaf2_port_comp_node2 = params['leaf2_port2'] #This connects Leaf2 to Comp-node2
       self.leaf1_node_id = params['leaf1_node_id']
@@ -113,7 +113,7 @@ class testcase_gbp_aci_intg_leaf_vpc_flap_5(object):
         Send and Verify traffic
         """
         self._log.info("\nSend and Verify Traffic\n")
-        return verify_traff(self.ntk_node)
+        return verify_traff(self.network_node)
 
     def test_CleanUp(self):
         """
