@@ -226,7 +226,7 @@ class gbpNova(object):
            instance.delete()
         else:
            if not tenant:
-               tenant=self.cred['project_id']
+               tenant=self.cred['project_name']
            cmd = 'nova --os-tenant-name %s delete ' %(tenant)+vmname
            results = run_openstack_cli([cmd],self.cntrlrip,
                                     username=self.username,

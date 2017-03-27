@@ -46,7 +46,7 @@ try:
     else:
         LOG.info(
         "ML2-SANITY: Test-5: Create shared External Ntk in Admin-tenant for pre-existing L3Out : PASS")
-    '''
+    
     LOG.info(
     "####### WORKFLOW-1: Attaching router to networks BEFORE VM creation:Tenant %s ######" 
     %(tnt1))
@@ -214,7 +214,7 @@ try:
     else:
     	LOG.info(
     	"ML2-SANITY: Test-22: EXT-RTR can reach the FIPs of tenant %s : PASS" %(tnt2))
-    '''
+    
     # NO-NAT Test
     LOG.info(
     "####### WORKFLOW-3: NO-NAT with Shared Address-Scope and Tenant-specific subnetpool %s ######" 

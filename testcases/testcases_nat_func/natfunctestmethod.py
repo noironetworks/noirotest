@@ -18,7 +18,7 @@ from traff_from_allvms_to_extgw import NatTraffic
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.ERROR)
 # create a logfile handler
-hdlr = logging.FileHandler('/tmp/nat_functionality.log')
+hdlr = logging.FileHandler('/tmp/test_nat_functionality.log')
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 hdlr.setFormatter(formatter)
 # Add the handler to the logger
@@ -65,9 +65,11 @@ PR_TCP = 'PrTcp'
 PRS_ICMP_TCP = 'PrsIcmpTcp'
 PRS_ICMP = 'PrsIcmp'
 PRS_TCP = 'PrsTcp'
-
 gbpcrud = GBPCrud(CNTRLRIP)
 gbpnova = gbpNova(CNTRLRIP)
+if PLUGIN_TYPE:
+    from libs.neutron import *
+    neutron = neutronCli(CNTRLRIP)
 
 class NatFuncTestMethods(object):
     """
@@ -77,6 +79,38 @@ class NatFuncTestMethods(object):
     # local variable, as on every instance/invoke of the method new
     # value will be associated to the local variable within the
     # function scope
+
+    def create_external_networks(self):
+            LOG.info(
+            "\n## Create External Networks for L3Outs:: %s & %s ##" %(EXTSEG_PRI, EXTSEG_SEC))
+            try:
+                aimntkcfg_primary = '--apic:distinguished_names type=dict'+\
+                 ' ExternalNetwork='+\
+                 'uni/tn-common/out-%s/instP-MgmtExtPol' %(EXTSEG_PRI)
+                aimsnat = '--apic:snat_host_pool True'
+                neutron.netcrud(EXTSEG_PRI,'create',external=True,
+                            shared=True, aim = aimntkcfg_primary)
+                self.EXTSUB1 = neutron.subnetcrud('extsub1','create',EXTSEG_PRI,
+                               cidr=NATIPPOOL1,extsub=True)
+                self.EXTSUB2 = neutron.subnetcrud('extsub3','create',EXTSEG_PRI,
+                               cidr=SNATPOOL,extsub=True,aim=aimsnat)
+
+
+                aimntkcfg_sec = '--apic:distinguished_names type=dict'+\
+                 ' ExternalNetwork='+\
+                 'uni/tn-common/out-%s/instP-DcExtPol' %(EXTSEG_SEC)
+                aimsnat = '--apic:snat_host_pool True'
+                neutron.netcrud(EXTSEG_SEC,'create',external=True,
+                            shared=True, aim = aimntkcfg_sec)
+                self.EXTSUB4 = neutron.subnetcrud('extsub4','create',EXTSEG_SEC,
+                               cidr=SNATPOOL,extsub=True,aim=aimsnat)
+	    except Exception as e:
+		LOG.ERROR("External Network Create Failed for MergedPlugin")
+		for l3out in [EXTSEG_PRI, EXTSEG_SEC]:
+	            neutron.runcmd('neutron net-delete %s' %(l3out))
+	    	return 0
+	    return 1
+	    
 
     def addhostpoolcidr(self,fileloc='/etc/neutron/neutron.conf',
                         l3out=EXTSEG_PRI,delete=False,
@@ -124,13 +158,24 @@ class NatFuncTestMethods(object):
                             patternchk,
                             add=False) 
 
-    def testCreateExtSegWithDefault(extsegname):
+    def testCreateExtSegWithDefault(self,extsegname):
         """
         Create External Segment
         """
         LOG.info(
         "\nStep: Create External Segment %s\n" %(extsegname))
-        self.extsegid = gbpcrud.create_gbp_external_segment(
+        if PLUGIN_TYPE:
+	    if extsegname == EXTSEG_PRI:
+		extsub = self.EXTSUB1
+	    else:
+		extsub = self.EXTSUB4
+            self.extsegid = gbpcrud.create_gbp_external_segment(
+                                        extsegname,
+                                        subnet_id = extsub,
+                                        shared=True
+                                       )
+	else:
+            self.extsegid = gbpcrud.create_gbp_external_segment(
                                        extsegname,
                                        external_routes = [{
                                            'destination':'0.0.0.0/0',

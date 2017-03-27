@@ -156,11 +156,11 @@ try:
     #Step 17
     if test_traff.traff_from_extrtr_to_fips('gbp',tnt1) == 0:
     	LOG.error(
-    	"GBP-SANITY: Test-17: External Router can send traffic to VMs in tenant %s"
+    	"GBP-SANITY: Test-17: Send traffic from External Router to VMs in tenant %s"
         %(tnt1))
     else:
     	LOG.info(
-    	"GBP-SANITY: Test-17: External Router can send traffic to VMs in tenant %s: PASS"
+    	"GBP-SANITY: Test-17: Send traffic from External Router to VMs in tenant %s: PASS"
 	%(tnt1))
 
     ############# BELOW IS THE WORKFLOW for GBP NO-NAT ###################

@@ -39,9 +39,18 @@ def main():
     # Verify the configuration on ACI
     print "Verification .. sleep 30s, allowing DP learning"
     sleep(30) 
-    if not testbed_cfg.verifySetup():
+    _iter = 0
+    while True:
+        verify = testbed_cfg.verifySetup()
+	if verify:
+            break
+	if _iter > 1:
            testbed_cfg.cleanup()
            sys.exit(1)
+	print "Sleeping for 20s more for next iteration of Verify"
+	sleep(20)
+	_iter += 1
+
     header_to_suite_map = {'header1': [header1, test_same_ptg_same_l2p_same_l3p],
                            'header2': [header2, test_diff_ptg_same_l2p_l3p],
                             'header3': [header3, test_diff_ptg_diff_l2p_same_l3p],

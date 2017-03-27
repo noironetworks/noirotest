@@ -81,7 +81,7 @@ class test_same_ptg_same_l2p_same_l3p(object):
             ptg_name = 'demo_same_ptg_l2p_l3p_ptg' #TBD: JISHNU For now hardcoded, we will improve this
             if flag == 'enforced':
                expectedRetVal = 0
-	       if self.plugin_mode == 'aim':
+	       if self.plugin_mode:
                   self.gbpcfg.gbp_policy_cfg_all(2, 'group', self.ptg, intra_ptg_allow="False")
 	       else:
                    self.gbpaci.addEnforcedToPtg(

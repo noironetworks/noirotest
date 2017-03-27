@@ -8,33 +8,10 @@ from natfunctestmethod import *
 from libs.gbp_crud_libs import GBPCrud
 
 class GbpNatFuncGlobalCfg(object):
-    LOG.info(
-            "\n## START OF GBP NAT FUNCTIONALITY TESTSUITE GLOBAL CONFIG\n")
     
-    def create_external_network(self):
-        LOG.info(
-        "\n## Create External Networks for L3Outs:: %s & %s ##" %(EXTSEG_PRI, EXTSEG_SEC))
-	l3out_subnets = {}
-        try:
-	    for l3out in [EXTSEG_PRI, EXTSEG_SEC]:
-		if l3out == 'Management-Out':
-		    extepg = 'MgmtExtPol'
-		else:
-		    extepg = 'DcExtPol'
-                aimntkcfg = '--apic:distinguished_names type=dict'+\
-                 ' ExternalNetwork='+\
-                 'uni/tn-common/out-%s/instP-%s' %(l3out, extepg)
-                aimsnat = '--apic:snat_host_pool True'
-                neutron.netcrud(l3out,'create',external=True,
-                            shared=True, aim = aimntkcfg)
-                EXTSUB1 = neutron.subnetcrud('extsub1','create',l3out,
-                               cidr=,extsub=True)
-                EXTSUB2 = neutron.subnetcrud('extsub2','create',l3out,
-                               cidr=EXTSNATCIDR,extsub=True,aim=aimsnat)
-                l3out_subnets[l3out]=[EXTSUB1, EXTSUB2]
-		
-	
     def CfgGlobalObjs(self):
+        LOG.info(
+            "\n## START OF GBP NAT FUNCTIONALITY TESTSUITE GLOBAL CONFIG\n")
         LOG.info(
                "\n## Create a Policy Action needed for NAT Testing ##")
         gbpcrud.create_gbp_policy_action(ACTION,
@@ -180,6 +157,9 @@ class GbpNatFuncGlobalCfg(object):
         if len(act_list) > 0:
            for act in act_list:
                gbpcrud.delete_gbp_policy_action(act, property_type='uuid')
+	if PLUGIN_TYPE:
+	    for l3out in [EXTSEG_PRI, EXTSEG_SEC]:
+	 	neutron.runcmd('neutron net-delete %s' %(l3out))
         LOG.info("\nGlobal Config Clean-Up Completed")
 
     

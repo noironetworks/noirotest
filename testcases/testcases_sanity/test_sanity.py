@@ -49,7 +49,7 @@ EXTNONATCIDR = '2.3.4.0/24' #Can be any cidr, jsut needed for neutron router
 #We want to re-purpose the CIDR of PvtNtk for VMs participating in NO-NAT
 NONATCIDR = '60.60.60.0/24'
 APICVRF = "--apic:distinguished_names type=dict"+\
-	  " VRF='uni/tn-common/ctx-DcExtVrf'"
+	  " VRF='uni/tn-common/ctx-DcExtVRF'"
 ML2Fips = {}
 GBPFips = {}
 ACT = 'ALLOW'
@@ -162,7 +162,7 @@ class crudML2(object):
     Cidrs[ml2tnt1] = ['11.11.11.0/28', '21.21.21.0/28']
 
     def create_ml2_tenants(self):
-	#neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create') #JISHNU
+	neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create')
 	return None
     def create_pvt_network_subnets(self,nonat=False):
         LOG.info(
@@ -405,7 +405,7 @@ class crudGBP(object):
     vms[tnt2] = GBPvms[tnt2]
 
     def create_gbp_tenants(self):
-        #neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create') #JISHNU
+        neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create')
 	from libs.gbp_nova_libs import gbpNova
         self.gbptnt1 = GBPCrud(CNTRLIP,tenant=tnt1)
         self.gbptnt2 = GBPCrud(CNTRLIP,tenant=tnt2)

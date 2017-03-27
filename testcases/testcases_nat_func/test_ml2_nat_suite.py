@@ -527,9 +527,6 @@ class NatML2TestSuite(object):
         if getEp:
             for net in self.netNames[self.tnt1]:
                 vm = self.NETtoVM[net].keys()[0]
-                print 'JISHNU VM == ',vm
-                print 'JISHNU CHECK in KEYs = ',getEp[net].keys()
-                print 'JISHNU Status in VM = ',getEp[net][vm]['status']
                 if not vm in getEp[net].keys() \
                    or getEp[net][vm]['status'] != 'learned,vmm':
                     LOG.error(

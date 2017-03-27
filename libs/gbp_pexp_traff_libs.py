@@ -42,10 +42,7 @@ class gbpExpTraff(object):
         print child.before
         print 'Out ==NOIRO'
         noicmp,nossh=1,1
-        if len(re.findall('Unreachable',child.before))==2: #Count of ping pkts
-           noicmp=0       
-           print 'I am in No PIng'
-        if noicmp==0 :
+        if len(re.findall('100% packet loss',child.before)): #Count of ping pkts
            print "Cannot run any traffic test since Source VM is Unreachable"
            return 2
         login_retry = 1

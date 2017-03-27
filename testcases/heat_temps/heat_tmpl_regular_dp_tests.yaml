@@ -50,6 +50,7 @@ resources:
 
     demo_rule_icmp:
         type: OS::GroupBasedPolicy::PolicyRule
+        depends_on: [ demo_act, demo_class_icmp ]
         properties:
             name: demo_rule_icmp
             policy_classifier_id: { get_resource: demo_class_icmp }
@@ -58,6 +59,7 @@ resources:
 
     demo_ruleset_icmp:
         type: OS::GroupBasedPolicy::PolicyRuleSet
+        depends_on: demo_rule_icmp
         properties:
             name: demo_ruleset_icmp
             policy_rules: [{ get_resource: demo_rule_icmp }]
@@ -75,6 +77,7 @@ resources:
 
     demo_rule_tcp:
         type: OS::GroupBasedPolicy::PolicyRule
+        depends_on: [ demo_act, demo_class_tcp ]
         properties:
             name: demo_rule_tcp
             policy_classifier_id: { get_resource: demo_class_tcp }
@@ -83,6 +86,7 @@ resources:
 
     demo_ruleset_tcp:
         type: OS::GroupBasedPolicy::PolicyRuleSet
+        depends_on: demo_rule_tcp
         properties:
             name: demo_ruleset_tcp
             policy_rules: [{ get_resource: demo_rule_tcp }]
@@ -100,6 +104,7 @@ resources:
 
     demo_rule_udp:
         type: OS::GroupBasedPolicy::PolicyRule
+        depends_on: [ demo_act, demo_class_udp ]
         properties:
             name: demo_rule_udp
             policy_classifier_id: { get_resource: demo_class_udp }
@@ -108,6 +113,7 @@ resources:
 
     demo_ruleset_udp:
         type: OS::GroupBasedPolicy::PolicyRuleSet
+        depends_on: demo_rule_udp
         properties:
             name: demo_ruleset_udp
             policy_rules: [{ get_resource: demo_rule_udp }]
@@ -118,6 +124,7 @@ resources:
 
     demo_ruleset_icmp_tcp:
         type: OS::GroupBasedPolicy::PolicyRuleSet
+        depends_on: [ demo_rule_icmp, demo_rule_tcp ]
         properties:
             name: demo_ruleset_icmp_tcp
             policy_rules: [{ get_resource: demo_rule_icmp }, { get_resource: demo_rule_tcp }]
@@ -128,6 +135,7 @@ resources:
 
     demo_ruleset_icmp_udp:
         type: OS::GroupBasedPolicy::PolicyRuleSet
+        depends_on: [ demo_rule_icmp, demo_rule_udp ]
         properties:
             name: demo_ruleset_icmp_udp
             policy_rules: [{ get_resource: demo_rule_icmp },{ get_resource: demo_rule_udp }]
@@ -138,6 +146,7 @@ resources:
 
     demo_ruleset_tcp_udp:
         type: OS::GroupBasedPolicy::PolicyRuleSet
+        depends_on: [ demo_rule_udp, demo_rule_tcp ]
         properties:
             name: demo_ruleset_tcp_udp
             policy_rules: [{ get_resource: demo_rule_tcp }, { get_resource: demo_rule_udp }]
@@ -148,6 +157,7 @@ resources:
 
     demo_ruleset_all:
         type: OS::GroupBasedPolicy::PolicyRuleSet
+        depends_on: [demo_rule_icmp, demo_rule_tcp, demo_rule_udp]
         properties:
             name: demo_ruleset_all
             policy_rules: [{ get_resource: demo_rule_icmp }, { get_resource: demo_rule_tcp }, { get_resource: demo_rule_udp }]

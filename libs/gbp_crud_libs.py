@@ -43,7 +43,6 @@ class GBPCrud(object):
         cred['password']=password
         cred['tenant_name']=tenant
         cred['auth_url'] = "http://%s:5000/v2.0/" % ostack_controller
-        print cred
         self.client = gbpclient.Client(**cred)
 
     def create_gbp_policy_action(self,name,**kwargs):

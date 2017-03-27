@@ -24,7 +24,7 @@ class NatTraffic(object):
         self.gbpcfg = gbpCfgCli(ostack_cntrlr_ip)
         self.gbpnova = gbpNova(ostack_cntrlr_ip)
         self.vm_list = vm_list
-        print " List of VMs passed from the testsuite ", vm_list
+        #print " List of VMs passed from the testsuite ", vm_list
         self.vm_to_ip_ns = {}
         """
         for vm in self.vm_list:
