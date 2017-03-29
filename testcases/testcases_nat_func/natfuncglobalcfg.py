@@ -5,7 +5,6 @@ import yaml
 import sys
 
 from natfunctestmethod import *
-from libs.gbp_crud_libs import GBPCrud
 
 class GbpNatFuncGlobalCfg(object):
     
@@ -136,6 +135,34 @@ class GbpNatFuncGlobalCfg(object):
             LOG.info("\nCleaning Up")
             self.cleanup()
             return 0
+
+    def add_avail_zone(self):
+            try:
+               # Check if Agg already exists then delete
+               cmdagg = run_openstack_cli("nova aggregate-list", CNTRLRIP)
+               if NOVA_AGG in cmdagg:
+                  LOG.warning("Residual Nova Agg exits, hence deleting it")
+                  gbpnova.avail_zone('cli', 'removehost',
+                                           NOVA_AGG,
+                                           hostname=AZ_COMP_NODE)
+                  gbpnova.avail_zone('cli', 'delete', NOVA_AGG)
+               LOG.info("\nCreating Nova Host-aggregate & its Availability-zone")
+               self.agg_id = gbpnova.avail_zone(
+                       'api', 'create', NOVA_AGG, avail_zone_name=AVAIL_ZONE)
+            except Exception:
+                LOG.error(
+                    "\n ABORTING THE TESTSUITE RUN,nova host aggregate creation Failed", exc_info=True)
+                sys.exit(1)
+            LOG.info(" Agg %s" % (self.agg_id))
+            try:
+             LOG.info("\nAdding Nova host to availaibility-zone")
+             gbpnova.avail_zone('api', 'addhost', self.agg_id, hostname=AZ_COMP_NODE)
+            except Exception:
+                LOG.error(
+                    "\n ABORTING THE TESTSUITE RUN, availability zone creation Failed", exc_info=True)
+                gbpnova.avail_zone(
+                    'cli', 'delete', self.agg_id)  # Cleanup Agg_ID
+                sys.exit(1)
 
 
     def cleanup(self):

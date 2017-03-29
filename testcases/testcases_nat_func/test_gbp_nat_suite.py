@@ -61,7 +61,8 @@ class NatGbpTestSuite(object):
         # Ignoring this Initial Blind-Cleanup
         self.steps.DeleteOrCleanup('cleanup') 
         self.globalcfg.cleanup()
-        
+	# Check and create Avail-zone
+        self.globalcfg.add_avail_zone()
         # Initiate Global Configuration 
 	if self.plugin:
 	    if not self.steps.create_external_networks():
@@ -72,14 +73,14 @@ class NatGbpTestSuite(object):
                      self.test_nat_func_2,
                      self.test_nat_func_3,
 		     self.test_nat_func_4,
-		     self.test_nat_func_5
-		     #self.test_nat_func_6,
-		     #self.test_nat_func_7,
-		     #self.test_nat_func_8,
-		     #self.test_snat_func_9,
-		     #self.test_snat_func_10,
-		     #self.test_snat_func_11,
-                     #self.test_snat_func_12
+		     self.test_nat_func_5,
+		     self.test_nat_func_6,
+		     self.test_nat_func_7,
+		     self.test_nat_func_8,
+		     self.test_snat_func_9,
+		     self.test_snat_func_10,
+		     self.test_snat_func_11,
+                     self.test_snat_func_12
                      ]
         if self.flag:
            self.steps.addhostpoolcidr(flag=self.flag)
@@ -620,7 +621,6 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testCreatePtgWithNonDefaultL3p():
            return 0
-        
         self.steps.AddSShContract(self.apicip) ## Adding SSH contract
         if not self.steps.testCreatePolicyTargetForEachPtg():
            return 0
@@ -644,7 +644,7 @@ class NatGbpTestSuite(object):
         sleep(15)
         self.forextrtr.add_route_in_extrtr(
                                           self.extrtr,
-                                          self.steps.snatpool,
+                                          SNATPOOL,
                                           self.gwip1_extrtr,
                                           action='update'
                                           )
@@ -690,7 +690,7 @@ class NatGbpTestSuite(object):
         sleep(15)
         self.forextrtr.add_route_in_extrtr(
                                           self.extrtr,
-                                          self.steps.snatpool,
+                                          SNATPOOL,
                                           self.gwip1_extrtr,
                                           action='update'
                                           )
@@ -808,7 +808,7 @@ class NatGbpTestSuite(object):
         "\n SNATed Traffic from the ONLY VM without FIP to ExtRtr")
         self.forextrtr.add_route_in_extrtr(
                                           self.extrtr,
-                                          self.steps.snatpool,
+                                          SNATPOOL,
                                           self.gwip2_extrtr,
                                           action='update'
                                           )

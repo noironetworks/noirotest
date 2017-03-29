@@ -38,7 +38,7 @@ parameters:
     type: string
 
   mgmt_nat_ip_pool:
-    default: "55.55.55.0/24"
+    default: "50.50.50.0/24"
     description: NAT IP-Pool for Mgmt Ext Seg
     label: mgmt_nat_ip_pool
     type: string
@@ -47,7 +47,7 @@ parameters:
   # So if you change the value, ensure to change in the
   # above file too. Sorry :-) bear with my laziness :-( 
   dc_nat_ip_pool:
-    default: '66.66.66.0/24'
+    default: '60.60.60.0/24'
     description: NAT IP-Pool for DC Ext Seg
     label: dc_nat_ip_pool
     type: string

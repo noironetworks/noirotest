@@ -34,16 +34,18 @@ EXTRTR_IP1 = conf['extrtr_ip1']
 EXTRTR_IP2 = conf['extrtr_ip2']
 GWIP1_EXTRTR = conf['gwip1_extrtr']
 GWIP2_EXTRTR = conf['gwip2_extrtr']
+NOVA_AGG = conf['nova_agg_name']
 AVAIL_ZONE = conf['nova_az_name']
+AZ_COMP_NODE = conf['az_comp_node']
 PAUSETODEBG = conf['pausetodebug']
 EXTSEG_PRI = conf['primary_L3out']
 EXTSEG_SEC = conf['secondary_L3out']
 NATPOOLNAME1 = 'GbpNatPoolTest1'
 NATPOOLNAME2 = 'GbpNatPoolTest2'
-NATIPPOOL1 = '55.55.55.0/24'
-NATIPPOOL2 = '66.66.66.0/24'
-SNATPOOL = '50.50.50.0/24'
-SNATCIDR = '50.50.50.1/24'
+NATIPPOOL1 = '50.50.50.0/24'
+NATIPPOOL2 = '60.60.60.0/24'
+SNATPOOL = '55.55.55.0/24'
+SNATCIDR = '55.55.55.1/24'
 L3PNAME = 'L3PNat'
 L3PIPPOOL = '20.20.20.0/24'
 L3PPREFLEN = 26
@@ -679,14 +681,21 @@ class NatFuncTestMethods(object):
         Adds SSH contract between NS and EPG
         Needed for SNAT Tests
         """
-        aci=gbpApic(apicip)
-        LOG.info(
-            "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
-        svcepglist = [
-                'TestPtg1',
-                'L2PNat'
-                ]
-        aci.create_add_filter(svcepglist)
+       	LOG.info(
+                "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
+	if not PLUGIN_TYPE:
+        	aci=gbpApic(apicip)
+        	svcepglist = [
+                	'TestPtg1',
+                	'L2PNat'
+                	]
+        	aci.create_add_filter(svcepglist)
+	else:
+		if isinstance (run_remote_cli(
+                              "python add_ssh_filter.py create",
+                               CNTRLRIP, 'root', 'noir0123'), tuple):
+                        LOG.warning("adding filter to SvcEpg failed in AIM")
+			return 0
         sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
 	return 1
 

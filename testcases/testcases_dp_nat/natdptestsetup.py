@@ -41,10 +41,13 @@ class nat_dp_main_config(object):
 	self.comp_node = conf['compute-2']
         self.cntlr_ip = conf['controller_ip']
         self.extgw = conf['ext_rtr']
+	self.priL3Out = conf['primary_L3out']
+	self.secL3Out = conf['secondary_L3out']
         self.apic_ip = conf['apic_ip']
         self.leaf1_ip = conf['leaf1_ip']
         self.leaf2_ip = conf['leaf2_ip']
         self.spine_ip = conf['spine_ip']
+	self.plugin = conf['plugin-type']
         if preexist:
             self.dnat_heat_temp = conf['preexist_dnat_temp']
         else:
@@ -67,8 +70,8 @@ class nat_dp_main_config(object):
 	self.gbpaci = gbpApic(self.apic_ip,
 			      apicsystemID=self.apicsystemID)
         self.gbpcrud = GBPCrud(self.cntlr_ip)
-        self.hostpoolcidrL3OutA = '50.50.50.1/24'
-        self.hostpoolcidrL3OutB = '60.60.60.1/24'
+        self.hostpoolcidrL3OutA = '55.55.55.1/24'
+        self.hostpoolcidrL3OutB = '66.66.66.1/24'
 	#Instead of defining the below static labels/vars
 	#could have sourced the heat.yaml file and read it
 	#But since this TestConfig defined in yaml file
@@ -81,6 +84,39 @@ class nat_dp_main_config(object):
 	self.L2plist = ['APPL2P','WEBSRVRL2P','WEBCLNTL2P']
 	self.EpgL2p = dict(zip(self.Epglist,self.L2plist))
 	self.L3Outlist = ['Management-Out', 'Datacenter-Out']
+
+    def create_external_networks(self):
+            LOG.info(
+            "\n## Create External Networks for L3Outs:: %s & %s ##" %(self.priL3Out, self.secL3Out))
+            try:
+                aimntkcfg_primary = '--apic:distinguished_names type=dict'+\
+                 ' ExternalNetwork='+\
+                 'uni/tn-common/out-%s/instP-MgmtExtPol' %(self.priL3Out)
+                aimsnat = '--apic:snat_host_pool True'
+                neutron.netcrud(self.priL3Out,'create',external=True,
+                            shared=True, aim = aimntkcfg_primary)
+                self.EXTSUB1 = neutron.subnetcrud('extsub1','create',self.priL3Out,
+                               cidr=50.50.50.0/24,extsub=True)
+                self.EXTSUB3 = neutron.subnetcrud('extsub3','create',self.priL3Out,
+                               cidr=self.hostpoolcidrL3OutA,extsub=True,aim=aimsnat)
+
+
+                aimntkcfg_sec = '--apic:distinguished_names type=dict'+\
+                 ' ExternalNetwork='+\
+                 'uni/tn-common/out-%s/instP-DcExtPol' %(self.secL3Out)
+                aimsnat = '--apic:snat_host_pool True'
+                neutron.netcrud(self.secL3Out,'create',external=True,
+                            shared=True, aim = aimntkcfg_sec)
+                self.EXTSUB2 = neutron.subnetcrud('extsub2','create',self.secL3Out,
+                               cidr=60.60.60.0/24,extsub=True)
+                self.EXTSUB4 = neutron.subnetcrud('extsub4','create',self.secL3Out,
+                               cidr=self.hostpoolcidrL3OutB,extsub=True,aim=aimsnat)
+	    except Exception as e:
+		LOG.ERROR("External Network Create Failed for MergedPlugin")
+		for l3out in [self.priL3Out, self.secL3Out]:
+	            neutron.runcmd('neutron net-delete %s' %(l3out))
+	    	return 0
+	    return 1
 
     def setup(self, nat_type, do_config=0, pertntnatEpg=False):
         """
@@ -150,19 +186,20 @@ class nat_dp_main_config(object):
                                    self.neutronconffile,
                                    pattern)
             if nat_type == 'snat':
-                # Adding host_pool_cidr to the both L3Outs
-		sectionlist = ['apic_external_network:Management-Out',
+		if not self.plugin:
+                    # Adding host_pool_cidr to the both L3Outs
+		    sectionlist = ['apic_external_network:Management-Out',
                                'apic_external_network:Datacenter-Out']
-                patvallist = [self.hostpoolcidrL3OutA,
+                    patvallist = [self.hostpoolcidrL3OutA,
                               self.hostpoolcidrL3OutB]
-		pattern = 'host_pool_cidr'
-                #Remove any exiting host_pool_cidr form neutron config
-                editneutronconf(self.cntlr_ip,
+		    pattern = 'host_pool_cidr'
+                    #Remove any exiting host_pool_cidr form neutron config
+                    editneutronconf(self.cntlr_ip,
                                 self.neutronconffile,
                                 pattern,
                                 add=False)
-	        for section,patval in zip(sectionlist,patvallist):
-                    editneutronconf(self.cntlr_ip,
+	            for section,patval in zip(sectionlist,patvallist):
+                        editneutronconf(self.cntlr_ip,
                                     self.neutronconffile,
 				    '%s=%s' %(pattern,patval),
                                     section=section)
@@ -175,6 +212,8 @@ class nat_dp_main_config(object):
                "\n ABORTING THE TESTSUITE RUN, Delete of Residual Heat-Stack Failed")
                self.cleanup() # Because residual stack-delete already failed above
                sys.exit(1)
+	    if self.plugin:
+		self.create_external_networks()
             self._log.info(
             "\n Invoking Heat-Temp for Config creation of %s" % (nat_type.upper()))
             if self.gbpheat.cfg_all_cli(1, self.heat_stack_name, heat_temp=self.heat_temp_test) == 0:
@@ -183,10 +222,11 @@ class nat_dp_main_config(object):
                self.cleanup(nat_type='dnat')
                sys.exit(1)
             sleep(5)  # Sleep 5s assuming that all objects areated in APIC
-            self._log.info(
-            "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
-            #create_add_filter(self.apic_ip, svc_epg_list)
-            self.gbpaci.create_add_filter(self.L2plist)
+	    if not self.plugin:
+                self._log.info(
+                "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
+                #create_add_filter(self.apic_ip, svc_epg_list)
+                self.gbpaci.create_add_filter(self.L2plist)
         if nat_type == 'dnat':
                 ### <Generate the dict comprising VM-name and its FIPs > ###
                 self.fipsOftargetVMs = {}
