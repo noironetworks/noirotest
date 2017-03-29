@@ -1,4 +1,6 @@
 from test_sanity import *
+from commands import *
+getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
 LOG.setLevel(logging.INFO)
 tnt1,tnt2,tnt3 = TNT_LIST_ML2
 LOG.info("#### Start of ML2 Sanity #####")

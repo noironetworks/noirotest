@@ -48,6 +48,9 @@ class nat_dp_main_config(object):
         self.leaf2_ip = conf['leaf2_ip']
         self.spine_ip = conf['spine_ip']
 	self.plugin = conf['plugin-type']
+        if self.plugin:
+    	    from libs.neutron import *
+    	    neutron = neutronCli(self.cntlr_ip)
         if preexist:
             self.dnat_heat_temp = conf['preexist_dnat_temp']
         else:
@@ -120,65 +123,17 @@ class nat_dp_main_config(object):
 
     def setup(self, nat_type, do_config=0, pertntnatEpg=False):
         """
-        Availability Zone creation
         Heat Stack Creates All Test Config
         Generate dict comprising VM-name and FIPs
         <do_config> : Added this do_config, just runner to fetch FIPs
                     without having to run the whole setup, assuming
                     that setup was run before and the VMs exist
         """
-        # Enabling Route Reflector
-        self._log.info("\n Set the APIC Route Reflector")
-        cmd = 'apic-route-reflector --ssl --no-secure --apic-ip %s admin noir0123' % (self.apic_ip)
-        getoutput(cmd)
         if nat_type == 'dnat':
             self.heat_temp_test = self.dnat_heat_temp
         else:
             self.heat_temp_test = self.snat_heat_temp
         if do_config == 0:
-            self._log.info(
-                "\n Updating Nova Quota")
-            if self.gbpnova.quota_update() == 0:
-                self._log.info(
-                    "\n ABORTING THE TESTSUITE RUN, Updating the Nova Quota's Failed")
-                sys.exit(1)
-            if self.num_hosts > 1:
-               try:
-                   cmd = "nova aggregate-list" # Check if Agg already exists then delete
-                   if self.nova_agg in getoutput(cmd):
-                      self._log.warning(
-                      "\nResidual Nova Agg exits, hence deleting it")
-                      self.gbpnova.avail_zone('cli',
-                                              'removehost',
-                                               self.nova_agg,
-                                               hostname=self.az_node)
-                      self.gbpnova.avail_zone('cli', 'delete', self.nova_agg)
-                   self._log.info(
-                   "\nCreating Nova Host-Aggregate & its Availability-zone")
-                   self.agg_id = self.gbpnova.avail_zone('api',
-                                                         'create',
-                                                          self.nova_agg,
-                                                          avail_zone_name\
-                                                          =self.nova_az)
-               except Exception:
-                   self._log.error(
-                   "\n ABORTING THE TESTSUITE RUN,nova host aggregate creation Failed",\
-                   exc_info=True)
-                   sys.exit(1)
-               self._log.info(" Agg %s" % (self.agg_id))
-               try:
-                 self._log.info("\nAdding Nova host to availability-zone")
-                 self.gbpnova.avail_zone('api', 
-                                         'addhost', 
-                                         self.agg_id, 
-                                         hostname=self.az_node)
-               except Exception:
-                     self._log.info(
-                     "\n ABORTING THE TESTSUITE RUN, availability zone creation Failed")
-                     self.gbpnova.avail_zone('cli',
-                                             'delete',
-                                              self.agg_id) # Cleanup Agg_ID
-                     sys.exit(1)
             if nat_type == 'dnat':
                 if pertntnatEpg:
                    pattern = 'per_tenant_nat_epg=True'
@@ -471,18 +426,16 @@ class nat_dp_main_config(object):
            # Ntk namespace cleanup in Network-Node.. VM names are static
            # throughout the test-cycle
            del_netns(self.network_node)
-        if not avail:
-           self.gbpnova.avail_zone('cli',
-                                   'removehost',
-                                   self.nova_agg,
-                                   hostname=self.az_node)
-           self.gbpnova.avail_zone('cli', 'delete', self.nova_agg)
         #Remove the test-added config from neutron conf
-        for pattern in ['host_pool_cidr',
+	if not self.plugin:
+            for pattern in ['host_pool_cidr',
                         'per_tenant_nat_epg',
                          ]:
-            editneutronconf(self.cntlr_ip,
+                editneutronconf(self.cntlr_ip,
                             self.neutronconffile,
                             pattern,
                             add=False)
+	else:
+            for l3out in [self.secL3out, self.priL3out]:
+                neutron.runcmd('neutron net-delete %s' %(l3out))
                                                                    

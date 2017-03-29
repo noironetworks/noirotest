@@ -74,38 +74,8 @@ class gbp_main_config(object):
 
     def setup(self):
         """
-        Availability Zone creation
         Heat Stack Creates All Test Config
         """
-
-        # Updating/Enabling Nova config availability-zone
-        if self.num_hosts > 1:
-            try:
-               # Check if Agg already exists then delete
-	       cmdagg = run_openstack_cli("nova aggregate-list", self.cntlr_ip)
-               if self.nova_agg in cmdagg:
-                  self._log.warning("Residual Nova Agg exits, hence deleting it")
-                  self.gbpnova.avail_zone('cli', 'removehost',
-                                           self.nova_agg, 
-                                           hostname=self.comp_node)
-                  self.gbpnova.avail_zone('cli', 'delete', self.nova_agg)
-               self._log.info("\nCreating Nova Host-aggregate & its Availability-zone")
-               self.agg_id = self.gbpnova.avail_zone(
-                       'api', 'create', self.nova_agg, avail_zone_name=self.nova_az)
-            except Exception:
-                self._log.error(
-                    "\n ABORTING THE TESTSUITE RUN,nova host aggregate creation Failed", exc_info=True)
-                sys.exit(1)
-            self._log.info(" Agg %s" % (self.agg_id))
-            try:
-             self._log.info("\nAdding Nova host to availaibility-zone")
-             self.gbpnova.avail_zone('api', 'addhost', self.agg_id, hostname=self.comp_node)
-            except Exception:
-                self._log.error(
-                    "\n ABORTING THE TESTSUITE RUN, availability zone creation Failed", exc_info=True)
-                self.gbpnova.avail_zone(
-                    'cli', 'delete', self.agg_id)  # Cleanup Agg_ID
-                sys.exit(1)
 
         # Invoking Heat Stack for building up the Openstack Config
         # Expecting if at all there is residual heat-stack it
@@ -266,7 +236,3 @@ class gbp_main_config(object):
            # Ntk namespace cleanup in Network-Node.. VM names are static
            # throughout the test-cycle
            del_netns(self.network_node)
-        if avail == 0:
-           self.gbpnova.avail_zone('cli', 'removehost',
-                                   self.nova_agg, hostname=self.comp_node)
-           self.gbpnova.avail_zone('cli', 'delete', self.nova_agg)

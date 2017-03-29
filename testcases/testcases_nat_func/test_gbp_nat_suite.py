@@ -61,8 +61,6 @@ class NatGbpTestSuite(object):
         # Ignoring this Initial Blind-Cleanup
         self.steps.DeleteOrCleanup('cleanup') 
         self.globalcfg.cleanup()
-	# Check and create Avail-zone
-        self.globalcfg.add_avail_zone()
         # Initiate Global Configuration 
 	if self.plugin:
 	    if not self.steps.create_external_networks():
