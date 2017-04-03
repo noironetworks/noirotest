@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
 import sys
-import logging
-import os
-import datetime
 import re
 from commands import *
 try:
@@ -16,13 +13,6 @@ from fabric.contrib import files
 
 class Bonding(object):
 
-    # Initialize logging
-    logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)
-    _log = logging.getLogger( __name__ )
-    hdlr = logging.FileHandler('/tmp/test_def_traff.log')
-    _log.setLevel(logging.INFO)
-    _log.setLevel(logging.DEBUG)
-    
     def __init__(self,host_ip,host_user='root',host_pwd='noir0123'):
       """
       Verify all traffic b/w End-points using PTG with NO Contract(Policy RuleSet) 

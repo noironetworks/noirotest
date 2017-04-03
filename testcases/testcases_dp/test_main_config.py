@@ -14,6 +14,40 @@ from libs.keystone import Keystone
 from libs.gbp_utils import *
 from testcases.config import conf
 
+APICSYSTEM_ID = conf['apic_system_id']
+network_node = conf['network_node']
+cntlr_ip = conf['controller_ip']
+apic_ip = conf['apic_ip']
+leaf1_ip = conf['leaf1_ip']
+leaf2_ip = conf['leaf2_ip']
+spine_ip = conf['spine_ip']
+apic_passwd = conf['apic_passwd']
+heat_temp_test = conf['main_setup_heat_temp']
+num_hosts = conf['num_comp_nodes']
+heat_stack_name = conf['heat_dp_stack_name']
+pausetodebug = conf['pausetodebug']
+test_parameters = conf['test_parameters']
+plugin = conf['plugin-type']
+gbpnova = gbpNova(cntlr_ip)
+gbpheat = gbpHeat(cntlr_ip)
+if plugin: #Incase of MergedPlugin
+    gbpaci = gbpApic(apic_ip, mode='aim')
+else:
+    gbpaci = gbpApic(apic_ip,
+		       apicsystemID=APICSYSTEM_ID) 
+vmlist = ['VM1','VM2','VM3','VM4',
+          'VM5','VM6','VM7','VM8',
+	  'VM9','VM10','VM11','VM12'	
+	 ]
+        #Below L2Ps needed for APIC Verification
+L2plist = [
+           'demo_same_ptg_l2p_l3p_bd',
+           'demo_diff_ptg_same_l2p_l3p_bd',
+           'demo_diff_ptg_l2p_same_l3p_bd_1',
+           'demo_diff_ptg_l2p_same_l3p_bd_2',
+           'demo_srvr_bd', 'demo_clnt_bd'
+          ]
+
 class gbp_main_config(object):
     """
     The intent of this class is to setup the complete GBP config 

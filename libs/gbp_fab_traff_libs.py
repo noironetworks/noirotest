@@ -1,20 +1,12 @@
 #!/usr/bin/env python
 
 import datetime
-import logging
 import re
 import sys
 from fabric.api import cd,run,env, hide, get, settings, sudo
 
 class gbpFabTraff(object):
 
-    # Initialize logging
-    logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)
-    _log = logging.getLogger( __name__ )
-    hdlr = logging.FileHandler('/tmp/test_def_traff.log')
-    _log.setLevel(logging.INFO)
-    _log.setLevel(logging.DEBUG)
-    
     def __init__(self):
       """
       Verify all traffic b/w End-points using PTG with NO Contract(Policy RuleSet) 

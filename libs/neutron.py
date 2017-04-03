@@ -15,17 +15,19 @@ class neutronPy(object):
         cred['auth_url'] = "http://%s:5000/v2.0/" % controllerIp
         self.client = nclient.Client(**cred)
 
-    def create_router(self,name):
+    def create_router(self,name,shared=False):
 	body_value = {'router': {
     			'name' : name,
     			'admin_state_up': True,
+			'shared' : shared
 		     }}
 	try:
 	    router = self.client.create_router(body=body_value)
 	    return router['router']['id']
 	except Exception as e:
 	    print "Router Create failed: ", repr(e)
-	
+	    raise
+
     def get_router_list(self):
         """ returns list of routers """
         return self.client.list_routers()['routers']
@@ -66,18 +68,43 @@ class neutronPy(object):
 		self.client.remove_interface_router(rtr_id, rtr_dict)
 	except Exception as e:
 	    print "Attach/Detach router from network failed: ",repr(e)
+	    raise
 		
 
-    def create_net(self, netname):
-        cn = {'network': {'name': netname, 'admin_state_up': True}}
-        netw = self.client.create_network(body=cn)
-        nid = netw['network']['id']
-        return nid
+    def create_net(self, netname, **kwargs):
+	try:
+            cn = {'network': {'name': netname, 'admin_state_up': True}}
+	    for arg,val in kwargs.items():
+		cn['network'][arg] = val
+            netw = self.client.create_network(body=cn)
+            nid = netw['network']['id']
+            return nid
+	except Exception as e:
+	    raise
    
-    def create_subnet(self, name, cidr, netid):
-        cn = {'subnets': [{'name': name, 'cidr': cidr, 'ip_version': 4, 'network_id': netid}]}
-        snid = self.client.create_subnet(body=cn)
-        return snid['subnets'][0]['id']
+    def create_subnet(self, name, cidr, netid, **kwargs):
+	try:
+            csn = {'subnets': [{'name': name, 'cidr': cidr, 'ip_version': 4, 'network_id': netid}]}
+	    for arg,val in kwargs.items():
+		csn['subnets'][0][arg] = val
+            snid = self.client.create_subnet(body=csn)
+            return snid['subnets'][0]['id']
+	except Exception as e:
+	    raise
+
+    def create_port(self, network_id, **kwargs):
+	try:
+	    pt = {'port': {'admin_state_up': True,\
+			   'network_id' : network_id}}
+	    for arg,val in kwargs.items():
+		if arg == 'fixed_ips':
+		    val == [{'ip_address': val}]
+		pt['port'][arg]=val
+	    port = self.client.create_port(body=pt)
+	    portid = port['port']['id']
+	    return portid
+	except Exception as e:
+	    raise
 
     def get_network_list(self):
         return self.client.list_networks()['networks']
@@ -95,15 +122,31 @@ class neutronPy(object):
     def get_port_list(self):
         return self.client.list_ports()['ports']
 
-    def get_all_port_details(self):
+    def get_all_port_details(self, prop=''):
 	port_details = {}
-	for port in self.get_port_list():
-            port_details[port['id']] = {'owner' : port['device_owner'],
+	try:
+	    for port in self.get_port_list():
+		# Fetching standard port properties
+                port_details[port['id']] = {'owner' : port['device_owner'],
  				        'network' : port['network_id'],
-					'ip' : port['fixed_ips'][0]['ip_address']}
-					
+					'ip' : port['fixed_ips'][0]['ip_address'],
+					'status' : port['status'],
+					'allowed_address_pairs' : port['allowed_address_pairs']
+					}
+	        if prop and prop not in port_details[port['id']].keys(): #If not among above port_properties
+		    port_details[port['id']][prop] = port[prop]
+	except Exception as e:
+	    raise
 	return port_details
     
+    def update_port(self,portID,port_prop={}):
+	try:
+	    body = {"port" : port_prop}
+	    return self.client.update_port(portID,body=body)
+	except Exception as e:
+		raise
+	
+
     def get_dhcp_port_details(self):
 	details = self.get_all_port_details()
 	dhcp_ports = {}
@@ -149,10 +192,7 @@ class neutronCli(object):
         env.host_string = self.controller
         env.user = self.username
         env.password = self.password
-        with settings(warn_only=True):
-             run("hostname")
         srcRc = 'source /root/keystonerc_admin'
-        print "EXECUTING THE NEUTRON CLI"
         with prefix(srcRc):
 		try:
                    _output = run(cmd)
@@ -170,11 +210,15 @@ class neutronCli(object):
 	for tnt in tenantList:
 	    if action == 'create':
 		cmd_tnt = 'openstack project create %s' %(tnt)
+		tenant_id = self.getuuid(self.runcmd(cmd_tnt))
 		cmd_user = 'openstack role add --user admin --project %s admin' %(tnt)
-	        for cmd in [cmd_tnt,cmd_user]:
-		   self.runcmd(cmd)
+		self.runcmd(cmd_user)
+		if tenant_id:
+		    return tenant_id
 	    if action == 'delete':
-		cmd = 'openstack project delete %s' %(tnt)
+		for tnt in tenantList:
+		    cmd = 'openstack project delete %s' %(tnt)
+		    self.runcmd(cmd)
 
     def getuuid(self,cmd_out):
         '''
@@ -372,3 +416,17 @@ class neutronCli(object):
 	else:
 	    return []
 
+    def purgeresource(self,tenantIDList,resourceOnly=False):
+        "Method to clean resources"
+        if not isinstance(tenantIDList,list):
+            tenantIDList = [tenantIDList]
+	for tenant_id in tenantIDList:
+	    cmd1 = 'gbp purge %s' %(tenant_id)
+	    cmd2 = 'aimctl manager application-profile-delete prj_%s OpenStack' %(tenant_id)
+	    cmd3 = 'aimctl manager tenant-delete  prj_%s' %(tenant_id)
+	    cmd4 = 'openstack project delete %s' %(tenant_id)
+	    for cmd in [cmd1, cmd2, cmd3, cmd4]:
+	        self.runcmd(cmd) #Only cmd1, i.e. gbp/neutron resource will be deleted
+		if resourceOnly:
+		    break
+    
