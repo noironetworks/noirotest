@@ -133,15 +133,12 @@ class gbp_main_config(object):
 	    tnt = self.keyst.get_tenant_attribute('admin','id')
         else:
             tnt='admin'
-        apictnts = self.gbpaci.getTenant()
-        self.tntDN = [apictnts[key] for key in apictnts.iterkeys()\
-                      if tnt in key]
         #Adding SSH-filter to Svc_Contract provided by Svc_Epgs
         self._log.info(
             "\n Adding SSH-Filter to Svc_epg created for every dhcp_agent")
         try:
 	    if not self.plugin: #i.e. if 'classical plugin'
-	        if not self.gbpaci.create_add_filter(self.tntDN):
+	        if not self.gbpaci.create_add_filter('admin'):
 			raise Exception("Adding filter to SvcEpg failed")
 	    else: #i.e. if MergedPlugin
 	       if isinstance (run_remote_cli(
@@ -151,7 +148,7 @@ class gbp_main_config(object):
 	except Exception as e:
                  self._log.error(
                  "\nABORTING THE TESTSUITE RUN: " + repr(e))
-	         self.cleanup()
+	         self.cleanup() 
 	         sys.exit(1)
 
     def verifySetup(self):

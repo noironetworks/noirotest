@@ -174,6 +174,9 @@ class NatFuncTestMethods(object):
             self.extsegid = gbpcrud.create_gbp_external_segment(
                                         extsegname,
                                         subnet_id = extsub,
+                                        external_routes = [{
+                                           'destination':'0.0.0.0/0',
+                                           'nexthop': None}],
                                         shared=True
                                        )
 	else:

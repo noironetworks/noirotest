@@ -207,6 +207,7 @@ class neutronCli(object):
 	'''
 	if not isinstance(tenantList,list):
 	    tenantList = [tenantList]
+	tenant_id_list = []
 	for tnt in tenantList:
 	    if action == 'create':
 		cmd_tnt = 'openstack project create %s' %(tnt)
@@ -214,11 +215,16 @@ class neutronCli(object):
 		cmd_user = 'openstack role add --user admin --project %s admin' %(tnt)
 		self.runcmd(cmd_user)
 		if tenant_id:
-		    return tenant_id
+		    tenant_id_list.append(tenant_id)
 	    if action == 'delete':
 		for tnt in tenantList:
 		    cmd = 'openstack project delete %s' %(tnt)
 		    self.runcmd(cmd)
+	if action == 'create':
+	    if len(tenant_id_list) == 1:
+		return tenant_id_list[0]
+	    if len(tenant_id_list) > 1:
+		return tenant_id_list
 
     def getuuid(self,cmd_out):
         '''

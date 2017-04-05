@@ -46,6 +46,7 @@ class DNAT_VMs_to_VMs(object):
         self.test_4_prs = {objs_uuid['shared_ruleset_tcp_id']}
         self.test_5_prs = {objs_uuid['shared_ruleset_icmp_tcp_id']}
         self.pausetodebug = objs_uuid['pausetodebug']
+	self.routefordest = objs_uuid['routefordest']
         self.vmfortraff = ['App-Server', 'Web-Server', 'Web-Client-1', 'Web-Client-2']
         self.vmtuple = ('App-Server', 'Web-Server', 'Web-Client-1', 'Web-Client-2')
         # Note: vmfortraff & vmtuple could have been addressed as a single
@@ -74,8 +75,9 @@ class DNAT_VMs_to_VMs(object):
         self.gbpcrud.AddRouteInShadowL3Out(self.ext_seg_2,
                                                       'Datacenter-Out',
                                                       'dnat',
+						      self.routefordest,
                                                       route='66.66.66.0/24',
-                                                      preexist=preexist) #Hard-coded reference from yaml file param dc_nat_ip_pool
+                                                      ) #Hard-coded reference from yaml file param dc_nat_ip_pool
 
         # Note: Cleanup per testcases is not required,since every testcase
         # updates the PTG, hence over-writing previous attr vals

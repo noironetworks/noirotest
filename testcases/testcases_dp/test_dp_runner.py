@@ -3,7 +3,7 @@ import os
 import sys
 import optparse
 from commands import *
-getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
+getoutput("rm -rf /tmp/testsuite*") #Deletes pre-existing test logs
 from time import sleep
 from libs.gbp_heat_libs import gbpHeat
 from test_main_config import *
@@ -31,7 +31,7 @@ def main():
     # Build the Test Config to be used for all DataPath Testcases
     print "Setting up global config for all DP Testing"
     testbed_cfg = gbp_main_config()
-    #testbed_cfg.setup() #JISHNU
+    testbed_cfg.setup()
     # Fetch gbp objects via heat output
     gbpheat = gbpHeat(super_hdr.cntlr_ip)
     objs_uuid = gbpheat.get_uuid_from_stack(
@@ -49,7 +49,6 @@ def main():
            sys.exit(1)
 	print "Sleeping for 20s more for next iteration of Verify"
 	sleep(20)
-	pausetodebug() #JISHNU
 	_iter += 1
 
     header_to_suite_map = {'header1': [header1, test_same_ptg_same_l2p_same_l3p],

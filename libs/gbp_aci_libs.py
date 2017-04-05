@@ -423,11 +423,15 @@ class gbpApic(object):
             path = '/api/node/mo/%s.json' %(deltnt)
             self.delete(path)
 
-    def create_add_filter(self,tntdn):
+    def create_add_filter(self,tnt):
         """
         svcepg: Preferably pass a list of svcepgs if more than one
         """
         #Create the noiro-ssh filter with ssh & rev-ssh subjects
+        if tnt == 'common':
+               tntdn = 'tn-common'
+        else:
+            tntdn = self.getTenant()[tnt]
         path = '/api/node/mo/%s/flt-noiro-ssh.json' %(tntdn)
         data = '{"vzFilter":{"attributes":{"dn":"%s/flt-noiro-ssh","name":"noiro-ssh","rn":"flt-noiro-ssh","status":"created,modified"},"children":[{"vzEntry":{"attributes":{"dn":"%s/flt-noiro-ssh/e-ssh","name":"ssh","etherT":"ip","prot":"tcp","sFromPort":"22","sToPort":"22","rn":"e-ssh","status":"created,modified"},"children":[]}},{"vzEntry":{"attributes":{"dn":"%s/flt-noiro-ssh/e-rev-ssh","name":"rev-ssh","etherT":"ip","prot":"tcp","dFromPort":"22","dToPort":"22","rn":"e-rev-ssh","status":"created,modified"},"children":[]}}]}}' %(3*(tntdn,))
         results = self.post(path, data)
@@ -465,10 +469,14 @@ class gbpApic(object):
         req = self.post(path,data)
         print req
 
-    def addEnforcedToPtg(self,epg,tntdn,flag='enforced'):
+    def addEnforcedToPtg(self,epg,tnt,flag='enforced'):
         """
         Add Enforced flag to the PTG
         """
+        if tnt == 'common':
+               tntdn = 'tn-common'
+        else:
+            tntdn = self.getTenant()[tnt]
         path = '/api/node/mo/%s/%s/epg-%s.json' %(tntdn,self.appProfile,epg)
         data = '{"fvAEPg":{"attributes":{"dn":"%s/%s/epg-%s","pcEnfPref":"%s"},"children":[]}}' %(tntdn,self.appProfile,epg,flag)
         req = self.post(path, data)
@@ -488,4 +496,3 @@ class gbpApic(object):
         req = self.post(path,data)
         print req
 
-	    

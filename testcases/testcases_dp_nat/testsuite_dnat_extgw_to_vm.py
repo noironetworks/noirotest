@@ -47,6 +47,7 @@ class DNAT_ExtGw_to_VMs(object):
         self.test_4_prs = {objs_uuid['shared_ruleset_tcp_id']}
         self.test_5_prs = {objs_uuid['shared_ruleset_icmp_tcp_id']}
         self.pausetodebug = objs_uuid['pausetodebug']
+	self.routefordest = objs_uuid['routefordest']
         self.dest_vm_fips = dest_vm_fips
         self.gbp_crud = GBPCrud(self.ostack_controller)
 
@@ -59,7 +60,7 @@ class DNAT_ExtGw_to_VMs(object):
         self.gbp_crud.AddRouteInShadowL3Out(self.ext_seg_2,
                                                        'Datacenter-Out',
                                                        'dnat',
-                                                       preexist=preexist)
+                                                       self.routefordest)
 
         # Note: Cleanup per testcases is not required,since every testcase
         # updates the PTG, hence over-writing previous attr vals

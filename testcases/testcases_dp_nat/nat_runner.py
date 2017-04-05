@@ -2,29 +2,19 @@
 import sys
 import optparse
 from commands import *
-getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
+getoutput("rm -rf /tmp/testsuite*") #Deletes pre-existing test logs
 from time import sleep
 from libs.gbp_heat_libs import gbpHeat
 from libs.gbp_utils import *
-from natdptestsetup import nat_dp_main_config
+from natdptestsetup import *
 
 def main():
     usage = "usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
-    parser.add_option("-c", "--configfile",
-                      help="Mandatory Arg: Name of the Config File with location",
-                      dest='configfile')
-    parser.add_option("-o", "--controllerIp",
-                      help="Mandatory Arg: IP Address of the Ostack Controller",
-                      dest='cntlrIp')
     parser.add_option("-n", "--nattype",
                       help="Mandatory Arg: Type of NAT"\
                       " Valid strings: dnat or snat or edgenat",
                       dest='nattype')
-    parser.add_option("-p", "--preexist",
-                      help="Mandatory Arg: Prexisting L3Out"\
-                      " Valid strings: yes or no",
-                      dest='preexist')
     parser.add_option("-f", "--ptnepg",
                       help="Flag to enable Per Tenant NAT-EPG"\
                       " Valid string: <yes>",
@@ -37,19 +27,9 @@ def main():
                       dest='integ')
     (options, args) = parser.parse_args()
 
-    if not options.configfile:
-        print ("Mandatory: Please provide the ConfigFile with location")
-        sys.exit(1)
-    if not options.cntlrIp:
-        print ("Mandatory: Please provide the Ostack Controller IP")
-        sys.exit(1)
     if not options.nattype:
         print ("Mandatory: Please provide the NAT-Type, "\
                "Valid strings <dnat> or <snat> or <edgenat>")
-        sys.exit(1)
-    if not options.preexist:
-        print ("Mandatory: Please provide the PreExisting L3Out Flag, "\
-               "Valid strings <yes> or <no>")
         sys.exit(1)
     def runinteg(node):
         if node == 'borderleaf':
@@ -90,21 +70,15 @@ def main():
                     revert=True,
                     restart=restart
                          )
-
-    cfgfile = options.configfile
+    preexist = True #Going forward for all releases Pre-Existing L3Out
     nat_type = options.nattype
-    if options.preexist == 'yes':
-        preexist = True
-    else:
-        preexist = False
     if options.pertenantnatepg == 'yes':
        options.pertenantnatepg = True
-    if preexist:            
-        # Setup the PreExitingL3Out Config in neutron conf
-        preExistcfg(options.cntlrIp)
+    # Setup the PreExitingL3Out Config in neutron conf
+    preExistcfg(cntlr_ip)
     # Build the Test Config to be used for all NAT DataPath Testcases
-    testbed_cfg = nat_dp_main_config(preexist)
-    gbpheat = gbpHeat(options.cntlrIp) #Instantiated to fetch gbp-objects
+    testbed_cfg = nat_dp_main_config()
+    gbpheat = gbpHeat(cntlr_ip) #Instantiated to fetch gbp-objects
 
     if nat_type == 'dnat':
         # RUN ONLY DNAT DP TESTs
@@ -124,14 +98,15 @@ def main():
 					     )
         # Fetch gbp objects via heat output
         objs_uuid = gbpheat.get_uuid_from_stack(
-                    testbed_cfg.dnat_heat_temp,
-                    testbed_cfg.heat_stack_name
+                    dnat_heat_temp,
+                    heat_stack_name
                     )
-        objs_uuid['external_gw'] = testbed_cfg.extgw
-        objs_uuid['ostack_controller'] = testbed_cfg.cntlr_ip
-        objs_uuid['ipsofextgw'] = testbed_cfg.ips_of_extgw
-        objs_uuid['network_node'] = testbed_cfg.network_node
-        objs_uuid['pausetodebug'] = testbed_cfg.pausetodebug
+        objs_uuid['external_gw'] = extgw
+        objs_uuid['ostack_controller'] = cntlr_ip
+        objs_uuid['ipsofextgw'] = ips_of_extgw
+        objs_uuid['network_node'] = network_node
+        objs_uuid['pausetodebug'] = pausetodebug
+	objs_uuid['routefordest'] = routefordest
         # Verify the config setup on the ACI
 	print 'Sleeping for the EP learning on ACI Fab'
 	sleep(30)   
@@ -139,17 +114,15 @@ def main():
 	    if not testbed_cfg.verifySetup(nat_type,
                                            pertntnatEpg=True):
 	        testbed_cfg.cleanup()
-                if preexist:
-                    preExistcfg(options.cntlrIp,revert=True)
-	            print \
+                preExistcfg(cntlr_ip,revert=True)
+	        print \
                     'DNAT-PerTntNatEpg TestSuite Execution Failed'
                 sys.exit(1)
 	else:
 	    if not testbed_cfg.verifySetup(nat_type):
 	        testbed_cfg.cleanup()
-                if preexist:
-                    preExistcfg(options.cntlrIp,revert=True)
-	            print \
+                preExistcfg(cntlr_ip,revert=True)
+	        print \
                     'DNAT TestSuite Execution Failed'
                 sys.exit(1)
         # Note: Please always maintain the below order of DNAT Test Execution
@@ -161,6 +134,7 @@ def main():
         import DNAT_ExtGw_to_VMs
         test_dnat_extgw_to_vm = DNAT_ExtGw_to_VMs(objs_uuid,
 						 targetVmFips)
+
         test_dnat_extgw_to_vm.test_runner(preexist)
         # If integ=True, then ONLY repeat run of ExtRtr-VM Tests
         # no need for VM-to-VM, will enable if needed later
@@ -168,10 +142,9 @@ def main():
            runinteg(options.integ)
            if not testbed_cfg.verifySetup(nat_type):
               testbed_cfg.cleanup()
-              if preexist:
-                  #Revert Back the L3Out Config
-                  preExistcfg(options.cntlrIp,revert=True)
-                  print \
+              #Revert Back the L3Out Config
+              preExistcfg(cntlr_ip,revert=True)
+              print \
                   'DNAT-Integ TestSuite Execution Failed after Reload %s'\
                   %(options.integ)
               sys.exit(1)
@@ -206,9 +179,8 @@ def main():
 	sleep(30)   
 	if not testbed_cfg.verifySetup(nat_type):
 	    testbed_cfg.cleanup()
-            if preexist:
-                preExistcfg(options.cntlrIp,revert=True)
-	        print 'SNAT TestSuite Execution Failed due to Setup Issue'
+            preExistcfg(cntlr_ip,revert=True)
+	    print 'SNAT TestSuite Execution Failed due to Setup Issue'
             sys.exit(1)
         # Execution of SNAT DP Tests
         from testcases.testcases_dp_nat.testsuite_snat_vm_to_extgw \
@@ -221,9 +193,8 @@ def main():
            runinteg(options.integ)
            if testbed_cfg.verifySetup(nat_type):
               testbed_cfg.cleanup()
-              if preexist:
-                  preExistcfg(options.cntlrIp,revert=True)
-                  print \
+              preExistcfg(cntlr_ip,revert=True)
+              print \
                   'SNAT-Integ TestSuite Execution Failed after Reload %s'\
                   %(options.integ)
               sys.exit(1)
@@ -231,9 +202,6 @@ def main():
         # Cleanup after the SNAT Testsuite is run
         testbed_cfg.cleanup()
         print "\nSNAT TestSuite executed Successfully\n"
-    #Revert Back the L3Out Config
-    if preexist:
-        preExistcfg(options.cntlrIp,revert=True)
 
 if __name__ == "__main__":
     main()

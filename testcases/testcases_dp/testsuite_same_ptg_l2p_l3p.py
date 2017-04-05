@@ -86,7 +86,7 @@ class test_same_ptg_same_l2p_same_l3p(object):
 	       else:
                    self.gbpaci.addEnforcedToPtg(
                    		                ptg_name,
-                                		tenant='admin',
+                                		'admin',
                                 		) #Cant use self.ptg as its a UUID instead of namestring
             else:
 	       if self.plugin_mode: #Incase of MergedPlugin
@@ -94,8 +94,8 @@ class test_same_ptg_same_l2p_same_l3p(object):
 	       else:
                    self.gbpaci.addEnforcedToPtg(
                    		                ptg_name,
+                                		'admin',
                                 		flag=flag,
-                                		tenant='admin',
                                 		)	
                expectedRetVal = 1
             for test in test_list:

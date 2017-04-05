@@ -1250,42 +1250,30 @@ class GBPCrud(object):
                   _log.error("Attribute %s and its Value %s NOT found in Object %s %s" %(arg,val,obj,obj_uuid))
                   return 0
 
-    def AddRouteInShadowL3Out(self,extseg_id,extseg_name,nattype,route='',preexist=False):
+    def AddRouteInShadowL3Out(self,extseg_id,extseg_name,nattype,destrte,route=''):
         """
         Utility Method to add ext_routes to Ext_Seg
         ONLY needed for NAT DP TESTs ONLY USED For Datacenter-Out ExtSeg
         TBD: To be enhanced
         """
         if extseg_name == 'Datacenter-Out':
-              #cmd = 'crudini --get /etc/neutron/neutron.conf apic_external_network:%s cidr_exposed' %(extseg_name)
-              cmd = 'grep %s -A 6 /etc/neutron/neutron.conf' %(extseg_name)\
-                    +' | grep cidr_exposed'
-              out = re.search('\\b(\d+.\d+.\d+).\d+.*' '', getoutput(cmd), re.I)
-              rte = out.group(1)+'.0/24'
-        #cmd = 'crudini --get /etc/neutron/neutron.conf apic_external_network:%s gateway_ip' %(extseg_name)
-        cmd = 'grep %s -A 9 /etc/neutron/neutron.conf' %(extseg_name)\
-              +' | grep gateway_ip'
-        out = re.search('\\b(\d+.\d+.\d+.\d+).*' '', getoutput(cmd), re.I)
-        if preexist:
-           route_gw = ''
-        else:
-           route_gw = out.group(1)
+            route_gw = ''
         if nattype == 'dnat' and route != '':
             _log.info("\nRoute added to ShadowL3Out corresponding to External Segment"
                       " %s for DNAT VM2VM Traffic are %s & %s with GW %s"\
-                      %(extseg_name,route,rte,route_gw))
+                      %(extseg_name,route,destrte,route_gw))
             self.update_gbp_external_segment(
              extseg_id,external_routes=[{'destination' : route, 'nexthop' : route_gw},
-                                        {'destination' : rte, 'nexthop' : route_gw}])
+                                        {'destination' : destrte, 'nexthop' : route_gw}])
         if nattype == 'dnat' and route == '':
            _log.info("\nRoute added to ShadowL3Out corresponding to External "
                     "Segment%s for DNAT ExtRtr2VM Traffic is %s with GW %s"\
-                    %(extseg_name,rte,route_gw))
+                    %(extseg_name,destrte,route_gw))
            self.update_gbp_external_segment(
-             extseg_id,external_routes=[{'destination' : rte, 'nexthop' : route_gw}])
+             extseg_id,external_routes=[{'destination' : destrte, 'nexthop' : route_gw}])
         if nattype == 'snat':
            _log.info("\nRoute added to ShadowL3Out corresponding to"
                     " External Segment %s for SNAT Traffic is %s with GW %s"\
-                    %(extseg_name,rte,route_gw))
+                    %(extseg_name,destrte,route_gw))
            self.update_gbp_external_segment(
-             extseg_id,external_routes=[{'destination' : rte, 'nexthop' : route_gw}])
+             extseg_id,external_routes=[{'destination' : destrte, 'nexthop' : route_gw}])

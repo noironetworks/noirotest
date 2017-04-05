@@ -606,6 +606,9 @@ class crudGBP(object):
         self.extsegid = self.gbpadmin.create_gbp_external_segment(
                                         es_name,
 					subnet_id = extsub,
+					external_routes = [{
+                                           'destination':'0.0.0.0/0',
+                                           'nexthop': None}],
 				       	shared=True
                                        )
 	    
