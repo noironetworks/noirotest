@@ -8,7 +8,7 @@ from libs.gbp_utils import *
 
 CNTRLRIP = conf['controller_ip']
 APICIP = conf['apic_ip']
-
+NTKNODE = conf['network_node']
 
 def main():
     check_ssh = raw_input(
@@ -16,15 +16,15 @@ def main():
     if check_ssh == 'NO':
 	print ('ENSURE to SETUP Passwordless SSH to nodes in your setup')
 	sys.exit(0)
-    setup(CNTRLRIP,APICIP)
+    setup(CNTRLRIP,APICIP,NTKNODE)
 
-def setup(controller_ip,apic_ip,cntlr_user='root',apic_user='admin',
+def setup(controller_ip,apic_ip,ntknode,cntlr_user='root',apic_user='admin',
           apic_pwd = 'noir0123', cntlr_pwd='noir0123'):
 
     env.host_string = controller_ip
     env.user = cntlr_user
     env.password = cntlr_pwd
-  
+
     #Step-1: Copy the Heat Templates to the Controller
     for heat_templt in ['~/noirotest_local/testcases/heat_temps/heat_dnat_only.yaml',
 			'~/noirotest_local/testcases/heat_temps/heat_snat_only.yaml',
@@ -88,6 +88,10 @@ def setup(controller_ip,apic_ip,cntlr_user='root',apic_user='admin',
         print("\n ABORTING THE TESTSUITE RUN, availability zone creation Failed")
         gbpnova.avail_zone('cli', 'delete', agg_id)  # Cleanup Agg_ID
         sys.exit(1)
+   
+    #Step-5: Copy the iptools-arping to the network-node of the fabric
+    env.host_string = ntknode
+    put('iputils-arping_20121221-4ubuntu1_amd64.deb', '~/')
 
 
 if __name__ == "__main__":

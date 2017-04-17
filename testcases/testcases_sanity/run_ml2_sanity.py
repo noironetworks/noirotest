@@ -1,7 +1,5 @@
 from test_sanity import *
 from commands import *
-getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
-LOG.setLevel(logging.INFO)
 tnt1,tnt2,tnt3 = TNT_LIST_ML2
 LOG.info("#### Start of ML2 Sanity #####")
 
@@ -48,7 +46,7 @@ try:
     else:
         LOG.info(
         "ML2-SANITY: Test-5: Create shared External Ntk in Admin-tenant for pre-existing L3Out : PASS")
-    
+
     LOG.info(
     "####### WORKFLOW-1: Attaching router to networks BEFORE VM creation:Tenant %s ######" 
     %(tnt1))
@@ -93,7 +91,7 @@ try:
     	"ML2-SANITY: Test-9: VMs are reachable(ICMP & SSH) from netns(DHCP-server) for tenant %s : PASS" %(tnt1))
     	LOG.info(
     	"ML2-SANITY: Test-9: MetaData for VMs in tenant %s : PASS" %(tnt1))
-
+    
     #Step 10:
     if test_traff.traff_from_ml2_tenants(tnt1,ext=True,proto=['icmp','tcp']) == 0:
     	LOG.error(
@@ -280,7 +278,7 @@ try:
     	LOG.info(
     	"ML2-SANITY: Test-29: Attach router of tenant %s connects to shared External Ntk : PASS" %(tnt3))
 
-    sleep(10)
+    sleep(5)
     #Step 30:
     if test_traff.traff_from_ml2_tenants(tnt3,ext=True,proto=['icmp','tcp']) == 0:
     	LOG.error(

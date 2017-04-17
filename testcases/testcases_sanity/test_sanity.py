@@ -4,6 +4,8 @@ import logging
 import re
 import string
 import sys
+from commands import *
+getoutput("rm -rf /tmp/test_*") #Deletes pre-existing test logs
 from time import sleep
 from libs.gbp_aci_libs import *
 from libs.gbp_utils import *
@@ -16,7 +18,7 @@ from testcases.testcases_nat_func.traff_from_extgw import *
 
 # Initialize logging
 LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.ERROR)
+LOG.setLevel(logging.INFO)
 # create a logfile handler
 hdlr = logging.FileHandler('/tmp/test_sanity.log')
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')

@@ -79,6 +79,7 @@ class resource(object):
 	        self.netID = neutron_api.create_net(self.net_name,port_security_enabled=False)
 	    else:
 	        self.netID = neutron_api.create_net(self.net_name)
+	    self.dhcp_netns = 'qdhcp-%s' %(self.netID) #Needed for traffic
 	    self.subID = neutron_api.create_subnet(self.sub_name,
 					    self.cidr,
 					    self.netID)
@@ -146,6 +147,14 @@ class resource(object):
 	    LOG.error('AAP port create failed: '+repr(e))
 	    return 0
 
+    def send_traff_for_aap(self):
+	aap_tr = gbpExpTraff(COMPUTE1,self.dhcp_netns,\
+			    self.vm_prop[self.vm1]['ip'],
+			    self.vm_prop[self.vm1]['ip']
+			    )
+	if not aap_tr.aap_traff(self.vip):
+	    return 0
+
     def verify_port(self, value):
 	try:
 	    if self.feature == 'psec':
@@ -170,17 +179,22 @@ class resource(object):
 	    return 0
 	return True
 
-    def verify_ep(self,prop_value):
+    def verify_ep(self,prop_value=False,aap_set=True):
 	    if self.feature == 'psec':
 	        return comp.verify_EpFile(self.vm_prop[self.vm1]['port_id'],
 				    self.vm_prop[self.vm1]['mac'],
 				    promiscuous_mode = prop_value)
 	    if self.feature == 'aap':
 		for vm in  [self.vm1, self.vm2]:
+		    if aap_set:
+			ip = [self.vm_prop[self.vm1]['ip'],self.vip]
+		    else:
+			ip = [self.vm_prop[self.vm1]['ip']]
 	            result = comp.verify_EpFile(self.vm_prop[vm]['port_id'],
 				    self.vm_prop[vm]['mac'],
-				    virtual_ip = [{"ip" : prop_value,
-						   "mac" : self.vm_prop[vm][mac]}]
+				    ip = ip,
+				    virtual_ip = [{"ip" : self.vip,
+						   "mac" : self.vm_prop[vm]['mac']}]
 				)
 		    if not result:
 			return False

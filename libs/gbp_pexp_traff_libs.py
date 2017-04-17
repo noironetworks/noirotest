@@ -37,7 +37,8 @@ class gbpExpTraff(object):
         child.sendline('hostname')
         child.expect('#')
         print child.before
-        child.sendline('ip netns exec %s ping %s -c 2' %(self.netns,self.src_ep)) ## Check whether ping works first
+        child.sendline('ip netns exec %s ping %s -c 2' \
+			%(self.netns,self.src_ep)) ## Check whether ping works first
         child.expect('#')
         print child.before
         print 'Out ==NOIRO'
@@ -48,28 +49,32 @@ class gbpExpTraff(object):
         login_retry = 1
         while login_retry < 4: 
             try:
-               child.sendline('ip netns exec %s ssh noiro@%s' %(self.netns,self.src_ep))
-               ssh_newkey = 'Are you sure you want to continue connecting (yes/no)?'
-               i= child.expect([ssh_newkey,'password:',pexpect.EOF])
-               if i == 0:
-                  child.sendline('yes')
-                  i=child.expect([ssh_newkey,'password:',pexpect.EOF])
-               if i == 1:
-                  child.sendline('noir0123')
-               child.expect('\$')
-               break
+		print "Trying to SSH into VM ....."
+                child.sendline('ip netns exec %s ssh noiro@%s' \
+				%(self.netns,self.src_ep))
+                ssh_newkey = 'Are you sure you want to continue connecting (yes/no)?'
+                i = child.expect([ssh_newkey,'password:',pexpect.EOF])
+                if i == 0:
+                    child.sendline('yes')
+                    i = child.expect([ssh_newkey,'password:',pexpect.EOF])
+                if i == 1:
+                    child.sendline('noir0123')
+                child.expect('\$')
+                break
             except Exception as e:
-               print "Failing to Login into the VM from the Namespace\n"
-               print "\nException Error: %s\n" %(e)
-               sleep(10)
-               login_retry +=1
+		if login_retry == 3:
+                    print "After 3 attempts Failed to SSH into the VM from the Namespace\n"
+                    print "\nException Error: %s\n" %(e)
+		    return 2
+            sleep(10)
+            login_retry +=1
         child.sendline('sudo -s')
         child.expect('noiro:')
         child.sendline('noir0123')
         child.expect('#')
 	child.sendline('nohup python -m SimpleHTTPServer 80 &')
 	child.expect('#')
-        child.sendline('ifconfig eth0')
+        child.sendline('ip addr show eth0')
         child.expect('#')
         print child.before
         results = {}
@@ -90,7 +95,8 @@ class gbpExpTraff(object):
             results[dest_ep] = {'icmp':'NA', 'tcp':'NA', 'udp':'NA'} #Setting results for all proto = NA, assuming no traffic is not tested for the specific proto
             for protocol in protocols:
                 if protocol=='icmp' or protocol=='all':
-                   child.sendline('hping3 %s --icmp -c %s --fast -q -d %s' %(dest_ep,self.pkt_cnt,self.pkt_size)) #
+                   child.sendline('hping3 %s --icmp -c %s --fast -q -d %s' \
+				%(dest_ep,self.pkt_cnt,self.pkt_size))
                    child.expect('#')
                    print "Sent ICMP packets"
                    result=child.before         
@@ -100,14 +106,18 @@ class gbpExpTraff(object):
                    else:
                       results[dest_ep]['icmp']=0
                 if protocol=='tcp'or protocol=='all':
-                   cmd_s = "sudo hping3 %s -S -V -p %s -c %s --fast -q" %(dest_ep,port,self.pkt_cnt)
-                   cmd_sa = "sudo hping3 %s -S -A -V -p %s -c %s --fast -q" %(dest_ep,port,self.pkt_cnt)
-                   cmd_saf = "sudo hping3 %s -S -A -F -V -p %s -c %s --fast -q" %(dest_ep,port,self.pkt_cnt)
+                   cmd_s = "sudo hping3 %s -S -V -p %s -c %s --fast -q" \
+			    %(dest_ep,port,self.pkt_cnt)
+                   cmd_sa = "sudo hping3 %s -S -A -V -p %s -c %s --fast -q" \
+			    %(dest_ep,port,self.pkt_cnt)
+                   cmd_saf = "sudo hping3 %s -S -A -F -V -p %s -c %s --fast -q" \
+			    %(dest_ep,port,self.pkt_cnt)
                    if not tcp_syn_only:
                       for cmd in [cmd_s,cmd_sa,cmd_saf]:
                          child.sendline(cmd)
                          child.expect('#')
-                         print "Sent TCP SYN,SYN ACK,SYN-ACK-FIN to %s" %(dest_ep)
+                         print "Sent TCP SYN,SYN ACK,SYN-ACK-FIN to %s" \
+				%(dest_ep)
                          result=child.before
                          print result
                          if self.parse_hping(result,self.pkt_cnt) !=0:
@@ -152,7 +162,7 @@ class gbpExpTraff(object):
 	    print 'Run Traffic for the Protocols: %s and then analyze results' %(proto)
 	    results = self.test_run(protocols=proto,tcp_syn_only=tcp_syn_only,jumbo=jumbo)
         if results == 2:
-            return results
+            return 0
 	for dest_ip in self.dest_ep:
             allow_list = proto
             failed = {key: val for key, val in results[
@@ -165,3 +175,68 @@ class gbpExpTraff(object):
         else:
                 return 1
 	
+    def aap_traff(self,aap_ip):
+	"""
+	aap_ip :: should be ip address of AAP with mask
+		  eg: 1.1.1.1/24
+	"""
+        child = pexpect.spawn('ssh root@%s' %(self.net_node))
+        child.expect('#') #Expecting passwordless access
+        child.sendline('hostname')
+        child.expect('#')
+        print child.before
+        child.sendline('ip netns exec %s ping %s -c 2' %(self.netns,self.src_ep)) ## Check whether ping works first
+        child.expect('#')
+        print child.before
+        if len(re.findall('100% packet loss',child.before)): #Count of ping pkts
+           print "Cannot run any traffic test since Source VM is Unreachable"
+           return 0
+	pkg = 'iputils-arping_20121221-4ubuntu1_amd64.deb'
+        scp_retry = 1
+        while scp_retry < 4: 
+            try:
+		print "SecureCopy the Arping-tool into VM"
+  		child.sendline('ip netns exec %s scp %s noiro@%s:' \
+		 	    %(self.netns,pkg,self.src_ep))
+                ssh_newkey = 'Are you sure you want to continue connecting (yes/no)?'
+                i = child.expect([ssh_newkey,'password:',pexpect.EOF])
+                if i == 0:
+                    child.sendline('yes')
+                    i = child.expect([ssh_newkey,'password:',pexpect.EOF])
+                if i == 1:
+                    child.sendline('noir0123')
+                child.expect('#')
+		print "Trying to SSH into VM ....."
+                child.sendline('ip netns exec %s ssh noiro@%s' \
+			    %(self.netns,self.src_ep))
+		child.expect('password:')
+		child.sendline('noir0123')
+		child.expect('\$')
+                break
+            except Exception as e:
+		if scp_retry == 3:
+                    print "After 3 attempts Failed to SecureCopy/Login into VM from Namespace\n"
+                    print "\nException Error: %s\n" %(e)
+		    return 0
+            sleep(10)
+            scp_retry +=1
+        child.sendline('sudo -s')
+        child.expect('noiro:')
+        child.sendline('noir0123')
+        child.expect('#')
+	child.sendline('dpkg -i %s ' %(pkg))
+	child.expect('#')
+        child.sendline('ip addr show eth0')
+        child.expect('#')
+        print child.before
+	child.sendline('ip addr add %s dev eth0' %(aap_ip))
+	child.expect('#')
+	print "After adding the AAP-IP to the VM port"
+        child.sendline('ip addr show eth0')
+        child.expect('#')
+        print child.before
+	print "Send arping now ...."
+	child.sendline('arping -c 4 -A -I eth0 %s' %(aap_ip.rstrip('/24')))
+	child.expect('#')
+        print child.before
+	return 1

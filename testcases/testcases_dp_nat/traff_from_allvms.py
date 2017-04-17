@@ -8,7 +8,6 @@ import string
 import re
 from libs.gbp_conf_libs import gbpCfgCli
 from libs.gbp_nova_libs import gbpNova
-from libs.gbp_fab_traff_libs import gbpFabTraff
 from libs.gbp_pexp_traff_libs import gbpExpTraff
 from libs.raise_exceptions import *
 

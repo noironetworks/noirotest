@@ -20,9 +20,10 @@ if not steps.update_port(enable=True):
 else:
 	LOG.info("Associate AAP on VM Port: [OK]")
 if not steps.verify_ep():
-	LOG.error("Promiscuous Mode of the EndPoint: FAIL")
+	LOG.error("Virtual IP of EndPoint has AAP address associated: FAIL")
 else:
-	LOG.info("Promiscuous Mode of the EndPoint: [OK]")
+	LOG.info("Virtual IP of EndPoint has AAP address associated: [OK]")
+
 if not steps.update_port(enable=False):
 	LOG.error("Disable AAP on VM Port: FAIL")
 else:
@@ -51,3 +52,4 @@ else:
 	LOG.info("Promiscuous Mode of EndPoint after enabling back: [OK]")
     	
 steps.cleanup()
+

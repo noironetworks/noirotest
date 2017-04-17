@@ -15,7 +15,7 @@ if not steps.verify_port(True):
 	LOG.error("Port-Security Status on VM Port: FAIL")
 else:
 	LOG.info("Port-Security Status on VM Port: [OK]")
-if not steps.verify_ep(False):
+if not steps.verify_ep():
 	LOG.error("Promiscuous Mode of the EndPoint: FAIL")
 else:
 	LOG.info("Promiscuous Mode of the EndPoint: [OK]")
@@ -28,7 +28,7 @@ if not steps.verify_port(False):
 	LOG.error("Port-Security Status on VM Port after disabling: FAIL")
 else:
 	LOG.info("Port-Security Status on VM Port after disabling: [OK]")
-if not steps.verify_ep(True):
+if not steps.verify_ep(prop_value=True):
 	LOG.error("Promiscuous Mode of EndPoint after disabling: FAIL")
 else:
 	LOG.info("Promiscuous Mode of EndPoint after disabling: [OK]")
@@ -41,7 +41,7 @@ if not steps.verify_port(True):
 else:
 	LOG.info("Port-Security Status on VM Port after enabling back: [OK]")
 sleep(10)
-if not steps.verify_ep(False):
+if not steps.verify_ep():
 	LOG.error("Promiscuous Mode of EndPoint after enabling back: FAIL")
 else:
 	LOG.info("Promiscuous Mode of EndPoint after enabling back: [OK]")

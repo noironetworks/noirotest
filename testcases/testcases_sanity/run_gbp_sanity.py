@@ -1,7 +1,5 @@
 from test_sanity import *
 from commands import *
-getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
-LOG.setLevel(logging.INFO)
 tnt1,tnt2 = TNT_LIST_GBP
 LOG.info("#### Start of GBP SANITY #####")
 #Initialize the GBP CRUD Class
