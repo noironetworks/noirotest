@@ -33,7 +33,6 @@ APICIP = conf['apic_ip']
 TNT =  'BUCEPHALUS'
 EXTRTR = conf['ext_rtr']
 AVZONE = conf['nova_az_name']
-AVHOST = conf['az_comp_node']
 COMPUTE1 = conf['network_node']
 COMPUTE2 = conf['compute-2']
 pausetodebug = conf['pausetodebug']
@@ -47,7 +46,7 @@ PR_TCP = 'PR-TCP'
 PRS_ICMP_TCP = 'CONT-ICMP-TCP'
 PRS_ICMP = 'CONT-ICMP'
 PRS_TCP = 'CONT-TCP'
-comp = Compute(AVHOST)
+comp = Compute(COMPUTE2)
 neutron = neutronCli(CNTRLIP)
 neutron_api = neutronPy(CNTRLIP,tenant=TNT)
 
@@ -84,7 +83,7 @@ class resource(object):
 					    self.cidr,
 					    self.netID)
         except Exception as e:
-            LOG.error('Create Network/Subnet Failed: '+repr(e))
+            LOG.info('Create Network/Subnet Failed: '+repr(e))
 	    return 0
         return True
 
@@ -109,7 +108,7 @@ class resource(object):
                                  )
 		self.vm_prop[vmname]={'ip' : vm[0], 'port_id' : vm[1], 'mac' : vm[2]}
 	    except Exception as e:
-                LOG.error('VM Creation for tnt %s Failed: ' %(TNT)+repr(e))
+                LOG.info('VM Creation for tnt %s Failed: ' %(TNT)+repr(e))
                 return 0
 	return True
 
@@ -135,16 +134,16 @@ class resource(object):
 		    port = self.vm_prop[vm]['port_id']
 		    neutron_api.update_port(port, port_prop=prop)
 	except Exception as e:
-	    LOG.error(
+	    LOG.info(
 	    'Updating port-property %s for port %s Failed: ' %(prop,port)+repr(e))
 	    return 0
-	return True
+	return 1
 
     def create_aap_port(self):
 	try:
-	    neutron_api.create_port(self.netID,fixed_ips=self.vip)
+	    return neutron_api.create_port(self.netID,fixed_ips=self.vip)
 	except Exception as e:
-	    LOG.error('AAP port create failed: '+repr(e))
+	    LOG.info('AAP port create failed: '+repr(e))
 	    return 0
 
     def send_traff_for_aap(self):
@@ -154,6 +153,7 @@ class resource(object):
 			    )
 	if not aap_tr.aap_traff(self.vip):
 	    return 0
+	return 1
 
     def verify_port(self, value):
 	try:
@@ -175,11 +175,11 @@ class resource(object):
 		'ACTIVE':
 	 	        raise Exception('Unexpected port property or value')
 	except Exception as e:
-	    LOG.error('Port verify failed: '+repr(e))
+	    LOG.info('Port verify failed: '+repr(e))
 	    return 0
 	return True
 
-    def verify_ep(self,prop_value=False,aap_set=True):
+    def verify_ep(self,prop_value=False,aap_set=True,aap_vm=''):
 	    if self.feature == 'psec':
 	        return comp.verify_EpFile(self.vm_prop[self.vm1]['port_id'],
 				    self.vm_prop[self.vm1]['mac'],
@@ -187,9 +187,12 @@ class resource(object):
 	    if self.feature == 'aap':
 		for vm in  [self.vm1, self.vm2]:
 		    if aap_set:
-			ip = [self.vm_prop[self.vm1]['ip'],self.vip]
+			if aap_vm == vm:
+			    ip = [self.vm_prop[vm]['ip'],self.vip]
+			else:
+			    ip = [self.vm_prop[vm]['ip']]
 		    else:
-			ip = [self.vm_prop[self.vm1]['ip']]
+			ip = [self.vm_prop[vm]['ip']]
 	            result = comp.verify_EpFile(self.vm_prop[vm]['port_id'],
 				    self.vm_prop[vm]['mac'],
 				    ip = ip,

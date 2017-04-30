@@ -4,35 +4,43 @@ steps = resource('aap')
 LOG.info("Allowed Address Pair Test starts ..")
 #Start of Test Steps
 if not steps.create_network_subnet():
-	LOG.error("Create Network and Subnet: FAIL")
+	LOG.error("Step: Create Network and Subnet: FAIL")
 else:
-	LOG.info("Create Network and Subnet: [OK]")
+	LOG.info("Step: Create Network and Subnet: [OK]")
 if not steps.create_vm():
-	LOG.error("Create VM for AAP: FAIL")
+	LOG.error("Step: Create VM for AAP: FAIL")
 else:
-	LOG.info("Create VM for AAP: [OK]")
+	LOG.info("Step: Create VM for AAP: [OK]")
 if not steps.create_aap_port():
-	LOG.error("Create AAP Port: FAIL")
+	LOG.error("Step: Create AAP Port: FAIL")
 else:
-	LOG.info("Create AAP Port: [OK]")
+	LOG.info("Step: Create AAP Port: [OK]")
 if not steps.update_port(enable=True):
-	LOG.error("Associate AAP on VM Port: FAIL")
+	LOG.error("Step: Associate AAP on VM Port: FAIL")
 else:
-	LOG.info("Associate AAP on VM Port: [OK]")
-if not steps.verify_ep():
-	LOG.error("Virtual IP of EndPoint has AAP address associated: FAIL")
+	LOG.info("Step: Associate AAP on VM Port: [OK]")
+if not steps.verify_ep(aap_set=False):
+	LOG.error("Step: Virtual IP of EndPoint has AAP address associated: FAIL")
 else:
-	LOG.info("Virtual IP of EndPoint has AAP address associated: [OK]")
-
+	LOG.info("Step: Virtual IP of EndPoint has AAP address associated: [OK]")
+if not steps.send_traff_for_aap():
+	LOG.error("Generate AAP Traffic using ARP-Ping: FAIL")
+else:
+	LOG.info("Generate AAP Traffic using ARP-Ping: [OK]")
+if not steps.verify_ep(aap_vm=steps.vm1):
+	LOG.error("Step: Real IP of EndPoint has AAP address associated: FAIL")
+else:
+	LOG.info("Step: Real IP of EndPoint has AAP address associated: [OK]")
 if not steps.update_port(enable=False):
-	LOG.error("Disable AAP on VM Port: FAIL")
+	LOG.error("Step: Disable AAP on VM Port: FAIL")
 else:
-	LOG.info("Disable AAP on VM Port: [OK]")
+	LOG.info("Step: Disable AAP on VM Port: [OK]")
 sleep(10)
-if not steps.verify_port(False):
-	LOG.error("AAP Status on VM Port after disabling: FAIL")
+if not steps.verify_ep(aap_set=False):
+	LOG.error("Step: Virtual IP of EndPoint has AAP address associated: FAIL")
 else:
-	LOG.info("AAP Status on VM Port after disabling: [OK]")
+	LOG.info("Step: Virtual IP of EndPoint has AAP address associated: [OK]")
+"""
 if not steps.verify_ep(True):
 	LOG.error("Promiscuous Mode of EndPoint after disabling: FAIL")
 else:
@@ -42,14 +50,14 @@ if not steps.update_port(enable=True):
 else:
 	LOG.info("Enable back AAP on VM Port: [OK]")
 if not steps.verify_port(True):
-	LOG.error("AAP Status VM Port after enabling back: FAIL")
+	LOG.error("Step: AAP Status VM Port after enabling back: FAIL")
 else:
-	LOG.info("AAP Status on VM Port after enabling back: [OK]")
+	LOG.info("Step: AAP Status on VM Port after enabling back: [OK]")
 sleep(10)
 if not steps.verify_ep(False):
 	LOG.error("Promiscuous Mode of EndPoint after enbaling back: FAIL")
 else:
 	LOG.info("Promiscuous Mode of EndPoint after enabling back: [OK]")
-    	
+"""    	
 steps.cleanup()
 

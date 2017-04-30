@@ -1,4 +1,4 @@
-from test_sanity import *
+from common_sanity_methods import *
 from commands import *
 tnt1,tnt2 = TNT_LIST_GBP
 LOG.info("#### Start of GBP SANITY #####")

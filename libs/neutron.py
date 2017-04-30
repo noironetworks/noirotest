@@ -98,7 +98,7 @@ class neutronPy(object):
 			   'network_id' : network_id}}
 	    for arg,val in kwargs.items():
 		if arg == 'fixed_ips':
-		    val == [{'ip_address': val}]
+		    val = [{'ip_address': val}]
 		pt['port'][arg]=val
 	    port = self.client.create_port(body=pt)
 	    portid = port['port']['id']

@@ -3,7 +3,7 @@
 import string
 import random
 from testcases.config import conf
-from test_sanity import * #Just for logging & neutron class
+from common_sanity_methods import * #Just for logging & neutron class
 LOG.setLevel(logging.INFO)
 
 def tenant_create(net_create_func):

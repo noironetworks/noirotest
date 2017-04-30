@@ -1,4 +1,4 @@
-from test_sanity import *
+from common_sanity_methods import *
 from commands import *
 tnt1,tnt2,tnt3 = TNT_LIST_ML2
 LOG.info("#### Start of ML2 Sanity #####")

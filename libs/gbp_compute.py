@@ -105,6 +105,7 @@ class Compute(object):
 	example: vm-name , should be passed as vm_name
 	"""
 	remoteFile = '/var/lib/opflex-agent-ovs/endpoints/%s_%s.ep' %(portID,portMAC)
+	import pdb; pdb.set_trace()
 	epfile = self.GetReadFiles(remoteFile)
 	if epfile:
 	    for key, value in kwargs.iteritems():
@@ -129,10 +130,16 @@ class Compute(object):
 	        else:
                     if '_' in key:
                       key = key.replace('_','-')
-	            if value != epfile[key]:
-		       print "Mismatch between user fed and epfile",\
+		    if key == 'ip':
+			if set(value) != set(epfile[key]):
+			    print "Mismatch between user fed and epfile IP",\
+			      value, epfile[key]
+			    return None
+		    else:
+	                if value != epfile[key]:
+		           print "Mismatch between user fed and epfile",\
 		              value, epfile[key]
-	               return None
+	                   return None
 	    return True
         else:
 	    return None   

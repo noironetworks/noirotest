@@ -1,0 +1,13 @@
+#!/bin/bash
+source keystonerc_admin
+
+# /// Get the Tenant IDs for ENGG & HRC and run gbp purge ///
+hrc=$(openstack project list | grep HRC | awk '{print $2}')
+engg=$(openstack project list | grep ENGG | awk '{print $2}')
+admin=$(openstack project list | grep admin | awk '{print $2}')
+
+gbp purge $hrc
+gbp purge $engg
+gbp purge $admin
+
+

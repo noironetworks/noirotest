@@ -1,0 +1,50 @@
+#!/bin/bash
+source keystonerc_admin
+
+# /// Create Common Resources: External Network as Shared for NAT & NO-NAT ///   
+neutron net-create Management-Out --router:external True --shared --apic:distinguished_names type=dict ExternalNetwork=uni/tn-common/out-Management-Out/instP-MgmtExtPol
+FIP_SUBNET=$(neutron subnet-create Management-Out 50.50.50.0/24 --name ext-subnet --disable-dhcp --gateway 50.50.50.1 | grep ' id ' | awk '{print $4}' )
+SNAT_SUBNET=$(neutron subnet-create Management-Out 55.55.55.0/24 --name ext-subnet --disable-dhcp --gateway 55.55.55.1 --apic:snat_host_pool True | grep ' id ' | awk '{print $4}' )
+
+neutron net-create Datacenter-Out --router:external True --shared --apic:distinguished_names type=dict ExternalNetwork=uni/tn-common/out-Datacenter-Out/instP-DcExtPol --apic:nat_type ""
+NONAT_SUBNET=$(neutron subnet-create Datacenter-Out 60.60.60.0/24 --name ext-subnet --disable-dhcp --gateway 60.60.60.1 | grep ' id ' | awk '{print $4}' )
+
+# /// Create Openstack Tenant ENGG & HRC ////
+openstack project create ENGG
+openstack role add --user admin --project ENGG admin
+
+openstack project create HRC
+openstack role add --user admin --project HRC admin
+
+# /// Create Resources for tenant ENGG ///
+
+# Create Network & Subnets for ENGG
+neutron --os-tenant-name ENGG net-create ENET1
+neutron --os-tenant-name ENGG subnet-create ENET1 31.31.31.0/28 --name esub1
+
+neutron --os-tenant-name ENGG net-create ENET2
+neutron --os-tenant-name ENGG subnet-create ENET2 32.32.32.0/28 --name esub2
+
+# Create Router and attach to Ext & Pvt Networks for ENGG
+neutron --os-tenant-name ENGG router-create ERTR1
+neutron --os-tenant-name ENGG router-gateway-set ERTR1 Management-Out
+neutron --os-tenant-name ENGG router-interface-add ERTR1 subnet=esub1
+neutron --os-tenant-name ENGG router-interface-add ERTR1 subnet=esub2
+
+# /// Create Resources for tenant HRC ///
+gbp --os-tenant-name HRC ptg-create HPTG1
+
+gbp pa-create allow --action-type allow
+gbp pc-create --protocol ICMP --direction bi pc-icmp
+gbp pc-create --protocol TCP --direction bi pc-tcp
+gbp pr-create pr-tcp --classifier pc-tcp --actions allow
+gbp pr-create pr-icmp --classifier pc-icmp --actions allow
+gbp prs-create prs-icmp --policy-rules pr-icmp
+gbp prs-create prs-tcp --policy-rules pr-tcp
+
+# Create External Segment for HRC
+gbp external-segment-create EXT-Management-Out --subnet-id $FIP_SUBNET --external-route destination=0.0.0.0/0,nexthop=
+gbp l3p-update default --external-segment EXT-Management-Out
+
+
+
