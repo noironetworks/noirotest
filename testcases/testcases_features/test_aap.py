@@ -40,24 +40,5 @@ if not steps.verify_ep(aap_set=False):
 	LOG.error("Step: Virtual IP of EndPoint has AAP address associated: FAIL")
 else:
 	LOG.info("Step: Virtual IP of EndPoint has AAP address associated: [OK]")
-"""
-if not steps.verify_ep(True):
-	LOG.error("Promiscuous Mode of EndPoint after disabling: FAIL")
-else:
-	LOG.info("Promiscuous Mode of EndPoint after disabling: [OK]")
-if not steps.update_port(enable=True):
-	LOG.error("Enable back AAP on VM Port: FAIL")
-else:
-	LOG.info("Enable back AAP on VM Port: [OK]")
-if not steps.verify_port(True):
-	LOG.error("Step: AAP Status VM Port after enabling back: FAIL")
-else:
-	LOG.info("Step: AAP Status on VM Port after enabling back: [OK]")
-sleep(10)
-if not steps.verify_ep(False):
-	LOG.error("Promiscuous Mode of EndPoint after enbaling back: FAIL")
-else:
-	LOG.info("Promiscuous Mode of EndPoint after enabling back: [OK]")
-"""    	
 steps.cleanup()
 

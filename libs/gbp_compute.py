@@ -105,7 +105,6 @@ class Compute(object):
 	example: vm-name , should be passed as vm_name
 	"""
 	remoteFile = '/var/lib/opflex-agent-ovs/endpoints/%s_%s.ep' %(portID,portMAC)
-	import pdb; pdb.set_trace()
 	epfile = self.GetReadFiles(remoteFile)
 	if epfile:
 	    for key, value in kwargs.iteritems():

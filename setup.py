@@ -31,7 +31,7 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='root',apic_user='admin',
 			'~/noirotest_local/testcases/heat_temps/preexist_dnat_only.yaml',
 			'~/noirotest_local/testcases/heat_temps/preexist_snat_only.yaml',
 			'~/noirotest_local/testcases/heat_temps/heat_tmpl_regular_dp_tests.yaml',
-			'add_ssh_filter.py'
+			'~/noirotest_local/add_ssh_filter.py'
 			]:
          put(heat_templt,'~/')
     #Step-2: Restart the below services
@@ -91,7 +91,7 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='root',apic_user='admin',
    
     #Step-5: Copy the iptools-arping to the network-node of the fabric
     env.host_string = ntknode
-    put('iputils-arping_20121221-4ubuntu1_amd64.deb', '~/')
+    put('~/noirotest_local/iputils-arping_20121221-4ubuntu1_amd64.deb', '~/')
 
 
 if __name__ == "__main__":

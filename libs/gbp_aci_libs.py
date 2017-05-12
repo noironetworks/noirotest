@@ -14,24 +14,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import logging
-import os
 import re
 import json
 import requests
 import sys
-from time import sleep
-from commands import *
 from fabric.api import cd,run,env, hide, get, settings, local, lcd
 from raise_exceptions import *
 from passwdlib import *
-
-# Initialize logging
-logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)
-_log = logging.getLogger( __name__ )
-
-_log.setLevel(logging.INFO)
-_log.setLevel(logging.DEBUG)
 
 class gbpApic(object):
     def __init__(self, addr,mode='gbp',apicsystemID='noirolab',\
