@@ -158,6 +158,7 @@ class GbpNatFuncGlobalCfg(object):
 	if PLUGIN_TYPE:
 	    for l3out in [EXTSEG_PRI, EXTSEG_SEC]:
 	 	neutron.runcmd('neutron net-delete %s' %(l3out))
+	 	neutron.runcmd('gbp purge %s' %(ADMIN_TNTID))
         LOG.info("\nGlobal Config Clean-Up Completed")
 
     

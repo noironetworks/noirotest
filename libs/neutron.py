@@ -69,7 +69,6 @@ class neutronPy(object):
 	except Exception as e:
 	    print "Attach/Detach router from network failed: ",repr(e)
 	    raise
-		
 
     def create_net(self, netname, **kwargs):
 	try:
@@ -216,15 +215,14 @@ class neutronCli(object):
 		self.runcmd(cmd_user)
 		if tenant_id:
 		    tenant_id_list.append(tenant_id)
+	        if len(tenant_id_list) == 1:
+		    return tenant_id_list[0]
+	        if len(tenant_id_list) > 1:
+		    return tenant_id_list
 	    if action == 'delete':
 		for tnt in tenantList:
 		    cmd = 'openstack project delete %s' %(tnt)
 		    self.runcmd(cmd)
-	if action == 'create':
-	    if len(tenant_id_list) == 1:
-		return tenant_id_list[0]
-	    if len(tenant_id_list) > 1:
-		return tenant_id_list
 
     def getuuid(self,cmd_out):
         '''

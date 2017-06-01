@@ -6,6 +6,7 @@ import sys
 
 from time import sleep
 from testcases.config import conf
+from libs.keystone import Keystone
 from libs.gbp_aci_libs import gbpApic
 from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_nova_libs import gbpNova
@@ -72,6 +73,8 @@ gbpnova = gbpNova(CNTRLRIP)
 if PLUGIN_TYPE:
     from libs.neutron import *
     neutron = neutronCli(CNTRLRIP)
+keystone = Keystone(CNTRLRIP)
+ADMIN_TNTID = keystone.get_tenant_attribute('admin','id')
 
 class NatFuncTestMethods(object):
     """
@@ -455,14 +458,14 @@ class NatFuncTestMethods(object):
         # launch Nova VMs
         if gbpnova.vm_create_api(VM1_NAME,
                                       'ubuntu_multi_nics',
-                                      self.pt1id[1],
+                                      [{'port-id': self.pt1id[1]}],
                                       avail_zone=az1) == 0:
            LOG.error(
            "\n///// VM Create using PTG %s failed /////" %(PTG1NAME))
            return 0
         if gbpnova.vm_create_api(VM2_NAME,
                                       'ubuntu_multi_nics',
-                                      self.pt2id[1],
+                                      [{'port-id': self.pt2id[1]}],
                                       avail_zone=az2) == 0:
            LOG.error(
            "\n///// VM Create using PTG %s failed /////" %(PTG2NAME))
@@ -734,7 +737,8 @@ class NatFuncTestMethods(object):
            ptg_list = gbpcrud.get_gbp_policy_target_group_list()
            if len(ptg_list):
               for ptg in ptg_list:
-                gbpcrud.delete_gbp_policy_target_group(ptg, property_type='uuid')
+		if not 'auto' in ptg: #Exclude auto-PTGs from blind-cleanup
+                    gbpcrud.delete_gbp_policy_target_group(ptg, property_type='uuid')
            LOG.info("\nStep: Blind CleanUp: Delete L2Ps")
            l2p_list = gbpcrud.get_gbp_l2policy_list()
            if len(l2p_list):

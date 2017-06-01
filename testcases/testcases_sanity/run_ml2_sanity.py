@@ -38,7 +38,7 @@ try:
         raise TestError("ML2-SANITY: Test-4: Create Routers for both tenants ")
     else:
         LOG.info("ML2-SANITY: Test-4: Create Routers for both tenants : PASS")
-   
+    
     #Step 5:
     if create_external_network_subnets('nat') == 0:
         raise TestError(

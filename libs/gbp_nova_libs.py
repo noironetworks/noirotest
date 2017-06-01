@@ -152,21 +152,27 @@ class gbpNova(object):
         agg_id = self.avail_zone('api','create',availzone_name,avail_zone_name=availzone_name)
         self.nova.aggregates.add_host(agg_id,hostname)
         
-    def vm_create_api(self,vmname,vm_image,portid,
+    def vm_create_api(self,vmname,vm_image,nics,
 		      flavor_name='m1.medium',avail_zone='',
-		      ret_ip = False):
+		      ret_ip = False, max_count=1):
         """
         Call Nova API to create VM and check for ACTIVE status
+	nics:: For network, user should pass [{'net-id': ntkid}]
+		For port, user should pass [{'port-id': portid}]
         """
         vm_image = self.nova.images.find(name=vm_image)
         vm_flavor = self.nova.flavors.find(name=flavor_name)
-        port_id = [{'port-id': '%s' %(portid)}]
         if avail_zone != '':
            instance = self.nova.servers.create(name=vmname, image=vm_image,
-                                               flavor=vm_flavor, nics=port_id,
-                                               availability_zone=avail_zone)
+                                               flavor=vm_flavor, nics=nics,
+                                               availability_zone=avail_zone,
+						max_count=max_count)
         else:
-           instance = self.nova.servers.create(name=vmname, image=vm_image, flavor=vm_flavor, nics=port_id)
+           instance = self.nova.servers.create(name=vmname,
+						image=vm_image,
+						flavor=vm_flavor,
+						nics=nics,
+						max_count=max_count)
         print instance
         #Polling at 5 second intervals, until the status is ACTIVE
         vm_status = instance.status

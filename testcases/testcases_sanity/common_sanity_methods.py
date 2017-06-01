@@ -576,13 +576,13 @@ class crudGBP(object):
 	    if tnt == tnt1:
                 vm_ip = self.novatnt1.vm_create_api(vm,
                                       'ubuntu_multi_nics',
-                                      prop['port'],
+                                      [{'port-id': prop['port']}],
                                       avail_zone=az.next(),
 				      ret_ip = True)
 	    if tnt == tnt2:
                 vm_ip = self.novatnt2.vm_create_api(vm,
                                       'ubuntu_multi_nics',
-                                      prop['port'],
+                                      [{'port-id': prop['port']}],
                                       avail_zone=az.next(),
 				      ret_ip = True)
 	    if not vm_ip:

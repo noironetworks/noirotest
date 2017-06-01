@@ -3,7 +3,7 @@
 # Setup the testconfig file
 echo "Current Directory"
 pwd
-cp ../testcases/f8config.yaml ../testcases/testconfig.yaml
+cp ../testcases/f2config.yaml ../testcases/testconfig.yaml
 
 # Set passwordless ssh
 #cp /dev/null /home/noiro/.ssh/known_hosts
@@ -32,11 +32,11 @@ grep -r GBP-SANITY /tmp/test_sanity* >> ~/noirotest_local/forjenkins/cronejob
 grep -r 'FAIL' /tmp/test_sanity* >> ~/noirotest_local/forjenkins/results.log
 
 # TO RUN THE DP-Regression:
-#cd ~/noirotest_local/testcases/testcases_dp
-#echo "############ DP-REGRESSION-TESTs IN PROGRESS ############" >> ~/noirotest_local/forjenkins/cronejob
-#time python test_dp_runner.py >> ~/noirotest_local/forjenkins/cronejob
-#grep -r TEST_ /tmp/testsuite_* >> ~/noirotest_local/forjenkins/cronejob
-#grep -r 'FAIL' /tmp/testsuite_* >> ~/noirotest_local/forjenkins/results.log
+cd ~/noirotest_local/testcases/testcases_dp
+echo "############ DP-REGRESSION-TESTs IN PROGRESS ############" >> ~/noirotest_local/forjenkins/cronejob
+time python test_dp_runner.py >> ~/noirotest_local/forjenkins/cronejob
+grep -r TEST_ /tmp/testsuite_* >> ~/noirotest_local/forjenkins/cronejob
+grep -r 'FAIL' /tmp/testsuite_* >> ~/noirotest_local/forjenkins/results.log
 
 # TO RUN THE NAT-FUNCTIONALITY:
 cd ~/noirotest_local/testcases/testcases_nat_func
@@ -44,11 +44,3 @@ echo "############ NAT-FUNCTIONALITY-TESTs IN PROGRESS ############" >> ~/noirot
 time python test_gbp_nat_suite.py >> ~/noirotest_local/forjenkins/cronejob
 grep -r TEST /tmp/test_nat_* >> ~/noirotest_local/forjenkins/cronejob
 grep -r 'FAIL' /tmp/test_nat_* >> ~/noirotest_local/forjenkins/results.log
-
-# TO RUN THE FEATURE-SUITE
-cd ~/noirotest_local/testcases/testcases_features
-echo "############ FEATURE-TESTs IN PROGRESS ############" >> ~/noirotest_local/forjenkins/cronejob
-time python test_psec.py >> ~/noirotest_local/forjenkins/cronejob
-time python test_aap.py >> ~/noirotest_local/forjenkins/cronejob
-grep -r 'FAIL' /tmp/test_feature* >> ~/noirotest_local/forjenkins/results.log
-
