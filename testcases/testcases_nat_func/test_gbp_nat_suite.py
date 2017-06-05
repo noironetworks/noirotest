@@ -147,8 +147,6 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testLaunchVmsForEachPt():
            return 0
-        print "Sleeping for VM to come up ..."
-        sleep(10)
         if not self.steps.testAssociateFipToVMs():
            return 0
         sleep(10)
@@ -203,8 +201,6 @@ class NatGbpTestSuite(object):
                return 0
         if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
-        print "Sleeping for VM to come up ..."
-        sleep(10)
         if not self.steps.testCreateNatPoolAssociateExtSeg():
            return 0
         if not self.steps.testVerifyCfgdObjects():
@@ -241,8 +237,6 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
-        print "Sleeping for VM to come up ..."
-        sleep(10)
         if not self.steps.testCreateExtSegWithDefault(EXTSEG_PRI):
            return 0
         if not self.steps.testCreateUpdateExternalPolicy():
@@ -292,8 +286,6 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
-        print "Sleeping for VM to come up ..."
-        sleep(10)
         if not self.steps.testCreateExtSegWithDefault(EXTSEG_PRI):
            return 0
         if not self.steps.testCreateUpdateExternalPolicy():
@@ -357,8 +349,6 @@ class NatGbpTestSuite(object):
                return 0
         if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
-        print "Sleeping for VM to come up ..."
-        sleep(10)
         if self.flag != 'default_external_segment_name':
             if not self.steps.testAssociateExtSegToBothL3ps():
                return 0
@@ -422,8 +412,6 @@ class NatGbpTestSuite(object):
         #Intentionally launching VMs in same avail-zone/comp-node
         if not self.steps.testLaunchVmsForEachPt():
            return 0
-        print "Sleeping for VM to come up ..."
-        sleep(10)
         if not self.steps.testCreateExtSegWithDefault(EXTSEG_PRI):
            return 0
         if not self.steps.testCreateUpdateExternalPolicy():
@@ -516,8 +504,6 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
-        print "Sleeping for VM to come up ..."
-        sleep(40)
         self.forextrtr.add_route_in_extrtr(
                                           self.extrtr,
                                           self.fipsubnet1,
@@ -558,8 +544,6 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
-        print "Sleeping for VM to come up ..."
-        sleep(10)
         if not self.steps.testCreateExtSegWithDefault(EXTSEG_PRI):
            return 0
         if not self.steps.testCreateUpdateExternalPolicy():
@@ -624,8 +608,6 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testLaunchVmsForEachPt():
            return 0
-        print "Sleeping for VM to come up ..."
-        sleep(10)
         if not self.steps.testCreateUpdateExternalPolicy():
            return 0
         for ptgtype in ['internal','external']:
@@ -756,8 +738,6 @@ class NatGbpTestSuite(object):
         self.steps.AddSShContract(self.apicip) ## Adding SSH contract
         if not self.steps.testLaunchVmsForEachPt(az2=self.avail_zone):
            return 0
-        print "Sleeping for VM to come up ..."
-        sleep(10)
         if self.flag != 'default_external_segment_name':
             if not self.steps.testAssociateExtSegToBothL3ps():
                return 0

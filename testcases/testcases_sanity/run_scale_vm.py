@@ -20,7 +20,7 @@ az = alternate_az()
 
 class scale(object):
 
-    def ml2_scale_vm(self):
+    def create_vm(self):
 	network = neutron.create_net('SCALE-NET1')
 	neutron.create_subnet('SCALE-SUB',
 				'41.41.41.0/24',
@@ -32,9 +32,15 @@ class scale(object):
 			    flavor_name='m1.tiny',
 			    avail_zone='nova',
 			    max_count = 20)
-					
+
+    def delete_vm(self)					
+	for vmobj in nova.nova.servers.list():
+	    nova.nova.servers.delete(vmobj)
+
 run = scale()
-run.ml2_scale_vm()
+run.create_vm()
+
+nova.nova.servers.delete
 """
 for j in range(1, 7):                                                                                      
 

@@ -152,56 +152,85 @@ class gbpNova(object):
         agg_id = self.avail_zone('api','create',availzone_name,avail_zone_name=availzone_name)
         self.nova.aggregates.add_host(agg_id,hostname)
         
+    def get_vm_status(self,max_count):
+	"""
+	Fetches and evaluates the status of VMs
+	"""
+	status_try=1
+        while True:
+	    if len(self.nova.servers.list(
+			search_opts={'status': 'Active'}))== \
+			len(self.nova.servers.list()):
+		break	
+	    elif len(self.nova.servers.list(
+				search_opts={'status': 'ERROR'})):
+		_log.error("\nFollowing VMs are in ERROR state")
+		return 0
+	    else:
+	        status_try +=1
+	        sleep(1*max_count)
+	        if status_try > 60:
+	   	    _log.error("\nVMs has NO defined state, taking too "\
+					"long to spwan")
+		    return 0
+	return 1
+	
     def vm_create_api(self,vmname,vm_image,nics,
 		      flavor_name='m1.medium',avail_zone='',
-		      ret_ip = False, max_count=1):
+		      ret_ip = False, max_count=1,
+		      multihomed=False):
         """
         Call Nova API to create VM and check for ACTIVE status
 	nics:: For network, user should pass [{'net-id': ntkid}]
 		For port, user should pass [{'port-id': portid}]
+		In case of multi-home, pass list of values for
         """
-        vm_image = self.nova.images.find(name=vm_image)
-        vm_flavor = self.nova.flavors.find(name=flavor_name)
-        if avail_zone != '':
-           instance = self.nova.servers.create(name=vmname, image=vm_image,
-                                               flavor=vm_flavor, nics=nics,
-                                               availability_zone=avail_zone,
-						max_count=max_count)
-        else:
-           instance = self.nova.servers.create(name=vmname,
-						image=vm_image,
-						flavor=vm_flavor,
-						nics=nics,
-						max_count=max_count)
-        print instance
-        #Polling at 5 second intervals, until the status is ACTIVE
-        vm_status = instance.status
-        print vm_status
-        status_try=1
-        while vm_status != 'ACTIVE':
-          if status_try < 11:
-             sleep(10)
-             # Retrieve the instance again so the status field updates
-             instance = self.nova.servers.get(instance.id)
-             vm_status = instance.status
-          else:
-              _log.error("\nAfter waiting for 110 seconds, VM status is NOT ACTIVE")
-              return 0
-          status_try +=1
-	if ret_ip:
-	    return instance.networks.values()[0][0].encode('ascii')
-        return 1
-
+	try:
+            vm_image = self.nova.images.find(name=vm_image)
+            vm_flavor = self.nova.flavors.find(name=flavor_name)
+            if avail_zone:
+           	self.nova.servers.create(name=vmname,
+ 				    image=vm_image,
+                                    flavor=vm_flavor,
+				    nics=nics,
+                                    availability_zone=avail_zone,
+				    max_count=max_count)
+            else:
+           	self.nova.servers.create(name=vmname,
+		  		    image=vm_image,
+				    flavor=vm_flavor,
+				    nics=nics,
+				    max_count=max_count)
+	    if not self.get_vm_status(max_count):
+		return 0
+	    if ret_ip:
+		vmobject = self.nova.servers.list()
+		if max_count > 1: #Incase of scale
+		    vm_name_ip = {} #Using it for only scale
+		    for instance in vmobject:
+		        if multihomed: 
+			    ips = [ip.encode('ascii') for _list in \
+				instance.networks.values() for ip in _list]
+			else:
+			    ips = instance.networks.values()[0][0].encode('ascii')
+			vm_name_ip[instance.name] = ips    
+		else:
+		    for instance in vmobject:
+			if vmname == instance.name:
+		            return instance.networks.values()[0][0].encode('ascii')
+	except Exception as e:
+                _log.error(
+		'VM Creation Failed on Exception = %s\n' %(e))
+		import traceback; traceback.print_exc(file=sys.stdout)
+		return 0
+	return 1
+		
     def vm_create_cli(self,vmname,vm_image,ports,
                       avail_zone='',tenant=''):
         """
         Creates VM and checks for ACTIVE status
         tenant :: pass explicit tenant-name, if needed
         """
-        #There is a possibility that the NovaClass can be instantiated for
-        #for a given tenant-A, however in the same context user wants to 
-        #access a different tenant, hence the need of 'tenant' arg.
-        #ONLY applicable for CLI usage
         if not tenant:
             tenant=self.cred['project_id']
         cmd = 'nova --os-tenant-name %s boot --image ' %(tenant)+\

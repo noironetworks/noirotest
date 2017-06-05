@@ -10,9 +10,9 @@ cp ../testcases/f2config.yaml ../testcases/testconfig.yaml
 #python copysshkey.py
 
 # Setup the Fab
-python ../setup.py <<EOF
-YES
-EOF
+#python ../setup.py <<EOF
+#YES
+#EOF
 
 # Update the pkgs
 #python updatepkg.py
@@ -20,27 +20,27 @@ EOF
 # TO RUN THE SMOKE-TEST
 cd ~/noirotest_local/testcases/testcases_sanity
 # SMOKE-TEST for ML2 workflows
-echo "############ SANITY-ML2-TESTs IN PROGRESS ############" > ~/noirotest_local/forjenkins/cronejob
-time python run_ml2_sanity.py >> ~/noirotest_local/forjenkins/cronejob
-grep -r ML2-SANITY /tmp/test_sanity* >> ~/noirotest_local/forjenkins/cronejob
-grep -r 'FAIL' /tmp/test_sanity* > ~/noirotest_local/forjenkins/results.log
+echo "############ SANITY-ML2-TESTs IN PROGRESS ############" > ~/noirotest_local/forjenkins/cronejobFab2
+time python run_ml2_sanity.py >> ~/noirotest_local/forjenkins/cronejobFab2
+grep -r ML2-SANITY /tmp/test_sanity* >> ~/noirotest_local/forjenkins/cronejobFab2
+grep -r 'FAIL' /tmp/test_sanity* > ~/noirotest_local/forjenkins/results.log.Fab2
 
 # SMOKE-TEST for GBP workflows
-echo "############ SANITY-GBP-TESTs IN PROGRESS ############" >> ~/noirotest_local/forjenkins/cronejob
-time python run_gbp_sanity.py >> ~/noirotest_local/forjenkins/cronejob
-grep -r GBP-SANITY /tmp/test_sanity* >> ~/noirotest_local/forjenkins/cronejob
-grep -r 'FAIL' /tmp/test_sanity* >> ~/noirotest_local/forjenkins/results.log
+echo "############ SANITY-GBP-TESTs IN PROGRESS ############" >> ~/noirotest_local/forjenkins/cronejobFab2
+time python run_gbp_sanity.py >> ~/noirotest_local/forjenkins/cronejobFab2
+grep -r GBP-SANITY /tmp/test_sanity* >> ~/noirotest_local/forjenkins/cronejobFab2
+grep -r 'FAIL' /tmp/test_sanity* >> ~/noirotest_local/forjenkins/results.log.Fab2
 
 # TO RUN THE DP-Regression:
 cd ~/noirotest_local/testcases/testcases_dp
-echo "############ DP-REGRESSION-TESTs IN PROGRESS ############" >> ~/noirotest_local/forjenkins/cronejob
-time python test_dp_runner.py >> ~/noirotest_local/forjenkins/cronejob
-grep -r TEST_ /tmp/testsuite_* >> ~/noirotest_local/forjenkins/cronejob
-grep -r 'FAIL' /tmp/testsuite_* >> ~/noirotest_local/forjenkins/results.log
+echo "############ DP-REGRESSION-TESTs IN PROGRESS ############" >> ~/noirotest_local/forjenkins/cronejobFab2
+time python test_dp_runner.py >> ~/noirotest_local/forjenkins/cronejobFab2
+grep -r TEST_ /tmp/testsuite_* >> ~/noirotest_local/forjenkins/cronejobFab2
+grep -r 'FAIL' /tmp/testsuite_* >> ~/noirotest_local/forjenkins/results.log.Fab2
 
 # TO RUN THE NAT-FUNCTIONALITY:
 cd ~/noirotest_local/testcases/testcases_nat_func
-echo "############ NAT-FUNCTIONALITY-TESTs IN PROGRESS ############" >> ~/noirotest_local/forjenkins/cronejob
-time python test_gbp_nat_suite.py >> ~/noirotest_local/forjenkins/cronejob
-grep -r TEST /tmp/test_nat_* >> ~/noirotest_local/forjenkins/cronejob
-grep -r 'FAIL' /tmp/test_nat_* >> ~/noirotest_local/forjenkins/results.log
+echo "############ NAT-FUNCTIONALITY-TESTs IN PROGRESS ############" >> ~/noirotest_local/forjenkins/cronejobFab2
+time python test_gbp_nat_suite.py >> ~/noirotest_local/forjenkins/cronejobFab2
+grep -r TEST /tmp/test_nat_* >> ~/noirotest_local/forjenkins/cronejobFab2
+grep -r 'FAIL' /tmp/test_nat_* >> ~/noirotest_local/forjenkins/results.log.Fab2

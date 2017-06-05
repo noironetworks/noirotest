@@ -164,7 +164,7 @@ class crudML2(object):
     Cidrs[ml2tnt1] = ['11.11.11.0/28', '21.21.21.0/28']
 
     def create_ml2_tenants(self):
-	neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create')
+	self.ml2tntIDs = neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create',getid=True)
 	return None
     def create_pvt_network_subnets(self,nonat=False):
         LOG.info(
@@ -388,6 +388,9 @@ class crudML2(object):
 	        pass
 	neutron.runcmd('neutron net-delete Management-Out')
 	neutron.runcmd('neutron net-delete Datacenter-Out')
+	#Purge all resource/config if missed by above cleanups
+	for tnt in self.ml2tntIDs:
+	    neutron.purgeresource(tnt)
 
 class crudGBP(object):
     from libs.gbp_nova_libs import gbpNova
@@ -407,7 +410,7 @@ class crudGBP(object):
     vms[tnt2] = GBPvms[tnt2]
 
     def create_gbp_tenants(self):
-        neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create')
+        self.gbptntIDs = neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create',getid=True)
 	from libs.gbp_nova_libs import gbpNova
         self.gbptnt1 = GBPCrud(CNTRLIP,tenant=tnt1)
         self.gbptnt2 = GBPCrud(CNTRLIP,tenant=tnt2)
@@ -898,10 +901,13 @@ class crudGBP(object):
 	    except Exception as e:
 		print "Exception in Cleanup == ", repr(e)
 		pass
-	    neutron.runcmd('neutron subnetpool-delete %s' %(gbp_nonat_sps))
-	    neutron.runcmd('neutron address-scope-delete %s' %(gbp_nonat_ads))
-	    neutron.runcmd('neutron net-delete Management-Out')
-	    neutron.runcmd('neutron net-delete Datacenter-Out')
+	neutron.runcmd('neutron subnetpool-delete %s' %(gbp_nonat_sps))
+	neutron.runcmd('neutron address-scope-delete %s' %(gbp_nonat_ads))
+	neutron.runcmd('neutron net-delete Management-Out')
+	neutron.runcmd('neutron net-delete Datacenter-Out')
+	#Purge all resource/config if missed by above cleanups
+	for tnt in self.gbptntIDs:
+	    	neutron.purgeresource(tnt)
 	return 1
 
 class verifyML2(object):

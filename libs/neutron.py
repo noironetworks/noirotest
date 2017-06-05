@@ -199,7 +199,7 @@ class neutronCli(object):
 		except:
 		   pass
 
-    def addDelkeystoneTnt(self,tenantList,action):
+    def addDelkeystoneTnt(self,tenantList,action,getid=False):
 	'''
 	Add/Delete Tenants in Openstack
 	action: valid strings are 'create','delete'
@@ -207,22 +207,20 @@ class neutronCli(object):
 	if not isinstance(tenantList,list):
 	    tenantList = [tenantList]
 	tenant_id_list = []
-	for tnt in tenantList:
-	    if action == 'create':
+	if action == 'create':
+	    for tnt in tenantList:
 		cmd_tnt = 'openstack project create %s' %(tnt)
 		tenant_id = self.getuuid(self.runcmd(cmd_tnt))
 		cmd_user = 'openstack role add --user admin --project %s admin' %(tnt)
 		self.runcmd(cmd_user)
 		if tenant_id:
 		    tenant_id_list.append(tenant_id)
-	        if len(tenant_id_list) == 1:
-		    return tenant_id_list[0]
-	        if len(tenant_id_list) > 1:
+	    if getid and tenant_id_list:
 		    return tenant_id_list
-	    if action == 'delete':
-		for tnt in tenantList:
-		    cmd = 'openstack project delete %s' %(tnt)
-		    self.runcmd(cmd)
+	if action == 'delete':
+	    for tnt in tenantList:
+	        cmd = 'openstack project delete %s' %(tnt)
+	        self.runcmd(cmd)
 
     def getuuid(self,cmd_out):
         '''
@@ -426,10 +424,11 @@ class neutronCli(object):
             tenantIDList = [tenantIDList]
 	for tenant_id in tenantIDList:
 	    cmd1 = 'gbp purge %s' %(tenant_id)
-	    cmd2 = 'aimctl manager application-profile-delete prj_%s OpenStack' %(tenant_id)
-	    cmd3 = 'aimctl manager tenant-delete  prj_%s' %(tenant_id)
-	    cmd4 = 'openstack project delete %s' %(tenant_id)
-	    for cmd in [cmd1, cmd2, cmd3, cmd4]:
+	    cmd2 = 'aimctl manager vrf-delete prj_%s DefaultVRF' %(tenant_id)
+	    cmd3 = 'aimctl manager application-profile-delete prj_%s OpenStack' %(tenant_id)
+	    cmd4 = 'aimctl manager tenant-delete  prj_%s' %(tenant_id)
+	    cmd5 = 'openstack project delete %s' %(tenant_id)
+	    for cmd in [cmd1, cmd2, cmd3, cmd4, cmd5]:
 	        self.runcmd(cmd) #Only cmd1, i.e. gbp/neutron resource will be deleted
 		if resourceOnly:
 		    break
