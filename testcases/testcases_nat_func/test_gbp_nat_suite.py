@@ -377,7 +377,13 @@ class NatGbpTestSuite(object):
            return 0
         if not self.steps.testUpdateNatPoolAssociateExtSeg(DcExtsegid):
            return 0
-        if not self.steps.testCreateUpdateExternalPolicy(update=1,extseg=DcExtsegid):
+        if not self.steps.testCreateUpdateExternalPolicy(extseg=DcExtsegid,
+                                                        extpol=''):
+           return 0
+        if not self.steps.testApplyUpdatePrsToPtg(
+                                   'external',
+                                   PRS_ICMP_TCP
+                                   ):
            return 0
         if not self.steps.testAssociateFipToVMs(ExtSegName=EXTSEG_SEC):
            return 0

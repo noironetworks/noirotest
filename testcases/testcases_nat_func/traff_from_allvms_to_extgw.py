@@ -44,6 +44,9 @@ class NatTraffic(object):
         :: proto - 'all'/'icmp'/'tcp', all = both icmp & tcp
         """
         print 'Results from the Traffic Run == ', results
+        if results == 2: #Target VMs are unreachable(not pingable)
+            return 0
+
         print 'TARGET VM IPs == ', target_vm_ip
         failed = {}
         for key, val in results.iteritems():
@@ -92,8 +95,9 @@ class NatTraffic(object):
             vm_to_ip_list = [ip.encode('ascii') for ip in vm_to_ip_list]
             src_vm_pvt_ip_subnet = re.search(
                 '(\d+.\d+.\d+).\d+', vm_to_ip_list[0].encode('ascii'), re.I).group(1)
-            src_vm_dhcp_ns = self.gbpcfg.get_netns(
-                self.ntk_node, src_vm_pvt_ip_subnet)
+            src_vm_dhcp_ns = self.gbpcfg.get_netns(vm)
+            #src_vm_dhcp_ns = self.gbpcfg.get_netns(
+            #    self.ntk_node, src_vm_pvt_ip_subnet)
             self.vm_to_ip_ns[vm] = [vm_to_ip_list, src_vm_dhcp_ns]
         print 'VM-to-IP-NS == %s' % (self.vm_to_ip_ns)
 

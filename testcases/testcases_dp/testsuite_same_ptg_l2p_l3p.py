@@ -57,7 +57,8 @@ class test_same_ptg_same_l2p_same_l3p(object):
         self.test_7_prs = objs_uuid['demo_ruleset_all_id']
         self.vm1_ip = self.gbpcfg.get_vm_subnet('VM1')[0]
         self.vm1_subn = self.gbpcfg.get_vm_subnet('VM1')[1]
-        self.dhcp_ns = self.gbpcfg.get_netns(self.ntk_node, self.vm1_subn)
+        #self.dhcp_ns = self.gbpcfg.get_netns(self.ntk_node, self.vm1_subn)
+        self.dhcp_ns = self.gbpcfg.get_netns('VM1')
 
     def test_runner(self, log_string, location):
         """

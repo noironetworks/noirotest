@@ -420,7 +420,11 @@ class gbpApic(object):
         if tnt == 'common':
                tntdn = 'tn-common'
         else:
-            tntdn = self.getTenant()[tnt]
+           try:
+                tntdn = self.getTenant()[tnt]
+           except KeyError:
+               print "Tenant %s not found in APIC" %(tnt)
+               return 0
         path = '/api/node/mo/%s/flt-noiro-ssh.json' %(tntdn)
         data = '{"vzFilter":{"attributes":{"dn":"%s/flt-noiro-ssh","name":"noiro-ssh","rn":"flt-noiro-ssh","status":"created,modified"},"children":[{"vzEntry":{"attributes":{"dn":"%s/flt-noiro-ssh/e-ssh","name":"ssh","etherT":"ip","prot":"tcp","sFromPort":"22","sToPort":"22","rn":"e-ssh","status":"created,modified"},"children":[]}},{"vzEntry":{"attributes":{"dn":"%s/flt-noiro-ssh/e-rev-ssh","name":"rev-ssh","etherT":"ip","prot":"tcp","dFromPort":"22","dToPort":"22","rn":"e-rev-ssh","status":"created,modified"},"children":[]}}]}}' %(3*(tntdn,))
         results = self.post(path, data)
