@@ -252,6 +252,32 @@ class gbpNova(object):
         sleep(5)
         return self.check_vm_status('create',vmname,tenant=tenant)
                 
+    def vm_migrate(self, vmname, dest_compute, method='cli', tenant=''):
+        """
+        Live migrate an Instance
+        dest_compute:: fqdn of the compute-node as appears in nova
+        method :: 'api' or 'cli'. IFF 'cli', then pass 'tenant'
+                  if tenant != 'admin'
+        """
+        if method=='api':
+           vm_obj = self.nova.servers.find(name=vmname)
+           try:
+              vm_obj.live_migrate(host=dest_compute,
+                                  block_migration=True
+                                              )
+           except Exception as e:
+               print 'Error on Live Migration: '+repr(e)
+               return 0
+        else:
+           if not tenant:
+               tenant=self.cred['project_name']
+           cmd = 'nova --os-tenant-name %s live-migration' %(tenant)+\
+                 ' --block-migrate %s %s' %(vmname, dest_compute)
+           results = run_openstack_cli([cmd],self.cntrlrip,
+                                    username=self.username,
+                                    passwd=self.password)
+        return 1
+
     def vm_delete(self,vmname,method='cli',tenant=''):
         """
         Delete Instance 

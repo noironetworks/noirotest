@@ -54,7 +54,8 @@ class test_diff_ptg_diff_l2p_same_l3p(object):
         self.tcp_rule = 'demo_rule_tcp'
         self.vm7_ip = self.gbpcfg.get_vm_subnet('VM7')[0]
         self.vm7_subn = self.gbpcfg.get_vm_subnet('VM7')[1]
-        self.dhcp_ns = self.gbpcfg.get_netns(self.ntk_node, self.vm7_subn)
+        #self.dhcp_ns = self.gbpcfg.get_netns(self.ntk_node, self.vm7_subn)
+        self.dhcp_ns = self.gbpcfg.get_netns('VM7')
 
    
     def test_runner(self, log_string, location):

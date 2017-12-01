@@ -10,6 +10,7 @@ from libs.keystone import Keystone
 from libs.gbp_aci_libs import gbpApic
 from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_nova_libs import gbpNova
+from libs.neutron import *
 from libs.raise_exceptions import *
 from libs.gbp_utils import *
 from traff_from_extgw import *
@@ -47,6 +48,7 @@ NATIPPOOL1 = '50.50.50.0/24'
 NATIPPOOL2 = '60.60.60.0/24'
 SNATPOOL = '55.55.55.0/24'
 SNATCIDR = '55.55.55.1/24'
+SNATCIDR_EXTSEG_SEC = '66.66.66.1/24'
 L3PNAME = 'L3PNat'
 L3PIPPOOL = '20.20.20.0/24'
 L3PPREFLEN = 26
@@ -70,9 +72,7 @@ PRS_ICMP = 'PrsIcmp'
 PRS_TCP = 'PrsTcp'
 gbpcrud = GBPCrud(CNTRLRIP)
 gbpnova = gbpNova(CNTRLRIP)
-if PLUGIN_TYPE:
-    from libs.neutron import *
-    neutron = neutronCli(CNTRLRIP)
+neutron = neutronCli(CNTRLRIP)
 keystone = Keystone(CNTRLRIP)
 ADMIN_TNTID = keystone.get_tenant_attribute('admin','id')
 
@@ -127,7 +127,10 @@ class NatFuncTestMethods(object):
                    section is defined
         """
         patternchk = 'host_pool_cidr'
-        pattern = 'host_pool_cidr=%s' %(SNATCIDR)
+        if l3out == EXTSEG_SEC:
+             pattern = 'host_pool_cidr=%s' %(SNATCIDR_EXTSEG_SEC)
+        else:
+             pattern = 'host_pool_cidr=%s' %(SNATCIDR)
         section = 'apic_external_network:%s' %(l3out)
         if not delete:
             if flag == 'default_external_segment_name':
@@ -691,11 +694,7 @@ class NatFuncTestMethods(object):
                 "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
 	if not PLUGIN_TYPE:
         	aci=gbpApic(apicip)
-        	svcepglist = [
-                	'TestPtg1',
-                	'L2PNat'
-                	]
-        	aci.create_add_filter(svcepglist)
+                aci.create_add_filter('admin')
 	else:
 		if isinstance (run_remote_cli(
                               "python add_ssh_filter.py create",
@@ -737,8 +736,7 @@ class NatFuncTestMethods(object):
            ptg_list = gbpcrud.get_gbp_policy_target_group_list()
            if len(ptg_list):
               for ptg in ptg_list:
-		if not 'auto' in ptg: #Exclude auto-PTGs from blind-cleanup
-                    gbpcrud.delete_gbp_policy_target_group(ptg, property_type='uuid')
+                gbpcrud.delete_gbp_policy_target_group(ptg, property_type='uuid')
            LOG.info("\nStep: Blind CleanUp: Delete L2Ps")
            l2p_list = gbpcrud.get_gbp_l2policy_list()
            if len(l2p_list):

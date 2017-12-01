@@ -69,6 +69,7 @@ class neutronPy(object):
 	except Exception as e:
 	    print "Attach/Detach router from network failed: ",repr(e)
 	    raise
+		
 
     def create_net(self, netname, **kwargs):
 	try:
@@ -239,19 +240,19 @@ class neutronCli(object):
         if action == 'create':
 	   if external:
 	        if shared:
-	           cmd = 'neutron --os-tenant-name %s net-create %s --router:external --shared' %(tenant,name)
+	           cmd = 'neutron --os-project-name %s net-create %s --router:external --shared' %(tenant,name)
 	        else:
-	           cmd = 'neutron --os-tenant-name %s net-create %s --router:external' %(tenant,name)
+	           cmd = 'neutron --os-project-name %s net-create %s --router:external' %(tenant,name)
                 if aim:
                    cmd = cmd + ' %s' %(aim)
 	   else:
-	        cmd = 'neutron --os-tenant-name %s net-create %s' %(tenant,name)
+	        cmd = 'neutron --os-project-name %s net-create %s' %(tenant,name)
 	   ntkId = self.getuuid(self.runcmd(cmd))
 	   if ntkId:
 	       #print 'Output of ID ==\n', ntkId
 	       return ntkId
 	if action == 'delete':
-	   cmd = 'neutron --os-tenant-name %s net-delete %s' %(tenant,name)
+	   cmd = 'neutron --os-project-name %s net-delete %s' %(tenant,name)
            self.runcmd(cmd)
 
     def subnetcrud(self,name,action,ntkNameId,cidr=None,tenant='admin',
@@ -264,23 +265,23 @@ class neutronCli(object):
         """
 	if action == 'create':
             if extsub:
-	        cmd = 'neutron --os-tenant-name %s subnet-create %s %s --name %s --disable-dhcp'\
+	        cmd = 'neutron --os-project-name %s subnet-create %s %s --name %s --disable-dhcp'\
                       %(tenant,ntkNameId,cidr,name)
                 if aim:
                     cmd = cmd +' %s' %(aim)
             else:
 		if subnetpool:
-		    cmd = 'neutron --os-tenant-name %s ' %(tenant)+\
+		    cmd = 'neutron --os-project-name %s ' %(tenant)+\
 			  'subnet-create %s --subnetpool %s --name %s'\
 			  %(ntkNameId,subnetpool,name)
 		else:
-	            cmd = 'neutron --os-tenant-name %s subnet-create %s %s --name %s'\
+	            cmd = 'neutron --os-project-name %s subnet-create %s %s --name %s'\
 			  %(tenant,ntkNameId,cidr,name) 
 	    subnetId = self.getuuid(self.runcmd(cmd))
 	    if subnetId:
 	       return subnetId
 	if action == 'delete':
-	   cmd = 'neutron --os-tenant-name %s subnet-delete %s' %(tenant,name)	  
+	   cmd = 'neutron --os-project-name %s subnet-delete %s' %(tenant,name)	  
 	   self.runcmd(cmd)
 
     def rtrcrud(self,name,action,rtrprop='',gw='',subnet='',tenant='admin'):
@@ -292,11 +293,11 @@ class neutronCli(object):
         subnet: Name or ID of the subnet. Mandatory when rtrprop='interface'
         """
  	if rtrprop == 'gateway':
-	   cmd = 'neutron --os-tenant-name %s router-gateway-%s %s %s' %(tenant,action,name,gw)
+	   cmd = 'neutron --os-project-name %s router-gateway-%s %s %s' %(tenant,action,name,gw)
 	if rtrprop == 'interface':
-	   cmd = 'neutron --os-tenant-name %s router-interface-%s %s subnet=%s' %(tenant,action,name,subnet)
+	   cmd = 'neutron --os-project-name %s router-interface-%s %s subnet=%s' %(tenant,action,name,subnet)
 	if not rtrprop:
-	   cmd = 'neutron --os-tenant-name %s router-%s %s' %(tenant,action,name)
+	   cmd = 'neutron --os-project-name %s router-%s %s' %(tenant,action,name)
 	   if action == 'create':
 	      rtrId = self.getuuid(self.runcmd(cmd))
 	      if rtrId:
@@ -307,10 +308,10 @@ class neutronCli(object):
 		     shared=False, apicvrf=''):
         if action == 'create':
 	    if shared:
-	           cmd = 'neutron --os-tenant-name %s ' %(tenant)+\
+	           cmd = 'neutron --os-project-name %s ' %(tenant)+\
 			 'address-scope-create --shared %s %s ' %(name,ip)
 	    else:
-	           cmd = 'neutron --os-tenant-name %s ' %(tenant)+\
+	           cmd = 'neutron --os-project-name %s ' %(tenant)+\
 			 'address-scope-create %s %s ' %(name,ip)
 	    if apicvrf:
 	    	cmd = cmd + ' %s' %(apicvrf)
@@ -319,7 +320,7 @@ class neutronCli(object):
 	       #print 'Output of ID ==\n', ascId
 	       return ascId
 	if action == 'delete':
-	   cmd = 'neutron --os-tenant-name %s address-scope-delete %s' %(tenant,name)
+	   cmd = 'neutron --os-project-name %s address-scope-delete %s' %(tenant,name)
            self.runcmd(cmd)
 
     def subpoolcrud(self,name,action,address_scope='', pool='',
@@ -327,12 +328,12 @@ class neutronCli(object):
 	#if action:: 'create' , ONLY then address_scope,pool are mandatory
         if action == 'create':
 	    if shared:
-	           cmd = 'neutron --os-tenant-name %s subnetpool-create ' %(tenant)+\
+	           cmd = 'neutron --os-project-name %s subnetpool-create ' %(tenant)+\
 			 '--address-scope %s --shared ' %(address_scope)+\
 			 '--pool-prefix %s --default-prefixlen %s %s' \
 			 %(pool,prefix_len,name)
 	    else:
-	           cmd = 'neutron --os-tenant-name %s subnetpool-create ' %(tenant)+\
+	           cmd = 'neutron --os-project-name %s subnetpool-create ' %(tenant)+\
 			 '--address-scope %s ' %(address_scope)+\
 			 '--pool-prefix %s --default-prefixlen %s %s' \
 			 %(pool,prefix_len,name)
@@ -341,7 +342,7 @@ class neutronCli(object):
 	       #print 'Output of ID ==\n', spId
 	       return spId
 	if action == 'delete':
-	   cmd = 'neutron --os-tenant-name %s subnetpool-delete %s' %(tenant,name)
+	   cmd = 'neutron --os-project-name %s subnetpool-delete %s' %(tenant,name)
            self.runcmd(cmd)
 
     def Stripper(self,cmdout):
@@ -354,26 +355,26 @@ class neutronCli(object):
 	return final_IDlist
 
     def deleteAll(self,tenant):
-	cmd = 'neutron --os-tenant-name %s router-list -c id' %(tenant)
+	cmd = 'neutron --os-project-name %s router-list -c id' %(tenant)
 	cmd_out = self.runcmd(cmd)
 	if cmd_out:
 	    rtrList = self.Stripper(cmd_out)
 	    for rtr in rtrList:
-	         rtrout = self.runcmd('neutron --os-tenant-name %s router-port-list %s -c id' %(tenant,rtr))
+	         rtrout = self.runcmd('neutron --os-project-name %s router-port-list %s -c id' %(tenant,rtr))
 		 if rtrout:
 		    rtrportList = self.Stripper(rtrout)
 		    print rtrportList
 		    for port in rtrportList:
-		        portdelcmd = 'neutron --os-tenant-name %s router-interface-delete %s port="%s"' %(tenant,rtr,port)
+		        portdelcmd = 'neutron --os-project-name %s router-interface-delete %s port="%s"' %(tenant,rtr,port)
 			self.runcmd(portdelcmd)
-		 self.runcmd('neutron --os-tenant-name %s router-delete %s' %(tenant,rtr))   
-	cmdnet = 'neutron --os-tenant-name %s net-list -c id' %(tenant)
+		 self.runcmd('neutron --os-project-name %s router-delete %s' %(tenant,rtr))   
+	cmdnet = 'neutron --os-project-name %s net-list -c id' %(tenant)
 	cmdOut = self.runcmd(cmdnet)
 	if cmdOut:
 		netList = self.Stripper(cmdOut)
 	if netList:
 	   for net in netList:
-		self.runcmd('neutron --os-tenant-name %s net-delete %s' %(tenant,net))
+		self.runcmd('neutron --os-project-name %s net-delete %s' %(tenant,net))
 
     def alternate_az(self,avzone):
 	"Alternately returns AvailZone for alternate VM placement"
@@ -388,21 +389,21 @@ class neutronCli(object):
 	hostname as it appears in nova hypervisor-list
         """
         if net:
-           cmd = 'nova --os-tenant-name %s boot %s --image ubuntu_multi_nics --flavor m1.large --nic net-id=%s' %(tenant,vmname,net)
+           cmd = 'nova --os-project-name %s boot %s --image ubuntu_multi_nics --flavor m1.large --nic net-id=%s' %(tenant,vmname,net)
         if port:
-           cmd = 'nova --os-tenant-name %s boot %s --image ubuntu_multi_nics --flavor m1.large --nic port-id=%s' %(tenant,vmname,port)
+           cmd = 'nova --os-project-name %s boot %s --image ubuntu_multi_nics --flavor m1.large --nic port-id=%s' %(tenant,vmname,port)
 	if availzone:
 	   cmd = cmd+' --availability-zone %s' %(availzone)
         if self.runcmd(cmd):
 	    sleep(5)
-	    vmout = self.runcmd('nova --os-tenant-name %s show %s | grep network' %(tenant,vmname))
+	    vmout = self.runcmd('nova --os-project-name %s show %s | grep network' %(tenant,vmname))
 	    match = re.search("\\b(\d+.\d+.\d+.\d+)\\b.*",vmout,re.I)
 	    if match:
 		vmip = match.group(1)
 		num_try = 1
 		while num_try < 6:
 		    sleep(5)
-		    _out = self.runcmd('nova --os-tenant-name %s interface-list %s | grep ACTIVE'\
+		    _out = self.runcmd('nova --os-project-name %s interface-list %s | grep ACTIVE'\
 				   %(tenant,vmname))
 		    if _out or num_try == 5:
 		         break
@@ -424,11 +425,10 @@ class neutronCli(object):
             tenantIDList = [tenantIDList]
 	for tenant_id in tenantIDList:
 	    cmd1 = 'gbp purge %s' %(tenant_id)
-	    cmd2 = 'aimctl manager vrf-delete prj_%s DefaultVRF' %(tenant_id)
-	    cmd3 = 'aimctl manager application-profile-delete prj_%s OpenStack' %(tenant_id)
-	    cmd4 = 'aimctl manager tenant-delete  prj_%s' %(tenant_id)
-	    cmd5 = 'openstack project delete %s' %(tenant_id)
-	    for cmd in [cmd1, cmd2, cmd3, cmd4, cmd5]:
+	    cmd2 = 'aimctl manager application-profile-delete prj_%s OpenStack' %(tenant_id)
+	    cmd3 = 'aimctl manager tenant-delete  prj_%s' %(tenant_id)
+	    cmd4 = 'openstack project delete %s' %(tenant_id)
+	    for cmd in [cmd1, cmd2, cmd3, cmd4]:
 	        self.runcmd(cmd) #Only cmd1, i.e. gbp/neutron resource will be deleted
 		if resourceOnly:
 		    break

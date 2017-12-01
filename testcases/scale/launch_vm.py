@@ -23,6 +23,7 @@ for j in range(1, 7):
     for pt in pt_dict.itervalues():
         vm_name = '%s_scale_vm_%s' % (j, i)   
         print vm_name
-        gbp_nova.vm_create_api(vm_name, 'cirros', pt, 'm1.tiny', 'nova')
+        gbp_nova.vm_create_api(vm_name, 'cirros',
+                               [{'port-id': pt}], 'm1.tiny', 'nova')
         #gbp_nova.vm_delete(vm_name, 'api')
         i = i + 1

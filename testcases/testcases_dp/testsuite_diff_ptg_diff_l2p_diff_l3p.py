@@ -53,7 +53,8 @@ class test_diff_ptg_diff_l2p_diff_l3p(object):
         self.test_9_prs = objs_uuid['demo_ruleset_all_id']
         self.vm10_ip = self.gbpcfg.get_vm_subnet('VM10')[0]
         self.vm10_subn = self.gbpcfg.get_vm_subnet('VM10')[1]
-        self.dhcp_ns = self.gbpcfg.get_netns(self.ntk_node, self.vm10_subn)
+        #self.dhcp_ns = self.gbpcfg.get_netns(self.ntk_node, self.vm10_subn)
+        self.dhcp_ns = self.gbpcfg.get_netns('VM10')
 
     def test_runner(self, log_string, location):
         """

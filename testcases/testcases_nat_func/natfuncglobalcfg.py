@@ -159,6 +159,12 @@ class GbpNatFuncGlobalCfg(object):
 	    for l3out in [EXTSEG_PRI, EXTSEG_SEC]:
 	 	neutron.runcmd('neutron net-delete %s' %(l3out))
 	 	neutron.runcmd('gbp purge %s' %(ADMIN_TNTID))
+        else:
+            nets = neutron.runcmd("neutron net-list -F name -f value")
+            for net in nets:
+                if net.startswith("apic_owned_"):
+                    neutron.runcmd('neutron net-delete %s' %(net))
+
         LOG.info("\nGlobal Config Clean-Up Completed")
 
     

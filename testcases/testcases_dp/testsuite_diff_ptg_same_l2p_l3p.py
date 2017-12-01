@@ -52,7 +52,8 @@ class test_diff_ptg_same_l2p_l3p(object):
         self.test_7_prs = objs_uuid['demo_ruleset_all_id']
         self.vm4_ip = self.gbpcfg.get_vm_subnet('VM4')[0]
         self.vm4_subn = self.gbpcfg.get_vm_subnet('VM4')[1]
-        self.dhcp_ns = self.gbpcfg.get_netns(self.ntk_node, self.vm4_subn)
+        #self.dhcp_ns = self.gbpcfg.get_netns(self.ntk_node, self.vm4_subn)
+        self.dhcp_ns = self.gbpcfg.get_netns('VM4')
         self.udp_rule = 'demo_rule_udp'  # JISHNU: name appears as in heat template
         self.icmp_rule = 'demo_rule_icmp'
         self.tcp_rule = 'demo_rule_tcp'

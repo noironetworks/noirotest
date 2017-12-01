@@ -135,6 +135,12 @@ def attach_fip_to_vms(tnt,mode):
                    'floating-ip-associate %s %s' %(vm,fip)
 	    neutron.runcmd(cmd2)
 
+def migrate_vm(mode,dest_host):
+    from libs.gbp_nova import gbpNova
+    if mode == 'ml2':
+        nova = gbpNova(CNTRLIP,tenant=TNT_LIST_ML2[0])
+        nova.vm_migrate(method='api')
+
 def dump_results(mode):
     import commands
     text = commands.getoutput("grep -r %s-SANITY /tmp/test_sanity.log" %(mode)) 
@@ -391,6 +397,7 @@ class crudML2(object):
 	#Purge all resource/config if missed by above cleanups
 	for tnt in self.ml2tntIDs:
 	    neutron.purgeresource(tnt)
+
 
 class crudGBP(object):
     from libs.gbp_nova_libs import gbpNova
@@ -996,6 +1003,7 @@ class sendTraffic(object):
 	# valid strings for traffic_type:: 'inter_bd', 'intra_bd', 'intra_epg'
 	test_vms = self.get_epg_vms(tnt,traffic_type)
 	print 'After EPG based classification of VMs ', test_vms	
+        failed_traff = 0
 	for vm,vm_property in test_vms.iteritems():
 	    if ext:
 		target_ips = [EXTRTRIP1,EXTRTRIP2]
@@ -1005,11 +1013,21 @@ class sendTraffic(object):
 	    vm_traff = gbpExpTraff(COMPUTE1,vm_property['netns'],
 				vm_property['src_ip'],
 				target_ips)
-	    if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1):
-		#Sleep for 5s and re-run traffic again
-		sleep(5)
-		if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1):
-	            return 0
+            iter=1
+            while True:
+               if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1):
+                   iter+=1
+                   #Sleep for 1s and re-run traffic again
+                   sleep(1)
+                   if iter > 2:
+                        failed_traff = 1
+                        break
+               else:
+                   break
+        if failed_traff:
+            return 0
+        else:
+           return 1
 	
     def traff_from_extrtr_to_fips(self,mode,tnt):
         """

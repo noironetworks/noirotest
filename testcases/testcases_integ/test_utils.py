@@ -24,7 +24,8 @@ def verify_traff(ntk_node,vm_loc='default',proto=['all']):
         gbpcfg = gbpCfgCli()
         vm4_ip = gbpcfg.get_vm_subnet('VM4')[0]
         vm4_subn = gbpcfg.get_vm_subnet('VM4')[1]
-        dhcp_ns = gbpcfg.get_netns(ntk_node,vm4_subn)
+        #dhcp_ns = gbpcfg.get_netns(ntk_node,vm4_subn)
+        dhcp_ns = gbpcfg.get_netns('VM4')
         vm5_ip = gbpcfg.get_vm_subnet('VM5',ret='ip')
         vm6_ip = gbpcfg.get_vm_subnet('VM6',ret='ip')
         print "VM4_IP = %s, VM4_SUBN = %s, VM5_IP = %s, VM6_IP = %s, DHCP_NS = %s" %(vm4_ip,vm4_subn,vm5_ip,vm6_ip,dhcp_ns)

@@ -76,7 +76,7 @@ class gbpCfgCli(object):
                        -- name_uuid == UUID or name_string\n''')
            return 0
         #Build the command with mandatory param 'name_uuid' 
-        cmd_tnt = 'gbp --os-tenant-name %s ' %(tenant)
+        cmd_tnt = 'gbp --os-project-name %s ' %(tenant)
         if cmd_val == 0:
            cmd = cmd_tnt+'policy-action-delete '+str(name_uuid)
         if cmd_val == 1:
@@ -113,7 +113,7 @@ class gbpCfgCli(object):
                       --name_uuid == UUID or name_string\n''')
            return 0
         #Build the command with mandatory param 'classifier_name'
-        cmd_tnt = 'gbp --os-tenant-name %s ' %(tenant)
+        cmd_tnt = 'gbp --os-project-name %s ' %(tenant)
         if cmd_val == 0:
            cmd = cmd_tnt+'policy-classifier-delete '+str(name_uuid)
         if cmd_val == 1:
@@ -158,7 +158,7 @@ class gbpCfgCli(object):
                       -- name_uuid == UUID or name_string\n''')
            return 0
         #Build the command with mandatory params
-        cmd_tnt = 'gbp --os-tenant-name %s ' %(tenant)
+        cmd_tnt = 'gbp --os-project-name %s ' %(tenant)
         if cmd_val == 0:
            cmd = cmd_tnt+'%s-delete ' % cfgobj_dict[cfgobj]+str(name_uuid)
         if cmd_val == 1:
@@ -171,6 +171,7 @@ class gbpCfgCli(object):
              arg=string.replace(arg,'_','-')
           cmd = cmd + " --" + "".join( '%s=%s' %(arg, value ))
         # Execute the cmd
+        print "GBP CLI command: %s" % cmd
         cmd_out = self.exe_command(cmd)
         if cmd_out:
             # If try clause succeeds for "create" cmd then parse the cmd_out to extract the UUID of the object
@@ -237,7 +238,7 @@ class gbpCfgCli(object):
                       -- name_uuid == UUID or name_string\n''')
            return 0
         #Build the command with mandatory params
-        cmd_tnt = 'gbp --os-tenant-name %s ' %(tenant)
+        cmd_tnt = 'gbp --os-project-name %s ' %(tenant)
         cmd = cmd_tnt+'%s-update ' % cfgobj_dict[cfgobj]+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
         for arg, value in attr.iteritems():
@@ -265,7 +266,7 @@ class gbpCfgCli(object):
            if cfgobj not in cfgobj_dict:
               raise KeyError
         #Build the command with mandatory params
-        cmd_tnt = 'gbp --os-tenant-name %s ' %(tenant)
+        cmd_tnt = 'gbp --os-project-name %s ' %(tenant)
         cmd = cmd_tnt+'%s-list -c id ' % cfgobj_dict[cfgobj]
         cmd_out = self.exe_command(cmd)
         _out=cmd_out.split('\n')
@@ -277,7 +278,18 @@ class gbpCfgCli(object):
             cmd_out = self.exe_command(cmd)
         return 1 
 
-    def get_netns(self,net_node_ip,subnet):
+    def get_netns(self,vm_name):
+        cmd = "nova list | grep ' %s ' | awk -F'|' '{print $7}' | awk -F'=' '{print $1}'" % vm_name
+        print cmd
+        net_name = self.exe_command(cmd)
+        print net_name
+        cmd = "openstack network show %s -c id -f value" % net_name
+        print cmd
+        network_id = self.exe_command(cmd)
+        print "network_id: " + network_id
+        return 'qdhcp-' + network_id
+
+    def _get_netns(self,net_node_ip,subnet):
         """
         Returns the Network Node's Ntk NameSpace
         Associated with every VM

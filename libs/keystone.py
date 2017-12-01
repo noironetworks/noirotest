@@ -1,4 +1,5 @@
-from keystoneclient.v2_0 import client as kc
+#from keystoneclient.v2_0 import client as kc
+from keystoneclient.v3 import client as kc
 
 class Keystone(object):
     def __init__(self, ostack_controller, username='admin',
@@ -7,7 +8,14 @@ class Keystone(object):
         cred['username'] = username
         cred['password'] = password
         cred['tenant_name'] = tenant_name
+        #cred['auth_url'] = "http://%s:5000/v2.0/" % ostack_controller
         cred['auth_url'] = "http://%s:5000/v2.0/" % ostack_controller
+        cred['auth_plugin'] = 'v3password'
+        cred['auth_url'] = 'http://%s:35357/v3' % ostack_controller
+        cred['user_domain_name'] = 'default'
+        cred['project_domain_name'] = 'default'
+        cred['project_name'] = tenant_name
+
         self.client = kc.Client(**cred)
 
     def get_token(self):
@@ -20,16 +28,16 @@ class Keystone(object):
 	tenant objects
 	"""
 	if obj:
-	    return self.client.tenants.list()
+	    return self.client.projects.list()
 	else:
 	    tntnameID = {}
-            tntlist = self.client.tenants.list()
+            tntlist = self.client.projects.list()
 	    for tnt in tntlist:
 		tntnameID[tnt.name.encode()]=tnt.id.encode()
 	    return tntnameID	
 
     def get_tenant(self, tenant_name):
-        tntlist = self.client.tenants.list()
+        tntlist = self.client.projects.list()
         for tnt in tntlist:
             if tnt.name == tenant_name:
                return tnt
@@ -44,7 +52,7 @@ class Keystone(object):
         if self.tenant_exists(tenant_name):
             return
         try:
-            return self.client.tenants.create(tenant_name=tenant_name,
+            return self.client.projects.create(project_name=tenant_name,
                                            enabled=enabled)
         except:
             return None
@@ -102,19 +110,19 @@ class Keystone(object):
         hstack_owner_role_id = self.get_role_attribute('heat_stack_owner', 'id')
         member_role_id = self.get_role_attribute('_member_', 'id')
 
-        self.client.roles.add_user_role(user=demo_user_id, role=hstack_owner_role_id, tenant=hr_id)
-        self.client.roles.add_user_role(user=demo_user_id, role=member_role_id, tenant=hr_id)
-        self.client.roles.add_user_role(user=demo_user_id, role=hstack_owner_role_id, tenant=eng_id)
-        self.client.roles.add_user_role(user=demo_user_id, role=member_role_id, tenant=eng_id)
+        self.client.roles.add_user_role(user=demo_user_id, role=hstack_owner_role_id, project=hr_id)
+        self.client.roles.add_user_role(user=demo_user_id, role=member_role_id, project=hr_id)
+        self.client.roles.add_user_role(user=demo_user_id, role=hstack_owner_role_id, project=eng_id)
+        self.client.roles.add_user_role(user=demo_user_id, role=member_role_id, project=eng_id)
 
-        self.client.roles.add_user_role(user=admin_user_id, role=hstack_owner_role_id, tenant=hr_id)
-        self.client.roles.add_user_role(user=admin_user_id, role=member_role_id, tenant=hr_id)
-        self.client.roles.add_user_role(user=admin_user_id, role=hstack_owner_role_id, tenant=eng_id)
-        self.client.roles.add_user_role(user=admin_user_id, role=member_role_id, tenant=eng_id)
+        self.client.roles.add_user_role(user=admin_user_id, role=hstack_owner_role_id, project=hr_id)
+        self.client.roles.add_user_role(user=admin_user_id, role=member_role_id, project=hr_id)
+        self.client.roles.add_user_role(user=admin_user_id, role=hstack_owner_role_id, project=eng_id)
+        self.client.roles.add_user_role(user=admin_user_id, role=member_role_id, project=eng_id)
 
-        self.client.roles.add_user_role(user=neutron_user_id, role=hstack_owner_role_id, tenant=hr_id)
-        self.client.roles.add_user_role(user=neutron_user_id, role=member_role_id, tenant=hr_id)
-        self.client.roles.add_user_role(user=neutron_user_id, role=hstack_owner_role_id, tenant=eng_id)
-        self.client.roles.add_user_role(user=neutron_user_id, role=member_role_id, tenant=eng_id)
+        self.client.roles.add_user_role(user=neutron_user_id, role=hstack_owner_role_id, project=hr_id)
+        self.client.roles.add_user_role(user=neutron_user_id, role=member_role_id, project=hr_id)
+        self.client.roles.add_user_role(user=neutron_user_id, role=hstack_owner_role_id, project=eng_id)
+        self.client.roles.add_user_role(user=neutron_user_id, role=member_role_id, project=eng_id)
 
 

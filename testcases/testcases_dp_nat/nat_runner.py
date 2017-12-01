@@ -110,6 +110,7 @@ def main():
         # Verify the config setup on the ACI
 	print 'Sleeping for the EP learning on ACI Fab'
 	sleep(30)   
+        """ #JISHNU: commented out for now 07/25/17
 	if options.pertenantnatepg:
 	    if not testbed_cfg.verifySetup(nat_type,
                                            pertntnatEpg=True):
@@ -125,6 +126,7 @@ def main():
 	        print \
                     'DNAT TestSuite Execution Failed'
                 sys.exit(1)
+        """
         # Note: Please always maintain the below order of DNAT Test Execution
         # Since the DNAT_VM_to_VM has the final blind cleanup, which helps to
         # avoid the heat stack-delete failure coming from nat_dp_main_config
