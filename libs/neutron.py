@@ -5,7 +5,10 @@ from time import sleep
 from fabric.api import cd, run, env, hide, get, settings
 from fabric.context_managers import *
 from neutronclient.v2_0 import client as nclient
+from testcases.config import conf
 
+max_vm_wait = conf.get('vm_wait', 20)
+max_vm_tries = conf.get('vm_tries', 10)
 class neutronPy(object):
     def __init__(self, controllerIp, username='admin', password='noir0123', tenant='admin'):
         cred = {}
@@ -395,17 +398,17 @@ class neutronCli(object):
 	if availzone:
 	   cmd = cmd+' --availability-zone %s' %(availzone)
         if self.runcmd(cmd):
-	    sleep(5)
+	    sleep(20)
 	    vmout = self.runcmd('nova --os-project-name %s show %s | grep network' %(tenant,vmname))
 	    match = re.search("\\b(\d+.\d+.\d+.\d+)\\b.*",vmout,re.I)
 	    if match:
 		vmip = match.group(1)
 		num_try = 1
-		while num_try < 6:
-		    sleep(5)
+		while num_try < max_vm_tries:
+		    sleep(max_vm_wait)
 		    _out = self.runcmd('nova --os-project-name %s interface-list %s | grep ACTIVE'\
 				   %(tenant,vmname))
-		    if _out or num_try == 5:
+		    if _out or num_try == (max_vm_tries - 1):
 		         break
 		    num_try+=1
 		if _out: #It may happen even after above 5 retries,_out is still NoneType, so check for that
