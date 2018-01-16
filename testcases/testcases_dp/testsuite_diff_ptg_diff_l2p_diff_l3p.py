@@ -110,7 +110,7 @@ class test_diff_ptg_diff_l2p_diff_l3p(object):
                 self.ntk_node, self.dhcp_ns, self.vm10_ip, dest_ip)
         results = gbppexptraff.test_run()
         self._log.info("Results from the Testcase == %s" %(results))
-        if results == {}:
+        if results == {} or results == 2:
             return 0
         failed = {}
         failed = {key: val for key, val in results[

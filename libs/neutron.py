@@ -391,12 +391,19 @@ class neutronCli(object):
 	availzone:: pass it as <zone-name>|<hostname>
 	hostname as it appears in nova hypervisor-list
         """
+        image = 'ubuntu_multi_nics'
+        flavor = 'm1.large'
+        if conf.get('vm_image'):
+            image = conf['vm_image']
+        if conf.get('vm_flavor'):
+            flavor = conf['vm_flavor']
         if net:
-           cmd = 'nova --os-project-name %s boot %s --image ubuntu_multi_nics --flavor m1.large --nic net-id=%s' %(tenant,vmname,net)
+           cmd = 'nova --os-project-name %s boot %s --image %s --flavor %s --nic net-id=%s' %(tenant,vmname,image,flavor,net)
         if port:
-           cmd = 'nova --os-project-name %s boot %s --image ubuntu_multi_nics --flavor m1.large --nic port-id=%s' %(tenant,vmname,port)
+           cmd = 'nova --os-project-name %s boot %s --image %s --flavor %s --nic port-id=%s' %(tenant,vmname,image,flavor,port)
 	if availzone:
 	   cmd = cmd+' --availability-zone %s' %(availzone)
+        print(cmd)
         if self.runcmd(cmd):
 	    sleep(20)
 	    vmout = self.runcmd('nova --os-project-name %s show %s | grep network' %(tenant,vmname))
