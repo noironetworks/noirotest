@@ -109,6 +109,19 @@ class NatGbpTestSuite(object):
         self.steps.DeleteOrCleanup('cleanup')
 	if not self.plugin:
             self.steps.addhostpoolcidr(delete=True)
+        # Fix external routes
+        self.forextrtr.add_route_in_extrtr(
+                                          self.extrtr,
+                                          self.fipsubnet1,
+                                          self.gwip1_extrtr,
+                                          action='update'
+                                          )
+        self.forextrtr.add_route_in_extrtr(
+                                          self.extrtr,
+                                          self.fipsubnet2,
+                                          self.gwip2_extrtr,
+                                          action='update'
+                                          )
         self.globalcfg.cleanup()
 
     def test_nat_func_1(self):
