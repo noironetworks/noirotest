@@ -453,6 +453,12 @@ class NatFuncTestMethods(object):
         same:: True, then VMs launched in same avail-zone
         """
         az1 = 'nova' #default in openstack
+        vm_image = 'ubuntu_multi_nics'
+        vm_flavor = 'm1.medium'
+        if conf.get('vm_image'):
+            vm_image = conf['vm_image']
+        if conf.get('vm_flavor'):
+            vm_flavor = conf['vm_flavor']
         if same:
            az2 = az1
            LOG.info("\nStep: Launch VMs in same avail-zones\n")
@@ -460,15 +466,17 @@ class NatFuncTestMethods(object):
             LOG.info("\nStep: Launch VMs in two diff avail-zones\n")
         # launch Nova VMs
         if gbpnova.vm_create_api(VM1_NAME,
-                                      'ubuntu_multi_nics',
+                                      vm_image,
                                       [{'port-id': self.pt1id[1]}],
+                                      flavor_name=conf['vm_flavor'],
                                       avail_zone=az1) == 0:
            LOG.error(
            "\n///// VM Create using PTG %s failed /////" %(PTG1NAME))
            return 0
         if gbpnova.vm_create_api(VM2_NAME,
-                                      'ubuntu_multi_nics',
+                                      vm_image,
                                       [{'port-id': self.pt2id[1]}],
+                                      flavor_name=conf['vm_flavor'],
                                       avail_zone=az2) == 0:
            LOG.error(
            "\n///// VM Create using PTG %s failed /////" %(PTG2NAME))
