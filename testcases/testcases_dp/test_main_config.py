@@ -106,6 +106,30 @@ class gbp_main_config(object):
                         'demo_srvr_bd', 'demo_clnt_bd'
                        ]
 
+    def _get_template_parameters(self):
+        """Get parameters values for heat template.
+
+        Get the list of parameters supported by the heat template,
+        and search the testconfig.yaml file for any values that match.
+        """
+        parameter_args = []
+        if self.heat_temp_test:
+            import socket
+            print("hostname is %s" % socket.gethostname())
+            import os
+            print "current directory is %s" % os.getcwd()
+            fd = open(self.heat_temp_test, 'r')
+            if not fd:
+                return
+            template_data = yaml.load(fd)
+            for parameter in template_data['parameters']:
+                if conf.get(parameter):
+                    parameter_args.append(' -P ' + parameter + '=' + conf[parameter])
+        if parameter_args:
+            return ''.join(parameter_args)
+        else:
+             return None
+
     def setup(self):
         """
         Heat Stack Creates All Test Config
@@ -120,8 +144,10 @@ class gbp_main_config(object):
                "\n ABORTING THE TESTSUITE RUN, Delete of Residual Heat-Stack Failed") 
            self.cleanup(stack=1) # Because residual stack-delete already failed above
            sys.exit(1)
+        self._log.info("\n Checking for heat parameter args in config")
+        parameter_args = self._get_template_parameters()
         self._log.info("\n Invoking Heat Stack for building config and VMs")
-        if self.gbpheat.cfg_all_cli(1, self.heat_stack_name, heat_temp=self.heat_temp_test) == 0:
+        if self.gbpheat.cfg_all_cli(1, self.heat_stack_name, heat_temp=self.heat_temp_test, parameter_args=parameter_args) == 0:
             self._log.error(
                 "\n ABORTING THE TESTSUITE RUN, Heat-Stack create of %s Failed" % (self.heat_stack_name))
             self.cleanup()

@@ -73,6 +73,7 @@ try:
     	%(PRS_ICMP_TCP))
 
     #Step 8:
+    sleep(5)
     if test_traff.traff_from_gbp_tenant(tnt1,'intra_bd') == 0:
     	LOG.error(
     	"GBP-SANITY: Test-8: INTRA-BD traffic between VMs across two EPGs")

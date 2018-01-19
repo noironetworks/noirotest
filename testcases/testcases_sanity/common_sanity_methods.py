@@ -583,17 +583,25 @@ class crudGBP(object):
         %(tnt))
         az = neutron.alternate_az(AVZONE)
         for vm,prop in gbp_vm_ntk_ip[tnt].iteritems():
+            vm_image = 'ubuntu_multi_nics'
+            vm_flavor = 'm1.medium'
+            if conf.get('vm_image'):
+                vm_image = conf['vm_image']
+            if conf.get('vm_flavor'):
+                vm_flavor = conf['vm_flavor']
 	    if tnt == tnt1:
                 vm_ip = self.novatnt1.vm_create_api(vm,
-                                      'ubuntu_multi_nics',
+                                      vm_image,
                                       [{'port-id': prop['port']}],
                                       avail_zone=az.next(),
+                                      flavor_name=vm_flavor,
 				      ret_ip = True)
 	    if tnt == tnt2:
                 vm_ip = self.novatnt2.vm_create_api(vm,
-                                      'ubuntu_multi_nics',
+                                      vm_image,
                                       [{'port-id': prop['port']}],
                                       avail_zone=az.next(),
+                                      flavor_name=vm_flavor,
 				      ret_ip = True)
 	    if not vm_ip:
                 LOG.error("\n//// %s Create failed ////" %(vm))

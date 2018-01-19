@@ -118,6 +118,12 @@ class NatGbpTestSuite(object):
                                           )
         self.forextrtr.add_route_in_extrtr(
                                           self.extrtr,
+                                          SNATPOOL,
+                                          self.gwip1_extrtr,
+                                          action='update'
+                                          )
+        self.forextrtr.add_route_in_extrtr(
+                                          self.extrtr,
                                           self.fipsubnet2,
                                           self.gwip2_extrtr,
                                           action='update'
