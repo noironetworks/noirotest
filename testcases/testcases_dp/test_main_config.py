@@ -21,7 +21,7 @@ apic_ip = conf['apic_ip']
 leaf1_ip = conf['leaf1_ip']
 leaf2_ip = conf['leaf2_ip']
 spine_ip = conf['spine_ip']
-apic_passwd = conf['apic_passwd']
+apic_passwd = conf.get('apic_passwd')
 heat_temp_test = conf['main_setup_heat_temp']
 num_hosts = conf['num_comp_nodes']
 heat_stack_name = conf['heat_dp_stack_name']
@@ -31,7 +31,11 @@ plugin = conf['plugin-type']
 gbpnova = gbpNova(cntlr_ip)
 gbpheat = gbpHeat(cntlr_ip)
 if plugin: #Incase of MergedPlugin
-    gbpaci = gbpApic(apic_ip, mode='aim')
+    if apic_passwd:
+        gbpaci = gbpApic(apic_ip, mode='aim',
+                         password=apic_passwd)
+    else:
+        gbpaci = gbpApic(apic_ip, mode='aim')
 else:
     gbpaci = gbpApic(apic_ip,
 		       apicsystemID=APICSYSTEM_ID) 
@@ -79,7 +83,7 @@ class gbp_main_config(object):
         self.leaf1_ip = conf['leaf1_ip']
         self.leaf2_ip = conf['leaf2_ip']
         self.spine_ip = conf['spine_ip']
-        self.apic_passwd = conf['apic_passwd']
+        self.apic_passwd = conf.get('apic_passwd')
         self.heat_temp_test = conf['main_setup_heat_temp']
         self.num_hosts = conf['num_comp_nodes']
         self.heat_stack_name = conf['heat_dp_stack_name']
@@ -89,7 +93,11 @@ class gbp_main_config(object):
         self.gbpnova = gbpNova(self.cntlr_ip)
         self.gbpheat = gbpHeat(self.cntlr_ip)
 	if self.plugin: #Incase of MergedPlugin
-	    self.gbpaci = gbpApic(self.apic_ip, mode='aim')
+            if self.apic_passwd:
+                self.gbpaci = gbpApic(self.apic_ip, mode='aim',
+                                      password=self.apic_passwd)
+            else:
+                self.gbpaci = gbpApic(self.apic_ip, mode='aim')
 	else:
 	    self.gbpaci = gbpApic(self.apic_ip,
 			       apicsystemID=self.apicsystemID) 
