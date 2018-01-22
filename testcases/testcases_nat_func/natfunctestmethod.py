@@ -701,7 +701,10 @@ class NatFuncTestMethods(object):
        	LOG.info(
                 "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
 	if not PLUGIN_TYPE:
-        	aci=gbpApic(apicip)
+                if conf.get('apic_passwd'):
+                    aci=gbpApic(apicip, password=conf['apic_passwd'])
+                else:
+                    aci=gbpApic(apicip)
                 aci.create_add_filter('admin')
 	else:
 		if isinstance (run_remote_cli(
