@@ -10,6 +10,12 @@ import uuid
 from libs.gbp_crud_libs import GBPCrud
 from traff_from_extgw import *
 from libs.gbp_utils import *
+from testcases.config import conf
+
+L3OUT1=conf.get('primary_L3out')
+L3OUT1_NET=conf.get('primary_L3out_net')
+L3OUT2=conf.get('secondary_L3out')
+L3OUT2_NET=conf.get('secondary_L3out_net')
 
 
 class DNAT_ExtGw_to_VMs(object):
@@ -56,9 +62,9 @@ class DNAT_ExtGw_to_VMs(object):
         """
         Method to run all testcases
         """
-        # Add external routes to the Shadow L3Out(only for Datacenter-Out)
+        # Add external routes to the Shadow L3Out(only for L3OUT2)
         self.gbp_crud.AddRouteInShadowL3Out(self.ext_seg_2,
-                                                       'Datacenter-Out',
+                                                       L3OUT2,
                                                        'dnat',
                                                        self.routefordest)
 

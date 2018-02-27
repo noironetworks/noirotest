@@ -16,6 +16,13 @@ from libs.gbp_pexp_traff_libs import gbpExpTraff
 from testcases.config import conf
 from testcases.testcases_nat_func.traff_from_extgw import *
 
+L3OUT1=conf.get('primary_L3out')
+L3OUT1_NET=conf.get('primary_L3out_net')
+L3OUT2=conf.get('secondary_L3out')
+L3OUT2_NET=conf.get('secondary_L3out_net')
+L3OUT2_VRF=conf.get('secondary_L3out_vrf')
+KEY_AUTH_IP = conf.get('keystone_ip')
+
 # Initialize logging
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.INFO)
@@ -27,7 +34,7 @@ hdlr.setFormatter(formatter)
 LOG.addHandler(hdlr)
 
 #Extract and set global vars from config file
-#NOTE:The external-segment is hardcoded to 'Management-Out'
+#NOTE:The external-segment is hardcoded to L3OUT1
 CNTRLIP = conf['controller_ip']
 APICIP = conf['apic_ip']
 TNT_LIST_ML2 =  ['PENGUIN','OCTON','GARTH']
@@ -44,6 +51,8 @@ AVZONE = conf['nova_az_name']
 AVHOST = conf['az_comp_node']
 COMPUTE1 = conf['network_node']
 COMPUTE2 = conf['compute-2']
+CTRLR_USER = conf['controller_user']
+CTRLR_PSWD = conf['controller_password']
 pausetodebug = conf['pausetodebug']
 EXTDNATCIDR,FIPBYTES = '50.50.50.0/28', '50.50.50.'
 EXTSNATCIDR = '55.55.55.0/28'
@@ -51,7 +60,7 @@ EXTNONATCIDR = '2.3.4.0/24' #Can be any cidr, jsut needed for neutron router
 #We want to re-purpose the CIDR of PvtNtk for VMs participating in NO-NAT
 NONATCIDR = '60.60.60.0/24'
 APICVRF = "--apic:distinguished_names type=dict"+\
-	  " VRF='uni/tn-common/ctx-DcExtVRF'"
+	  " VRF='uni/tn-common/ctx-%s'" % L3OUT2_VRF
 ML2Fips = {}
 GBPFips = {}
 ACT = 'ALLOW'
@@ -66,7 +75,7 @@ ml2_vm_ntk_ip = {}
 gbp_vm_ntk_ip = {}
 comp1 = Compute(COMPUTE1)
 comp2 = Compute(COMPUTE2)
-neutron = neutronCli(CNTRLIP)
+neutron = neutronCli(CNTRLIP, username=CTRLR_USER, password=CTRLR_PSWD)
 neutron_api = neutronPy(CNTRLIP)
 
 def create_external_network_subnets(nat):
@@ -76,31 +85,33 @@ def create_external_network_subnets(nat):
         "####  Create Shared External Network for ML2 Tenants   ####\n"
         "#########################################################\n"
         )
-	#For nonat, use pre-existing Datacenter-Out
+	#For nonat, use pre-existing L3OUT2
 	#Also just add one subnet to that nonat External-Network
 	if nat == 'nonat':
+            apic_dn = 'uni/tn-common/out-%(l3out)s/instP-%(l3out_net)s' % {
+                'l3out': L3OUT2, 'l3out_net': L3OUT2_NET}
             aimntkcfg = '--apic:distinguished_names type=dict'+\
-                 ' ExternalNetwork='+\
-                 'uni/tn-common/out-Datacenter-Out/instP-DcExtPol'+\
+                 ' ExternalNetwork='+apic_dn+\
 		 " --apic:nat_type ''"
 	else:
+            apic_dn = 'uni/tn-common/out-%(l3out)s/instP-%(l3out_net)s' % {
+                'l3out': L3OUT1, 'l3out_net': L3OUT1_NET}
             aimntkcfg = '--apic:distinguished_names type=dict'+\
-                 ' ExternalNetwork='+\
-                 'uni/tn-common/out-Management-Out/instP-MgmtExtPol'
+                 ' ExternalNetwork='+apic_dn
             aimsnat = '--apic:snat_host_pool True'
 	try:
 	    if nat == 'nonat':
-	        neutron.netcrud('Datacenter-Out','create',external=True,
+	        neutron.netcrud(L3OUT2,'create',external=True,
                             shared=True, aim = aimntkcfg)
-                EXTSUB3 = neutron.subnetcrud('extsub3','create','Datacenter-Out',
+                EXTSUB3 = neutron.subnetcrud('extsub3','create',L3OUT2,
  			       cidr=EXTNONATCIDR,extsub=True)
 		return EXTSUB3
 	    else:
-	        neutron.netcrud('Management-Out','create',external=True,
+	        neutron.netcrud(L3OUT1,'create',external=True,
                             shared=True, aim = aimntkcfg)
-                EXTSUB1 = neutron.subnetcrud('extsub1','create','Management-Out',
+                EXTSUB1 = neutron.subnetcrud('extsub1','create',L3OUT1,
  			       cidr=EXTDNATCIDR,extsub=True)
-                EXTSUB2 = neutron.subnetcrud('extsub2','create','Management-Out',
+                EXTSUB2 = neutron.subnetcrud('extsub2','create',L3OUT1,
  			       cidr=EXTSNATCIDR,extsub=True,aim=aimsnat)
 	        return EXTSUB1, EXTSUB2
       	except Exception as e:
@@ -121,7 +132,7 @@ def attach_fip_to_vms(tnt,mode):
 	   GBPFips[tnt]=[]
 	for vm in vms:
 	    cmd1 = 'nova --os-tenant-name %s' %(tnt)+\
-                  ' floating-ip-create Management-Out'
+                  ' floating-ip-create %s' %(L3OUT1)
 	    match = re.search('(%s\d+).*'%(FIPBYTES),
                                         neutron.runcmd(cmd1),
 					re.I)
@@ -304,9 +315,9 @@ class crudML2(object):
         "###############################################\n"
 	%(tnt))
 	if not nonat:
-	    gw = 'Management-Out'
+	    gw = L3OUT1
 	else:
-	    gw = 'Datacenter-Out'
+	    gw = L3OUT2
  	try:
 	    neutron.rtrcrud(self.rtrIDs[tnt], 'set', rtrprop='gateway',
 	   		    gw=gw, tenant=tnt)
@@ -392,8 +403,8 @@ class crudML2(object):
 			   %(obj))
 	    except Exception:
 	        pass
-	neutron.runcmd('neutron net-delete Management-Out')
-	neutron.runcmd('neutron net-delete Datacenter-Out')
+	neutron.runcmd('neutron net-delete %s' % L3OUT1)
+	neutron.runcmd('neutron net-delete %s' % L3OUT2)
 	#Purge all resource/config if missed by above cleanups
 	for tnt in self.ml2tntIDs:
 	    neutron.purgeresource(tnt)
@@ -618,10 +629,10 @@ class crudGBP(object):
         )
 	self.extsegid = {}
 	if nattype == 'nat':
-	    es_name = 'Management-Out'
+	    es_name = L3OUT1
 	    extsub = create_external_network_subnets('nat')[0]
 	if nattype == 'nonat': 
-	    es_name = 'Datacenter-Out'
+	    es_name = L3OUT2
 	    extsub = create_external_network_subnets('nonat')
         self.extsegid = self.gbpadmin.create_gbp_external_segment(
                                         es_name,
@@ -644,9 +655,9 @@ class crudGBP(object):
         "###########################################\n"
         %(tnt)) 
 	if tnt == tnt1:
-	    extpolname = 'MgmtExtPol'
+	    extpolname = L3OUT1_NET
 	if tnt == tnt2:
-	    extpolname = 'DcExtPol'
+	    extpolname = L3OUT2_NET
 	gbptnt = GBPCrud(CNTRLIP,tenant=tnt)
 	self.extpol = gbptnt.create_gbp_external_policy(
 					extpolname,
@@ -918,10 +929,11 @@ class crudGBP(object):
 		pass
 	neutron.runcmd('neutron subnetpool-delete %s' %(gbp_nonat_sps))
 	neutron.runcmd('neutron address-scope-delete %s' %(gbp_nonat_ads))
-	neutron.runcmd('neutron net-delete Management-Out')
-	neutron.runcmd('neutron net-delete Datacenter-Out')
+	neutron.runcmd('neutron net-delete %s' % L3OUT1)
+	neutron.runcmd('neutron net-delete %s' % L3OUT2)
 	#Purge all resource/config if missed by above cleanups
-	for tnt in self.gbptntIDs:
+        if self.gbptntIDs:
+	    for tnt in self.gbptntIDs:
 	    	neutron.purgeresource(tnt)
 	return 1
 

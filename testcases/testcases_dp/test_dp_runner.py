@@ -33,7 +33,7 @@ def main():
     testbed_cfg = gbp_main_config()
     testbed_cfg.setup()
     # Fetch gbp objects via heat output
-    gbpheat = gbpHeat(super_hdr.cntlr_ip)
+    gbpheat = gbpHeat(super_hdr.cntlr_ip,cntrlr_uname=super_hdr.cntlr_user, cntrlr_passwd=super_hdr.cntlr_passwd)
     objs_uuid = gbpheat.get_uuid_from_stack(
         super_hdr.heat_temp, super_hdr.stack_name)
     ''' #JISHNU: Keeping it commented out until AID fix

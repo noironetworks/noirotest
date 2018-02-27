@@ -33,8 +33,8 @@ _log.setLevel(logging.DEBUG)
 
 class gbpNova(object):
 
-    def __init__(self,controllerIp,cntrlr_uname='root',cntrlr_passwd='noir0123', keystone_user='admin',
-                 keystone_password='noir0123', tenant='admin'):
+    def __init__(self,controllerIp,cntrlr_uname='heat-admin',cntrlr_passwd='noir0123',
+                 keystone_user='admin', keystone_password='noir0123', tenant='admin'):
         self.cntrlrip = controllerIp
         self.username = cntrlr_uname
         self.password = cntrlr_passwd
@@ -71,7 +71,7 @@ class gbpNova(object):
         result = run_remote_cli(cmdlist,self.cntrlrip,
                                 self.username,
                                 self.password,
-                                passOnFailure=False)
+                                passOnFailure=False, sudo=True)
         if result:
             return 1
         else:
@@ -306,8 +306,8 @@ class gbpNova(object):
         while True:
             cmd = 'nova --os-tenant-name %s show ' %(tenant)+vmname
             out = run_openstack_cli([cmd],self.cntrlrip,
-                                 username='root',
-                                 passwd='noir0123')
+                                 username=self.username,
+                                 passwd=self.password)
             if action == 'create':
                 if out and re.findall('ACTIVE',out) != []:
                     break

@@ -31,7 +31,7 @@ class gbpCfgCli(object):
 
     def __init__(self, controllerIp, cntrlr_username='root',
                  cntrlr_passwd='noir0123',tenant='admin',
-                 rcfile = '/root/keystonerc_admin'):
+                 rcfile = '~/overcloudrc'):
       self.cntrlrip = controllerIp
       self.uname = cntrlr_username
       self.passwd = cntrlr_passwd

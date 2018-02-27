@@ -9,7 +9,6 @@ class Keystone(object):
         cred['password'] = password
         cred['tenant_name'] = tenant_name
         #cred['auth_url'] = "http://%s:5000/v2.0/" % ostack_controller
-        cred['auth_url'] = "http://%s:5000/v2.0/" % ostack_controller
         cred['auth_plugin'] = 'v3password'
         cred['auth_url'] = 'http://%s:35357/v3' % ostack_controller
         cred['user_domain_name'] = 'default'

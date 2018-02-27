@@ -9,7 +9,9 @@ from time import sleep
 from libs.gbp_aci_libs import GbpApic
 from libs.gbp_crud_libs import GBPCrud
 from libs.gbp_nova_libs import gbpNova
+from testcases.config import conf
 
+KEYSTONE=conf.get('keystone_ip')
 Log = logging.getLogger(__name__)
 Log.setLevel(logging.INFO)
 # create a logfile handler

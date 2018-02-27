@@ -11,6 +11,12 @@ from libs.gbp_nova_libs import gbpNova
 from libs.gbp_fab_traff_libs import gbpFabTraff
 from libs.gbp_pexp_traff_libs import gbpExpTraff
 from libs.raise_exceptions import *
+from testcases.config import conf
+
+CNTRLR_USR = conf.get('controller_user') or 'root'
+CNTRLR_PASSWD = conf.get('controller_password') or 'noir0123'
+KEY_USER = conf.get('keystone_user') or 'admin'
+KEY_PASSWD = conf.get('keystone_password') or 'noir0123'
 
 
 class NatTraffic(object):
@@ -21,8 +27,10 @@ class NatTraffic(object):
     def __init__(self, ostack_cntrlr_ip, vm_list, ntk_node):
 
         self.ntk_node = ntk_node
-        self.gbpcfg = gbpCfgCli(ostack_cntrlr_ip)
-        self.gbpnova = gbpNova(ostack_cntrlr_ip)
+        self.gbpcfg = gbpCfgCli(ostack_cntrlr_ip, cntrlr_username=CNTRLR_USR,
+                 cntrlr_passwd=CNTRLR_PASSWD)
+        self.gbpnova = gbpNova(ostack_cntrlr_ip,cntrlr_uname=CNTRLR_USR,cntrlr_passwd=CNTRLR_PASSWD,
+                  keystone_user=KEY_USER,keystone_password=KEY_PASSWD)
         self.vm_list = vm_list
         #print " List of VMs passed from the testsuite ", vm_list
         self.vm_to_ip_ns = {}

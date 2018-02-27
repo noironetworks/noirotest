@@ -13,6 +13,10 @@ from libs.gbp_pexp_traff_libs import gbpExpTraff
 from libs.raise_exceptions import *
 from libs.gbp_utils import *
 from testsuites_setup_cleanup import super_hdr
+from testcases.config import conf
+
+cntlr_user = conf.get('controller_user') or 'root'
+cntlr_passwd = conf.get('controller_password') or 'noir0123'
 
 
 class test_same_ptg_same_l2p_same_l3p(object):
@@ -37,7 +41,8 @@ class test_same_ptg_same_l2p_same_l3p(object):
 
     def __init__(self, objs_uuid):
 
-        self.gbpcfg = gbpCfgCli(super_hdr.cntlr_ip)
+        self.gbpcfg = gbpCfgCli(super_hdr.cntlr_ip, cntrlr_username=cntlr_user,
+                 cntrlr_passwd=cntlr_passwd)
         self.gbpdeftraff = gbpFabTraff()
         stack_name = super_hdr.stack_name
         heat_temp = super_hdr.heat_temp
@@ -46,7 +51,7 @@ class test_same_ptg_same_l2p_same_l3p(object):
         self.apic_passwd = super_hdr.apic_passwd
         self.pausetodebug = super_hdr.pausetodebug
 	self.plugin_mode = super_hdr.plugin
-        self.gbpaci = gbpApic(self.apic_ip,
+        self.gbpaci = gbpApic(self.apic_ip, password=self.apic_passwd,
                                apicsystemID=super_hdr.apicsystemID)
         self.ptg = objs_uuid['demo_same_ptg_l2p_l3p_ptg_id']
         self.test_2_prs = objs_uuid['demo_ruleset_norule_id']

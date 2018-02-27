@@ -195,7 +195,7 @@ class neutronCli(object):
         env.host_string = self.controller
         env.user = self.username
         env.password = self.password
-        srcRc = 'source /root/keystonerc_admin'
+        srcRc = 'source ~/overcloudrc'
         with prefix(srcRc):
 		try:
                    _output = run(cmd)
