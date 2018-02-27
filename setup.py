@@ -6,6 +6,8 @@ from testcases.config import conf
 from libs.gbp_nova_libs import gbpNova
 from libs.gbp_utils import *
 
+KEY_USER = conf.get('keystone_user')
+KEY_PASSWORD = conf.get('keystone_password')
 CNTRLRIP = conf['controller_ip']
 APICIP = conf['apic_ip']
 NTKNODE = conf['network_node']
@@ -18,7 +20,7 @@ def main():
 	sys.exit(0)
     setup(CNTRLRIP,APICIP,NTKNODE)
 
-def setup(controller_ip,apic_ip,ntknode,cntlr_user='root',apic_user='admin',
+def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin',
           apic_pwd = 'noir0123', cntlr_pwd='noir0123'):
 
     env.host_string = controller_ip
@@ -26,19 +28,19 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='root',apic_user='admin',
     env.password = cntlr_pwd
 
     #Step-1: Copy the Heat Templates to the Controller
-    for heat_templt in ['~/noirotest_local/testcases/heat_temps/heat_dnat_only.yaml',
-			'~/noirotest_local/testcases/heat_temps/heat_snat_only.yaml',
-			'~/noirotest_local/testcases/heat_temps/preexist_dnat_only.yaml',
-			'~/noirotest_local/testcases/heat_temps/preexist_snat_only.yaml',
-			'~/noirotest_local/testcases/heat_temps/heat_tmpl_regular_dp_tests.yaml',
-			'~/noirotest_local/add_ssh_filter.py'
+    for heat_templt in ['~/noirotest/testcases/heat_temps/heat_dnat_only.yaml',
+			'~/noirotest/testcases/heat_temps/heat_snat_only.yaml',
+			'~/noirotest/testcases/heat_temps/preexist_dnat_only.yaml',
+			'~/noirotest/testcases/heat_temps/preexist_snat_only.yaml',
+			'~/noirotest/testcases/heat_temps/heat_tmpl_regular_dp_tests.yaml',
+			'~/noirotest/add_ssh_filter.py'
 			]:
          put(heat_templt,'~/')
     #Step-2: Restart the below services
-    for cmd in ['systemctl restart openstack-nova-api.service',
-		'systemctl restart openstack-nova-scheduler.service',
-		'systemctl restart openstack-heat-engine.service',
-		'systemctl restart openstack-heat-api.service'
+    for cmd in ['sudo systemctl restart openstack-nova-api.service',
+		'sudo systemctl restart openstack-nova-scheduler.service',
+		'sudo systemctl restart openstack-heat-engine.service',
+		'sudo systemctl restart openstack-heat-api.service'
                ]:
        run(cmd)
 
@@ -46,7 +48,7 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='root',apic_user='admin',
     with settings(warn_only=True):
         os_flvr = run('cat /etc/os-release')
         if 'Red Hat' in os_flvr:
-            cmd_src = 'source /root/keystonerc_admin'
+            cmd_src = 'source ~/overcloudrc'
 	if 'Ubuntu' in os_flvr:
             cmd_src = 'source ~/openrc'
         rr_cmd = 'apic route-reflector-create --ssl --no-secure '+\
@@ -63,10 +65,11 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='root',apic_user='admin',
     NOVA_AGG = conf['nova_agg_name']
     AVAIL_ZONE = conf['nova_az_name']
     AZ_COMP_NODE = conf['az_comp_node']
-    gbpnova = gbpNova(CNTRLRIP)
+    gbpnova = gbpNova(CNTRLRIP,cntrlr_uname=cntlr_user,cntrlr_passwd=cntlr_pwd,
+                      keystone_user=KEY_USER,keystone_password=KEY_PASSWORD)
     try:
     	# Check if Agg already exists then delete
-        cmdagg = run_openstack_cli("nova aggregate-list", CNTRLRIP)
+        cmdagg = run_openstack_cli("nova aggregate-list", CNTRLRIP, username=cntlr_user,passwd=cntlr_pwd)
         if NOVA_AGG in cmdagg:
         	print("Residual Nova Agg exits, hence deleting it")
                 gbpnova.avail_zone('cli', 'removehost',
@@ -75,7 +78,7 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='root',apic_user='admin',
                 gbpnova.avail_zone('cli', 'delete', NOVA_AGG)
         print("\nCreating Nova Host-aggregate & its Availability-zone")
         agg_id = gbpnova.avail_zone(
-                       'api', 'create', NOVA_AGG, avail_zone_name=AVAIL_ZONE)
+                       'cli', 'create', NOVA_AGG, avail_zone_name=AVAIL_ZONE)
     except Exception:
                 print(
                     "\n ABORTING THE TESTSUITE RUN,nova host aggregate creation Failed")
@@ -83,7 +86,7 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='root',apic_user='admin',
     print(" Agg %s" % (agg_id))
     try:
         print("\nAdding Nova host to availaibility-zone")
-        gbpnova.avail_zone('api', 'addhost', agg_id, hostname=AZ_COMP_NODE)
+        gbpnova.avail_zone('cli', 'addhost', agg_id, hostname=AZ_COMP_NODE)
     except Exception:
         print("\n ABORTING THE TESTSUITE RUN, availability zone creation Failed")
         gbpnova.avail_zone('cli', 'delete', agg_id)  # Cleanup Agg_ID
@@ -91,7 +94,7 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='root',apic_user='admin',
    
     #Step-5: Copy the iptools-arping to the network-node of the fabric
     env.host_string = ntknode
-    put('~/noirotest_local/iputils-arping_20121221-4ubuntu1_amd64.deb', '~/')
+    put('~/noirotest/iputils-arping_20121221-4ubuntu1_amd64.deb', '~/')
 
 
 if __name__ == "__main__":

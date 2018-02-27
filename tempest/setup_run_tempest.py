@@ -3,6 +3,12 @@ import optparse
 from time import sleep
 from fabric.api import cd, run, env, hide, get, settings, local ,put
 from fabric.context_managers import *
+from testcases.config import conf
+
+L3OUT1=conf.get('primary_L3out')
+L3OUT1_NET=conf.get('primary_L3out_net')
+L3OUT2=conf.get('secondary_L3out')
+L3OUT2_NET=conf.get('secondary_L3out_net')
 
 #Refer this URL for steps:
 #https://www.rdoproject.org/blog/2016/11/how-to-install-and-run-tempest/
@@ -66,11 +72,14 @@ class Tempest(object):
 		run(cmd)
 
 	    #Step-4: Configure the External-Network
-	    l3out_cmd = 'neutron net-create Datacenter-Out'+\
+	    cmd1 = 'neutron net-create %s' % L3OUT2
+            cmd2 = (' ExternalNetwork=uni/tn-common/out-%(l3)s/instP-%(l3net)s'
+                    % {'l3': L3OUT2, 'l3net': L3OUT2_NET})
+	    l3out_cmd = cmd1+\
 			' --router:external True --shared'+\
-			' --apic:distinguished_names type=dict'+\
-		' ExternalNetwork=uni/tn-common/out-Datacenter-Out/instP-DcExtPol'
-	    extsub_cmd = 'neutron subnet-create Datacenter-Out 60.60.60.0/24'+\
+			' --apic:distinguished_names type=dict'+ cmd2
+	    cmd1 = 'neutron subnet-create %s 60.60.60.0/24' % L3OUT2
+	    extsub_cmd = cmd1+\
 		 ' --name ext-subnet --disable-dhcp --gateway 60.60.60.1'
 	    with prefix('source keystonerc_admin'):
 	        run(l3out_cmd)

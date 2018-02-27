@@ -17,6 +17,10 @@ from testcases.config import conf
 APICSYSTEM_ID = conf['apic_system_id']
 network_node = conf['network_node']
 cntlr_ip = conf['controller_ip']
+cntlr_user = conf.get('controller_user') or 'root'
+cntlr_passwd = conf.get('controller_password') or 'noir0123'
+key_user = conf.get('keystone_user') or 'admin'
+key_passwd = conf.get('keystone_password') or 'noir0123'
 apic_ip = conf['apic_ip']
 leaf1_ip = conf['leaf1_ip']
 leaf2_ip = conf['leaf2_ip']
@@ -28,8 +32,10 @@ heat_stack_name = conf['heat_dp_stack_name']
 pausetodebug = conf['pausetodebug']
 test_parameters = conf['test_parameters']
 plugin = conf['plugin-type']
-gbpnova = gbpNova(cntlr_ip)
-gbpheat = gbpHeat(cntlr_ip)
+gbpnova = gbpNova(cntlr_ip,cntrlr_uname=cntlr_user,cntrlr_passwd=cntlr_passwd,
+                  keystone_user=key_user,keystone_password=key_passwd)
+gbpheat = gbpHeat(cntlr_ip,cntrlr_uname=cntlr_user, cntrlr_passwd=cntlr_passwd)
+
 if plugin: #Incase of MergedPlugin
     if apic_passwd:
         gbpaci = gbpApic(apic_ip, mode='aim',
@@ -37,7 +43,7 @@ if plugin: #Incase of MergedPlugin
     else:
         gbpaci = gbpApic(apic_ip, mode='aim')
 else:
-    gbpaci = gbpApic(apic_ip,
+    gbpaci = gbpApic(apic_ip, password=apic_passwd,
 		       apicsystemID=APICSYSTEM_ID) 
 vmlist = ['VM1','VM2','VM3','VM4',
           'VM5','VM6','VM7','VM8',
@@ -79,6 +85,11 @@ class gbp_main_config(object):
         self.comp_node = conf['az_comp_node']
         self.network_node = conf['network_node']
         self.cntlr_ip = conf['controller_ip']
+        self.cntlr_user = conf.get('controller_user') or 'root'
+        self.cntlr_passwd = conf.get('controller_password') or 'noir0123'
+        self.key_ip = conf.get('keystone_ip') or self.cntlr_ip
+        self.key_user = conf.get('keystone_user') or 'admin'
+        self.key_passwd = conf.get('keystone_password') or 'noir0123'
         self.apic_ip = conf['apic_ip']
         self.leaf1_ip = conf['leaf1_ip']
         self.leaf2_ip = conf['leaf2_ip']
@@ -90,8 +101,9 @@ class gbp_main_config(object):
 	self.pausetodebug = conf['pausetodebug']
         self.test_parameters = conf['test_parameters']
 	self.plugin = conf['plugin-type']
-        self.gbpnova = gbpNova(self.cntlr_ip)
-        self.gbpheat = gbpHeat(self.cntlr_ip)
+        self.gbpnova = gbpNova(self.cntlr_ip,cntrlr_uname=self.cntlr_user,cntrlr_passwd=self.cntlr_passwd,
+                  keystone_user=self.key_user,keystone_password=self.key_passwd)
+        self.gbpheat = gbpHeat(self.cntlr_ip,cntrlr_uname=self.cntlr_user, cntrlr_passwd=self.cntlr_passwd)
 	if self.plugin: #Incase of MergedPlugin
             if self.apic_passwd:
                 self.gbpaci = gbpApic(self.apic_ip, mode='aim',
@@ -99,7 +111,7 @@ class gbp_main_config(object):
             else:
                 self.gbpaci = gbpApic(self.apic_ip, mode='aim')
 	else:
-	    self.gbpaci = gbpApic(self.apic_ip,
+            self.gbpaci = gbpApic(self.apic_ip, password=self.apic_passwd,
 			       apicsystemID=self.apicsystemID) 
 	self.vmlist = ['VM1','VM2','VM3','VM4',
 		       'VM5','VM6','VM7','VM8',
@@ -163,7 +175,8 @@ class gbp_main_config(object):
         sleep(5)  # Sleep 5s assuming that all objects are created in APIC
         #Fetch the Tenant's DN for Openstack project 'admin'
         if self.plugin:
-	    self.keyst = Keystone(self.cntlr_ip)
+            self.keyst = Keystone(self.key_ip, username=self.key_user,
+                 password=self.key_passwd)
 	    tnt = self.keyst.get_tenant_attribute('admin','id')
         else:
             tnt='admin'
@@ -177,7 +190,7 @@ class gbp_main_config(object):
 	    else: #i.e. if MergedPlugin
 	       if isinstance (run_remote_cli(
                               "python add_ssh_filter.py create",
-                               self.cntlr_ip, 'root', 'noir0123'), tuple):
+                               self.cntlr_ip, self.cntlr_user, self.cntlr_passwd), tuple):
 		        raise Exception("adding filter to SvcEpg failed in AIM")
 	except Exception as e:
                  self._log.error(

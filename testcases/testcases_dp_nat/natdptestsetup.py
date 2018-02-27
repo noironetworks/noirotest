@@ -35,6 +35,8 @@ cntlr_ip = conf['controller_ip']
 extgw = conf['ext_rtr']
 priL3Out = conf['primary_L3out']
 secL3Out = conf['secondary_L3out']
+priL3OutNet=conf.get('primary_L3out_net')
+secL3OutNet=conf.get('secondary_L3out_net')
 apic_ip = conf['apic_ip']
 leaf1_ip = conf['leaf1_ip']
 leaf2_ip = conf['leaf2_ip']
@@ -75,7 +77,7 @@ L3plist = ['DCL3P1','DCL3P2']
 Epglist = ['APPPTG','WEBSRVRPTG','WEBCLNTPTG']
 L2plist = ['APPL2P','WEBSRVRL2P','WEBCLNTL2P']
 EpgL2p = dict(zip(Epglist,L2plist))
-L3Outlist = ['Management-Out', 'Datacenter-Out']
+L3Outlist = [priL3Out, secL3Out]
 
 class nat_dp_main_config(object):
     """
@@ -90,6 +92,8 @@ class nat_dp_main_config(object):
                 aimntkcfg_primary = '--apic:distinguished_names type=dict'+\
                  ' ExternalNetwork='+\
                  'uni/tn-common/out-%s/instP-MgmtExtPol' %(priL3Out)
+                 'uni/tn-common/out-%(l3out)s/instP-%(l3pol)s' % {
+                 'l3out': priL3Out, 'l3pol': priL3OutNet}
                 aimsnat = '--apic:snat_host_pool True'
                 neutron.netcrud(priL3Out,'create',external=True,
                             shared=True, aim = aimntkcfg_primary)
@@ -101,7 +105,8 @@ class nat_dp_main_config(object):
 
                 aimntkcfg_sec = '--apic:distinguished_names type=dict'+\
                  ' ExternalNetwork='+\
-                 'uni/tn-common/out-%s/instP-DcExtPol' %(secL3Out)
+                 'uni/tn-common/out-%(l3out)s/instP-%(l3pol)s' % {
+                 'l3out': secL3Out, 'l3pol': secL3OutNet}
                 aimsnat = '--apic:snat_host_pool True'
                 neutron.netcrud(secL3Out,'create',external=True,
                             shared=True, aim = aimntkcfg_sec)
@@ -138,8 +143,9 @@ class nat_dp_main_config(object):
             if nat_type == 'snat':
 		if not plugin:
                     # Adding host_pool_cidr to the both L3Outs
-		    sectionlist = ['apic_external_network:Management-Out',
-                               'apic_external_network:Datacenter-Out']
+		    sec1 = 'apic_external_network:%s' % priL3Out
+		    sec2 = 'apic_external_network:%s' % secL3Out
+		    sectionlist = [sec1, sec2]
                     patvallist = [hostpoolcidrL3OutA,
                               hostpoolcidrL3OutB]
 		    pattern = 'host_pool_cidr'
@@ -240,7 +246,7 @@ class nat_dp_main_config(object):
             #1. if per_tenant_nat_epg=True (Sungard)
             #2. if ExtSeg is created in Openstack with shared=False
             extsegs=gbpcrud.get_gbp_external_segment_list(getdict=True)
-            if not extsegs['Datacenter-Out']['shared'] or pertntnatEpg:
+            if not extsegs[secL3Out]['shared'] or pertntnatEpg:
 	        LOG.info(
 	        "\n Verify relations bw NAT-BDs and Regular EPGs association")
                 #When both shared and pertntnatEpg=False, then match string
@@ -264,7 +270,7 @@ class nat_dp_main_config(object):
                     raise Exception('Inconsistent number of NAT-EPGs')
                 if not match_count :
                     raise Exception(
-                        'NAT-EPG for Datacenter-Out L3out NOT found')
+                        'NAT-EPG for %s L3out NOT found' % secL3Out)
                 #The NAT-BD will be created as tenant-specific but its
                 #vrf should resolve in common-tenant(Pre-existing case)
 	        LOG.info(

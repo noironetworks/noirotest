@@ -12,6 +12,10 @@ from libs.gbp_pexp_traff_libs import gbpExpTraff
 from libs.raise_exceptions import *
 from testsuites_setup_cleanup import super_hdr
 from libs.gbp_utils import *
+from testcases.config import conf
+
+cntlr_user = conf.get('controller_user') or 'root'
+cntlr_passwd = conf.get('controller_password') or 'noir0123'
 
 
 class test_diff_ptg_diff_l2p_same_l3p(object):
@@ -35,7 +39,8 @@ class test_diff_ptg_diff_l2p_same_l3p(object):
 
     def __init__(self, objs_uuid):
 
-        self.gbpcfg = gbpCfgCli(super_hdr.cntlr_ip)
+        self.gbpcfg = gbpCfgCli(super_hdr.cntlr_ip, cntrlr_username=cntlr_user,
+                 cntrlr_passwd=cntlr_passwd)
         self.gbpdeftraff = gbpFabTraff()
         stack_name = super_hdr.stack_name
         heat_temp = super_hdr.heat_temp
