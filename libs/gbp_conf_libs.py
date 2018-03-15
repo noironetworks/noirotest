@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
 import sys
 from time import sleep
 import logging
@@ -303,12 +304,14 @@ class gbpCfgCli(object):
            with settings(warn_only=True):
               result = run("ip netns | grep qdhcp")
               out = [x.strip() for x in result.split('\n')]
-              for netns in out:
-                  cmd = "ip netns exec %s ifconfig" %(netns)
-                  result = run(cmd).replace('\r\n',' ')
-                  if result.find(subnet) > -1:
-                     netns_list.append(netns)
-           return netns_list
+              for sub in subnet:
+                  for netns in out:
+                      cmd = "ip netns exec %s ifconfig" %(netns)
+                      result = run(cmd).replace('\r\n',' ')
+                      if result.find(sub) > -1:
+                         netns_list.append(netns)
+                         break
+           return netns_list[0]
         else:
           with settings(warn_only=True):
            result = run("ip netns | grep qdhcp")
@@ -328,15 +331,24 @@ class gbpCfgCli(object):
         """
         cmd = "nova list | grep %s" %(vm_string)
         out_put = self.exe_command(cmd)
-        ip_match = re.search('.*=(\d+.\d+.\d+.\d+)',out_put,re.I)
-        subn_match = re.search('.*=(\d+.\d+.\d+)',out_put,re.I)
-        if ip_match != None and subn_match != None:
+        ip_list = []
+        subnet_list = []
+        for ip in out_put.split('|')[6].split('=')[1].split(','):
+            netip = netaddr.IPAddress(ip.strip())
+            ip_list.append(str(netip))
+            # UGLY - assume /24 for IPv4 and /64 for IPv6
+            if netip.version == 4:
+                subnet = str(netaddr.IPNetwork(ip.strip()+'/24').network)
+                subnet_list.append(subnet[:subnet.rfind('.')])
+            else:
+                continue
+        if subnet_list and ip_list:
            if  ret == 'ip':
-               return ip_match.group(1)
+               return ip_list
            elif ret == 'subnet':
-               return subn_match.group(1)
+               return subnet_list
            else:
-               return [ip_match.group(1),subn_match.group(1)]
+               return [ip_list,subnet_list]
         else:
            return 0
 

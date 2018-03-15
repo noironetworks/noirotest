@@ -215,9 +215,21 @@ class gbpNova(object):
 			    ips = instance.networks.values()[0][0].encode('ascii')
 			vm_name_ip[instance.name] = ips    
 		else:
+                    # Ensure an IPv4 address is first in the list
+                    def cmp_func(a,b):
+                        ipA = netaddr.IPAddress(a)
+                        ipB = netaddr.IPAddress(b)
+                        if ipA.version == 4:
+                            return -1
+                        elif ipB.version == 4:
+                            return 1
+                        else:
+                            return 0
 		    for instance in vmobject:
-			if vmname == instance.name:
-		            return instance.networks.values()[0][0].encode('ascii')
+                        if vmname == instance.name:
+                            sorted_ips = sorted(instance.networks.values()[0])
+                            return [ip.encode('ascii') for ip in sorted_ips]
+                    #        return instance.networks.values()[0][0].encode('ascii')
 	except Exception as e:
                 _log.error(
 		'VM Creation Failed on Exception = %s\n' %(e))
