@@ -34,7 +34,7 @@ L3OUT2=conf.get('secondary_L3out')
 L3OUT2_NET=conf.get('secondary_L3out_net')
 
 def run_openstack_cli(cmdList,cntrlrip,
-                      username='root',passwd='noir0123', sudo=False):
+                      username='root',passwd='noir0123', do_sudo=False):
     """
     This function enables the user to
     run cli-cmds on openstack env
@@ -54,7 +54,7 @@ def run_openstack_cli(cmdList,cntrlrip,
             cmd_src = 'source ~/openrc'
         with prefix(cmd_src):
             for cmd in cmdList:
-                if sudo:
+                if do_sudo:
                     results = sudo(cmd,quiet=True)
                 else:
                     results = run(cmd,quiet=True)
@@ -64,7 +64,7 @@ def run_openstack_cli(cmdList,cntrlrip,
     return results
 
 def run_remote_cli(cmdList,hostip,username,
-                   password,passOnFailure=True, sudo=False):
+                   password,passOnFailure=True, do_sudo=False):
     "Run cmd on a remote machine"
     env.host_string = hostip
     env.user = username
@@ -74,8 +74,8 @@ def run_remote_cli(cmdList,hostip,username,
     with settings(warn_only=True):
         run("hostname")
         for cmd in cmdList:
-            if sudo:
-                results = sudo(cmd)
+            if do_sudo:
+                results = do_sudo(cmd)
             else:
                 results = run(cmd)
             if not results.succeeded:
@@ -104,7 +104,7 @@ def get_apic_system_id(hostip,username,password,
                        filename='/etc/neutron/neutron.conf'):
     #NOTE: For aim-aid the filename should be /etc/aim/aim.conf
     cmd = "sed -nre 's/^apic_system_id=(.*)/\\1/p' %s" %(filename)
-    apic_aystem_id = run_remote_cli(cmd,hostip,username,password, sudo=True)
+    apic_aystem_id = run_remote_cli(cmd,hostip,username,password, do_sudo=True)
     if apic_system_id:
       return apic_system_id
 

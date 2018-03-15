@@ -38,13 +38,13 @@ class gbpHeat(object):
         self.tenant = tenant
         self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown','Exception','ERROR']
 
-    def run_heat_cli(self,cmd):
+    def run_heat_cli(self,cmd,sudo=False):
         """
         Heat Cli
         """
         return run_openstack_cli([cmd],self.cntrlrip,
                                      username=self.username,
-                                     passwd=self.password)
+                                     passwd=self.password,do_sudo=sudo)
         
     def cmd_error_check(self,cmd_out):
         """
@@ -104,7 +104,7 @@ class gbpHeat(object):
               _log.info("The stack does not exist, so no need of delete")
               return 1 
            # Else then proceed with delete as the said stack exists
-           ostack_version = self.run_heat_cli('nova-manage version')
+           ostack_version = self.run_heat_cli('nova-manage version', sudo=True)
 	   if ostack_version.find('2015') == 0 or ostack_version.find('2014') == 0:
     	      cmd_cfg = "heat --os-tenant-name %s stack-delete %s" %(tenant,name)
            else:
