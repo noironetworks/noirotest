@@ -48,18 +48,31 @@ class gbpExpTraffHping3(object):
 	self.vm_password = 'noir0123'
 	if conf.get('image_password'):
 	    self.vm_password = conf['image_password']
-	self.vm_prompt = '#'
+        self.host_prompt = '\$'
+        self.vm_prompt = '#'
 	if conf.get('image_prompt'):
 	    self.vm_prompt = conf['image_prompt']
 	self.host_prompt = '#'
 	self.netns_dict = netns_dict
 
+    def host_sudo(self, pexpect_session):
+        print "Entering sudo priviledged command mode"
+        pexpect_session.sendline('sudo -s')
+        self.host_prompt = '#'
+        pexpect_session.expect(self.host_prompt)
+
     def ssh_to_compute_host(self):
-	pexpect_session = pexpect.spawn('ssh root@%s' %(self.net_node))
-	pexpect_session.expect(self.host_prompt) #Expecting passwordless access
+        self.host_prompt = '\$'
+        if conf.get('director_deploy') and conf['director_deploy'] == 'True':
+            pexpect_session = pexpect.spawn('ssh heat-admin@%s' %(self.net_node))
+            pexpect_session.expect(self.host_prompt) #Expecting passwordless access
+        else:
+            pexpect_session = pexpect.spawn('ssh root@%s' %(self.net_node))
+            pexpect_session.expect(self.host_prompt) #Expecting passwordless access
 	pexpect_session.sendline('hostname')
 	pexpect_session.expect(self.host_prompt)
 	print pexpect_session.before
+        self.host_sudo(pexpect_session)
 	return pexpect_session
 
     def vm_reachable(self, pexpect_session, ip_list=None, no_ipv6=False):

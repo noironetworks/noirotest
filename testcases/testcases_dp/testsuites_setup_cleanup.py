@@ -15,6 +15,8 @@ class super_hdr(object):
     # Name of the config file is static
     nova_az = conf['nova_az_name']
     cntlr_ip = conf['controller_ip']
+    cntlr_user = conf.get('controller_user') or 'root'
+    cntlr_passwd = conf.get('controller_password') or 'noir0123'
     apic_ip = conf['apic_ip']
     apic_passwd = conf['apic_passwd']
     num_host = conf['num_comp_nodes']
@@ -27,6 +29,8 @@ class super_hdr(object):
     pausetodebug = conf['pausetodebug']
     plugin = conf['plugin-type']
     gbpcfg = gbpCfgCli(cntlr_ip)
+    gbpcfg = gbpCfgCli(cntlr_ip, cntrlr_username=cntlr_user,
+                       cntrlr_passwd=cntlr_passwd)
     gbpnova = gbpNova(cntlr_ip)
     gbpheat = gbpHeat(cntlr_ip)
 

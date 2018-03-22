@@ -33,8 +33,8 @@ _log.setLevel(logging.DEBUG)
 
 class gbpNova(object):
 
-    def __init__(self,controllerIp,cntrlr_uname='root',cntrlr_passwd='noir0123', keystone_user='admin',
-                 keystone_password='noir0123', tenant='admin'):
+    def __init__(self,controllerIp,cntrlr_uname='heat-admin',cntrlr_passwd='noir0123',
+                 keystone_user='admin', keystone_password='noir0123', tenant='admin'):
         self.cntrlrip = controllerIp
         self.username = cntrlr_uname
         self.password = cntrlr_passwd
@@ -71,7 +71,7 @@ class gbpNova(object):
         result = run_remote_cli(cmdlist,self.cntrlrip,
                                 self.username,
                                 self.password,
-                                passOnFailure=False)
+                                passOnFailure=False, sudo=True)
         if result:
             return 1
         else:
@@ -215,9 +215,21 @@ class gbpNova(object):
 			    ips = instance.networks.values()[0][0].encode('ascii')
 			vm_name_ip[instance.name] = ips    
 		else:
+                    # Ensure an IPv4 address is first in the list
+                    def cmp_func(a,b):
+                        ipA = netaddr.IPAddress(a)
+                        ipB = netaddr.IPAddress(b)
+                        if ipA.version == 4:
+                            return -1
+                        elif ipB.version == 4:
+                            return 1
+                        else:
+                            return 0
 		    for instance in vmobject:
-			if vmname == instance.name:
-		            return instance.networks.values()[0][0].encode('ascii')
+                        if vmname == instance.name:
+                            sorted_ips = sorted(instance.networks.values()[0])
+                            return [ip.encode('ascii') for ip in sorted_ips]
+                    #        return instance.networks.values()[0][0].encode('ascii')
 	except Exception as e:
                 _log.error(
 		'VM Creation Failed on Exception = %s\n' %(e))
@@ -306,8 +318,8 @@ class gbpNova(object):
         while True:
             cmd = 'nova --os-tenant-name %s show ' %(tenant)+vmname
             out = run_openstack_cli([cmd],self.cntrlrip,
-                                 username='root',
-                                 passwd='noir0123')
+                                 username=self.username,
+                                 passwd=self.password)
             if action == 'create':
                 if out and re.findall('ACTIVE',out) != []:
                     break

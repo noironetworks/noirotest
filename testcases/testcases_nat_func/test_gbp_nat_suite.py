@@ -12,6 +12,12 @@ from libs.gbp_utils import *
 from libs.gbp_fab_traff_libs import gbpFabTraff
 from natfuncglobalcfg import GbpNatFuncGlobalCfg
 from natfunctestmethod import *
+from testcases.config import conf
+
+L3OUT1=conf.get('primary_L3out')
+L3OUT1_NET=conf.get('primary_L3out_net')
+L3OUT2=conf.get('secondary_L3out')
+L3OUT2_NET=conf.get('secondary_L3out_net')
 
 LOG.setLevel(logging.INFO)
 
@@ -736,8 +742,8 @@ class NatGbpTestSuite(object):
         """
         LOG.info(
         "\n**** Execution of Testcase TEST_NAT_FUNC_12 starts ****")
-        #NOTE: For this TC, want to add host_pool_cidr to Datacenter-Out
-        #while remove it from Management-Out(this was already added by
+        #NOTE: For this TC, want to add host_pool_cidr to the L3out
+        #while remove it from L3out1(this was already added by
         #test_runner func).Ensure to list this TC as the last TC to run
 	if not self.plugin:
             self.steps.addhostpoolcidr(delete=True,flag=self.flag)
@@ -801,12 +807,12 @@ class NatGbpTestSuite(object):
         if not self.steps.testAssociateExtSegToBothL3ps(extsegid=DcExtsegid,
                                                         both=False):
            return 0
-        #Verify DNATed traffic from ExtRtr to 1 VM on Management-Out 
+        #Verify DNATed traffic from ExtRtr to 1 VM on L3out1
         LOG.info(
         "\n DNATed Traffic from ExtRTR to the ONLY VM with FIP")
         if not self.steps.testTrafficFromExtRtrToVmFip(self.extrtr,fip=True):
            return 0
-        #Verify SNATed traffic from ExtRtr to 1 VM on Datacenter-Out 
+        #Verify SNATed traffic from ExtRtr to 1 VM on the L3out2
         LOG.info(
         "\n SNATed Traffic from the ONLY VM without FIP to ExtRtr")
         self.forextrtr.add_route_in_extrtr(

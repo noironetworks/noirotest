@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import netaddr
 import sys
 import re
 from time import sleep
@@ -6,6 +7,8 @@ from fabric.api import cd, run, env, hide, get, settings
 from fabric.context_managers import *
 from neutronclient.v2_0 import client as nclient
 from testcases.config import conf
+
+VRF_PREFIX = "--apic:distinguished_names type=dict VRF='"
 
 max_vm_wait = conf.get('vm_wait', 20)
 max_vm_tries = conf.get('vm_tries', 10)
@@ -195,7 +198,7 @@ class neutronCli(object):
         env.host_string = self.controller
         env.user = self.username
         env.password = self.password
-        srcRc = 'source /root/keystonerc_admin'
+        srcRc = 'source ~/overcloudrc'
         with prefix(srcRc):
 		try:
                    _output = run(cmd)
@@ -266,20 +269,33 @@ class neutronCli(object):
         ntkNameId: name of the netk, mandatory to pass when action == create
         cidr: Mandatory to pass when action == create
         """
+        if cidr:
+            # Infer the ip_version from the cidr
+            prefix = netaddr.IPNetwork(cidr)
+            ip_version = prefix.version
+        elif subnetpool:
+            # Get the ip_version field from the subnetpool
+            cmd = 'neutron --os-tenant-name %s subnetpool-show %s | grep ip_version'\
+                  %(tenant,subnetpool)
+            version_string = self.runcmd(cmd)
+            ip_version = int(version_string.split()[3])
 	if action == 'create':
+            ip_version_string = '--ip-version %s' % ip_version
+            if ip_version == 6:
+                ip_version_string += ' --ipv6-ra-mode slaac --ipv6-address-mode slaac'
             if extsub:
-	        cmd = 'neutron --os-project-name %s subnet-create %s %s --name %s --disable-dhcp'\
-                      %(tenant,ntkNameId,cidr,name)
+                cmd = 'neutron --os-project-name %s subnet-create %s %s --name %s --disable-dhcp %s'\
+                      %(tenant,ntkNameId,cidr,name,ip_version_string)
                 if aim:
                     cmd = cmd +' %s' %(aim)
             else:
 		if subnetpool:
 		    cmd = 'neutron --os-project-name %s ' %(tenant)+\
-			  'subnet-create %s --subnetpool %s --name %s'\
-			  %(ntkNameId,subnetpool,name)
+                         'subnet-create %s --subnetpool %s --name %s %s'\
+                         %(ntkNameId,subnetpool,name,ip_version_string)
 		else:
-	            cmd = 'neutron --os-project-name %s subnet-create %s %s --name %s'\
-			  %(tenant,ntkNameId,cidr,name) 
+                   cmd = 'neutron --os-tenant-name %s subnet-create %s %s --name %s %s'\
+                         %(tenant,ntkNameId,cidr,name,ip_version_string)
 	    subnetId = self.getuuid(self.runcmd(cmd))
 	    if subnetId:
 	       return subnetId
@@ -309,6 +325,9 @@ class neutronCli(object):
 	
     def addscopecrud(self, name, action, tenant='admin', ip=4,
 		     shared=False, apicvrf=''):
+        if action == 'get':
+            cmd = 'neutron --os-project-name %s address-scope-show %s' %(tenant,name)
+            return self.runcmd(cmd)
         if action == 'create':
 	    if shared:
 	           cmd = 'neutron --os-project-name %s ' %(tenant)+\
@@ -317,7 +336,7 @@ class neutronCli(object):
 	           cmd = 'neutron --os-project-name %s ' %(tenant)+\
 			 'address-scope-create %s %s ' %(name,ip)
 	    if apicvrf:
-	    	cmd = cmd + ' %s' %(apicvrf)
+                cmd = cmd + " %s%s'" %(VRF_PREFIX,apicvrf)
 	    ascId = self.getuuid(self.runcmd(cmd))
 	    if ascId:
 	       #print 'Output of ID ==\n', ascId
@@ -329,17 +348,23 @@ class neutronCli(object):
     def subpoolcrud(self,name,action,address_scope='', pool='',
 		       prefix_len=28,tenant='admin', shared=False):
 	#if action:: 'create' , ONLY then address_scope,pool are mandatory
+        cidr = netaddr.IPNetwork(pool)
+        if cidr.version == 6:
+            default_prefixlen = '--default-prefixlen 64'
+        else:
+            default_prefixlen = '--default-prefixlen %s' % prefix_len
+
         if action == 'create':
 	    if shared:
 	           cmd = 'neutron --os-project-name %s subnetpool-create ' %(tenant)+\
 			 '--address-scope %s --shared ' %(address_scope)+\
-			 '--pool-prefix %s --default-prefixlen %s %s' \
-			 %(pool,prefix_len,name)
+                         '--pool-prefix %s %s %s' \
+                         %(pool,default_prefixlen,name)
 	    else:
 	           cmd = 'neutron --os-project-name %s subnetpool-create ' %(tenant)+\
 			 '--address-scope %s ' %(address_scope)+\
-			 '--pool-prefix %s --default-prefixlen %s %s' \
-			 %(pool,prefix_len,name)
+                         '--pool-prefix %s %s %s' \
+                         %(pool,default_prefixlen,name)
 	    spId = self.getuuid(self.runcmd(cmd))
 	    if spId:
 	       #print 'Output of ID ==\n', spId
@@ -409,7 +434,7 @@ class neutronCli(object):
 	    vmout = self.runcmd('nova --os-project-name %s show %s | grep network' %(tenant,vmname))
 	    match = re.search("\\b(\d+.\d+.\d+.\d+)\\b.*",vmout,re.I)
 	    if match:
-		vmip = match.group(1)
+                ips = [ip.strip() for ip in vmout.split('|')[2].split(',')]
 		num_try = 1
 		while num_try < max_vm_tries:
 		    sleep(max_vm_wait)
@@ -423,7 +448,7 @@ class neutronCli(object):
 		        portMAC = re.search(r'(([0-9a-f]{2}:){5}[0-9a-f]{2})',_out,re.I).group()
 		        _match = [i.strip(' ') for i in _out.split('|')]
 		        portID = _match[_match.index('ACTIVE')+1]
-	            return [vmip,portID,portMAC]
+                    return [ips,portID,portMAC]
 		else:
 		     return []
 	else:

@@ -26,9 +26,15 @@ from fabric.contrib import files
 from fabric.context_managers import *
 from raise_exceptions import *
 from time import sleep
+from testcases.config import conf
+
+L3OUT1=conf.get('primary_L3out')
+L3OUT1_NET=conf.get('primary_L3out_net')
+L3OUT2=conf.get('secondary_L3out')
+L3OUT2_NET=conf.get('secondary_L3out_net')
 
 def run_openstack_cli(cmdList,cntrlrip,
-                      username='root',passwd='noir0123'):
+                      username='root',passwd='noir0123', do_sudo=False):
     """
     This function enables the user to
     run cli-cmds on openstack env
@@ -43,19 +49,22 @@ def run_openstack_cli(cmdList,cntrlrip,
     with settings(warn_only=True):
         os_flvr = run('cat /etc/os-release',quiet=True)
         if 'Red Hat' in os_flvr:
-            cmd_src = 'source /root/keystonerc_admin'
+            cmd_src = 'source ~/overcloudrc'
         if 'Ubuntu' in os_flvr:
             cmd_src = 'source ~/openrc'
         with prefix(cmd_src):
             for cmd in cmdList:
-                results = run(cmd,quiet=True)
+                if do_sudo:
+                    results = sudo(cmd,quiet=True)
+                else:
+                    results = run(cmd,quiet=True)
                 if not results.succeeded:
 		    print "Unsuccessfull cmd-run output, bailing out ==\n",results
    		    return 0
     return results
 
 def run_remote_cli(cmdList,hostip,username,
-                   password,passOnFailure=True):
+                   password,passOnFailure=True, do_sudo=False):
     "Run cmd on a remote machine"
     env.host_string = hostip
     env.user = username
@@ -65,7 +74,10 @@ def run_remote_cli(cmdList,hostip,username,
     with settings(warn_only=True):
         run("hostname")
         for cmd in cmdList:
-            results = run(cmd)
+            if do_sudo:
+                results = do_sudo(cmd)
+            else:
+                results = run(cmd)
             if not results.succeeded:
                 if not passOnFailure:
                     print "Cmd Execution Failed, continue"
@@ -92,7 +104,7 @@ def get_apic_system_id(hostip,username,password,
                        filename='/etc/neutron/neutron.conf'):
     #NOTE: For aim-aid the filename should be /etc/aim/aim.conf
     cmd = "sed -nre 's/^apic_system_id=(.*)/\\1/p' %s" %(filename)
-    apic_aystem_id = run_remote_cli(cmd,hostip,username,password)
+    apic_aystem_id = run_remote_cli(cmd,hostip,username,password, do_sudo=True)
     if apic_system_id:
       return apic_system_id
 
@@ -278,33 +290,33 @@ def editneutronconf(controllerIp,
     env.password = pwd
     with settings(warn_only=True):
 	if add:
-             chk_string = run('grep -r %s %s' %(pattern,destfile))
+             chk_string = sudo('grep -r %s %s' %(pattern,destfile))
              if chk_string.succeeded: #pattern exists, then delete it
                 cmd = 'sed -i '+"'/%s/d' " %(pattern)+destfile #delete
-                run(cmd)
+                sudo(cmd)
              cmd = 'sed -i '+\
                    "'/%s" %(section)+\
                    '/a '+"%s' " %(pattern)+\
                    destfile
-             run(cmd)
+             sudo(cmd)
         if not add:
             if not isinstance(pattern,list):
                 pattern = [pattern]
                 for pat in pattern:
                     cmd = 'sed -i '+"'/%s/d' " %(pat)+destfile
 	            print cmd
-                    run(cmd)
+                    sudo(cmd)
 	if 'neutron' in destfile:
             print "Neutron Conf edited, hence restarting neutron-server"
             if restart:
-               run('service neutron-server restart')
+               sudo('service neutron-server restart')
 
 def preExistingL3Out(controllerIp,
                      destfile,
                      edgenat=False,
                      nonat=False,
                      revert=False,
-                     l3out=['Management-Out','Datacenter-Out'],
+                     l3out=[L3OUT1, L3OUT2],
                      user='root',
                      pwd='noir0123',
                      restart=True):
@@ -341,10 +353,10 @@ def preExistingL3Out(controllerIp,
                 runcmd(cmd)
                 # Convert L3Out into pre-existing by adding necessary config options
                 print "Adding preexisting config options into the L3Out"
-                if extnet == 'Management-Out':
-                    extEpg = 'MgmtExtPol'
-                if extnet == 'Datacenter-Out':
-                    extEpg = 'DcExtPol'
+                if extnet == L3OUT1:
+                    extEpg = L3OUT1_NET
+                if extnet == L3OUT2:
+                    extEpg = L3OUT2_NET
                 l3outpatterns = [
                              "external_epg=%s" %(extEpg) ,
                              "preexisting=True"

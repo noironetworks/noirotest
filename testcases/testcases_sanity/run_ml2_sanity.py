@@ -137,7 +137,7 @@ try:
     sleep(15) #For VMs to get learned in Fabric
 
     #Step 15:
-    if test_traff.traff_from_ml2_tenants(tnt2) == 1:
+    if test_traff.traff_from_ml2_tenants(tnt2, no_ipv6=True) == 1:
     	LOG.error(
     	"ML2-SANITY: Test-15: VMs b/w Networks/EPGs must NOT be reachable for tenant %s " %(tnt2))
     else:
@@ -163,6 +163,17 @@ try:
      	%(tnt2))
 
     sleep(10) #Almost immediate, so sleep
+
+    if conf.get('dual_stack') and conf['dual_stack'] == True:
+        if test_conf.reboot_vms(tnt2) == 0:
+           raise TestError(
+           "ML2-SANITY: Test-16.5: Rebooting VMs in tenant %s "
+           %(tnt2))
+        else:
+           LOG.info(
+           "ML2-SANITY: Test-16.5: Rebooting in tenant %s : PASS"
+           %(tnt2))
+        sleep(15)
 
     #Step 17:
     if test_traff.traff_from_ml2_tenants(tnt2,proto=['icmp','tcp']) == 0:
@@ -279,6 +290,17 @@ try:
     	"ML2-SANITY: Test-29: Attach router of tenant %s connects to shared External Ntk : PASS" %(tnt3))
 
     sleep(5)
+    if conf.get('dual_stack') and conf['dual_stack'] == True:
+        if test_conf.reboot_vms(tnt3) == 0:
+           raise TestError(
+           "ML2-SANITY: Test-29.5: Rebooting VMs in tenant %s "
+           %(tnt2))
+        else:
+           LOG.info(
+           "ML2-SANITY: Test-29.5: Rebooting in tenant %s : PASS"
+           %(tnt2))
+        sleep(20)
+
     #Step 30:
     if test_traff.traff_from_ml2_tenants(tnt3,ext=True,proto=['icmp','tcp']) == 0:
     	LOG.error(

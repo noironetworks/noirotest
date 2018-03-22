@@ -29,6 +29,8 @@ LOG.addHandler(hdlr)
 # CONSTANTS & CONFIG DEFINITION
 PLUGIN_TYPE = conf['plugin-type']
 CNTRLRIP = conf['controller_ip']
+CNTRLR_USR = conf.get('controller_user') or 'root'
+CNTRLR_PASSWD = conf.get('controller_password') or 'noir0123'
 APICIP = conf['apic_ip']
 NTKNODE = conf['network_node']
 EXTRTR = conf['ext_rtr']
@@ -41,7 +43,14 @@ AVAIL_ZONE = conf['nova_az_name']
 AZ_COMP_NODE = conf['az_comp_node']
 PAUSETODEBG = conf['pausetodebug']
 EXTSEG_PRI = conf['primary_L3out']
+EXTSEG_PRI_NET = conf.get('primary_L3out_net')
 EXTSEG_SEC = conf['secondary_L3out']
+EXTSEG_SEC_NET=conf.get('secondary_L3out_net')
+CTRLR_USER = conf['controller_user']
+CTRLR_PSWD = conf['controller_password']
+KEY_AUTH_IP = conf['keystone_ip']
+KEY_USER = conf.get('keystone_user') or 'admin'
+KEY_PASSWD = conf.get('keystone_password') or 'noir0123'
 NATPOOLNAME1 = 'GbpNatPoolTest1'
 NATPOOLNAME2 = 'GbpNatPoolTest2'
 NATIPPOOL1 = '50.50.50.0/24'
@@ -55,8 +64,8 @@ L3PPREFLEN = 26
 L2PNAME = 'L2PNat'
 PTG1NAME = 'TestPtg1'
 PTG2NAME = 'TestPtg2'
-EXTPOL_MGMT = 'MgmtExtPol'
-EXTPOL_DC = 'DcExtPol'
+EXTPOL_MGMT = EXTSEG_PRI_NET
+EXTPOL_DC = EXTSEG_SEC_NET
 VM1_NAME = 'TestVM1'
 VM2_NAME = 'TestVM2'
 VMLIST = [VM1_NAME, VM2_NAME]
@@ -72,8 +81,8 @@ PRS_ICMP = 'PrsIcmp'
 PRS_TCP = 'PrsTcp'
 gbpcrud = GBPCrud(CNTRLRIP)
 gbpnova = gbpNova(CNTRLRIP)
-neutron = neutronCli(CNTRLRIP)
-keystone = Keystone(CNTRLRIP)
+neutron = neutronCli(CNTRLRIP, username=CTRLR_USER, password=CTRLR_PSWD)
+keystone = Keystone(KEY_AUTH_IP)
 ADMIN_TNTID = keystone.get_tenant_attribute('admin','id')
 
 class NatFuncTestMethods(object):
@@ -89,9 +98,10 @@ class NatFuncTestMethods(object):
             LOG.info(
             "\n## Create External Networks for L3Outs:: %s & %s ##" %(EXTSEG_PRI, EXTSEG_SEC))
             try:
+                dn = 'uni/tn-common/out-%(seg)s/instP-%(pol)s' % {'seg': EXTSEG_PRI,
+                                                                  'pol': EXTSEG_SEC_NET}
                 aimntkcfg_primary = '--apic:distinguished_names type=dict'+\
-                 ' ExternalNetwork='+\
-                 'uni/tn-common/out-%s/instP-MgmtExtPol' %(EXTSEG_PRI)
+                 ' ExternalNetwork='+dn
                 aimsnat = '--apic:snat_host_pool True'
                 neutron.netcrud(EXTSEG_PRI,'create',external=True,
                             shared=True, aim = aimntkcfg_primary)
@@ -100,10 +110,11 @@ class NatFuncTestMethods(object):
                 self.EXTSUB2 = neutron.subnetcrud('extsub3','create',EXTSEG_PRI,
                                cidr=SNATPOOL,extsub=True,aim=aimsnat)
 
+                dn = 'uni/tn-common/out-%(seg)s/instP-%(net)s' % {'seg': EXTSEG_SEC,
+                                                                  'net': EXTSEG_SEC_NET}
 
                 aimntkcfg_sec = '--apic:distinguished_names type=dict'+\
-                 ' ExternalNetwork='+\
-                 'uni/tn-common/out-%s/instP-DcExtPol' %(EXTSEG_SEC)
+                                ' ExternalNetwork=' + dn
                 aimsnat = '--apic:snat_host_pool True'
                 neutron.netcrud(EXTSEG_SEC,'create',external=True,
                             shared=True, aim = aimntkcfg_sec)
@@ -141,6 +152,8 @@ class NatFuncTestMethods(object):
                editneutronconf(CNTRLRIP,
                             fileloc,
                             pat,
+                            user=CNTRLR_USR,
+                            pwd=CTRLR_PSWD,
                             section=sect
                            )
             else:
@@ -148,6 +161,8 @@ class NatFuncTestMethods(object):
                 editneutronconf(CNTRLRIP,
                             fileloc,
                             pattern,
+                            user=CNTRLR_USR,
+                            pwd=CTRLR_PSWD,
                             section=section
                            )
         if delete:
@@ -158,12 +173,16 @@ class NatFuncTestMethods(object):
                 editneutronconf(CNTRLRIP,
                             fileloc,
                             'default_external_segment_name',
+                            user=CNTRLR_USR,
+                            pwd=CTRLR_PSWD,
                             add=False,
                             restart=False
                            )
             editneutronconf(CNTRLRIP,
                             fileloc,
                             patternchk,
+                            user=CNTRLR_USR,
+                            pwd=CTRLR_PSWD,
                             add=False) 
 
     def testCreateExtSegWithDefault(self,extsegname):
@@ -709,7 +728,7 @@ class NatFuncTestMethods(object):
 	else:
 		if isinstance (run_remote_cli(
                               "python add_ssh_filter.py create",
-                               CNTRLRIP, 'root', 'noir0123'), tuple):
+                               CNTRLRIP, CTRLR_USER, CTRLR_PSWD), tuple):
                         LOG.warning("adding filter to SvcEpg failed in AIM")
 			return 0
         sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload

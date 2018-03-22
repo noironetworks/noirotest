@@ -1,0 +1,59 @@
+#!highlight yaml
+
+# Mandatory: User must not change the below config params
+plugin-type: 'merged' # OR keep it null string
+dnat_heat_temp: 'heat_dnat_only.yaml'
+snat_heat_temp: 'heat_snat_only.yaml'
+preexist_dnat_temp: 'preexist_dnat_only.yaml'
+preexist_snat_temp: 'preexist_snat_only.yaml'
+main_setup_heat_temp: 'heat_tmpl_regular_dp_tests.yaml'
+nova_agg_name: 'gbp_agg'
+nova_az_name: 'gbp_zone'
+heat_dp_stack_name: 'dpstack'
+heat_dp_nat_stack_name: 'dpnatstack'
+key_name: 'gbpkey' #Ensure that it is same as mentioned in heat template
+apic_system_id: 'osd10-fab3'
+primary_L3out: 'l3out-1' #Ensure to keep these names as is
+primary_L3out_net: 'l3out_1_net' #Ensure to keep these names as is
+primary_L3out_vrf: 'l3out_1_vrf' #Ensure to keep these names as is
+secondary_L3out: 'l3out-2'
+secondary_L3out_net: 'l3out_2_net'
+secondary_L3out_vrf: 'l3out_2_vrf'
+keystone_user: 'admin'
+keystone_ip: '1.100.1.103'
+keystone_password: 'noir0123'
+# User editable config params
+num_comp_nodes: 2
+apic_ip: '172.28.184.50'
+apic_passwd: 'noir0123'
+leaf1_ip: '172.28.184.51'
+leaf2_ip: '172.28.184.52'
+spine_ip: '172.28.184.53'
+controller_ip: '172.28.184.57'
+controller_user: 'heat-admin'
+controller_password: 'noir0123'
+neutronconffile: '/etc/neutron/neutron.conf' #Ensure it has the VALID apic_external_network config section defined
+network_node: '1.100.1.104' #in our lab env, compute-1=network_node
+az_comp_node: 'overcloud-compute-0.localdomain'
+compute-2: 'overcloud-compute-1.localdomain'
+ext_rtr: '172.28.184.59'
+gwip1_extrtr: '1.106.1.254'
+gwip2_extrtr: '1.106.2.254'
+extrtr_ip1: '1.106.1.1'
+extrtr_ip2: '1.106.2.1'
+#NOTE:Below Flag 'preexist' if True,then ensure 'Datacenter-Out' & 'Management-Out' are configured in APIC
+#with their resp external-policies as 'DcExtPol' & 'MgmtExtPol' << ensure name staring are as EXACT as given
+#here
+#preexist: True #See NOTE immediate above. For now 'commented out' as its fed from command-line
+#vm_image: '"trusty-multi-if"'
+vm_image: 'ubuntu_multi_nics'
+vm_flavor: 'm1.medium'
+test_parameters:
+  bd_type: vxlan
+  ip_version: ipv4
+  vpc_type: vpc
+vm_image: ubuntu_multi_nics
+image_prompt: '\#'
+# Enable the below flag inorder to live-debug on Failure of a Testcase
+pausetodebug: False
+director_deploy: 'True'

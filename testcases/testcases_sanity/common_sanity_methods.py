@@ -4,6 +4,7 @@ import logging
 import re
 import string
 import sys
+import uuid
 from commands import *
 getoutput("rm -rf /tmp/test_*") #Deletes pre-existing test logs
 from time import sleep
@@ -16,6 +17,13 @@ from libs.gbp_pexp_traff_libs import gbpExpTraff
 from testcases.config import conf
 from testcases.testcases_nat_func.traff_from_extgw import *
 
+L3OUT1=conf.get('primary_L3out')
+L3OUT1_NET=conf.get('primary_L3out_net')
+L3OUT2=conf.get('secondary_L3out')
+L3OUT2_NET=conf.get('secondary_L3out_net')
+L3OUT2_VRF=conf.get('secondary_L3out_vrf')
+KEY_AUTH_IP = conf.get('keystone_ip')
+
 # Initialize logging
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.INFO)
@@ -27,7 +35,7 @@ hdlr.setFormatter(formatter)
 LOG.addHandler(hdlr)
 
 #Extract and set global vars from config file
-#NOTE:The external-segment is hardcoded to 'Management-Out'
+#NOTE:The external-segment is hardcoded to L3OUT1
 CNTRLIP = conf['controller_ip']
 APICIP = conf['apic_ip']
 TNT_LIST_ML2 =  ['PENGUIN','OCTON','GARTH']
@@ -44,20 +52,24 @@ AVZONE = conf['nova_az_name']
 AVHOST = conf['az_comp_node']
 COMPUTE1 = conf['network_node']
 COMPUTE2 = conf['compute-2']
+CTRLR_USER = conf['controller_user']
+CTRLR_PSWD = conf['controller_password']
 pausetodebug = conf['pausetodebug']
 EXTDNATCIDR,FIPBYTES = '50.50.50.0/28', '50.50.50.'
 EXTSNATCIDR = '55.55.55.0/28'
 EXTNONATCIDR = '2.3.4.0/24' #Can be any cidr, jsut needed for neutron router
 #We want to re-purpose the CIDR of PvtNtk for VMs participating in NO-NAT
 NONATCIDR = '60.60.60.0/24'
-APICVRF = "--apic:distinguished_names type=dict"+\
-	  " VRF='uni/tn-common/ctx-DcExtVRF'"
+NONATCIDRV6 = '2001:db8::/56'
+APICVRF = "uni/tn-common/ctx-%s" % L3OUT2_VRF
 ML2Fips = {}
 GBPFips = {}
 ACT = 'ALLOW'
 CLS_ICMP = 'ICMP'
+CLS_ICMPV6 = 'ICMPV6'
 CLS_TCP = 'TCP'
 PR_ICMP = 'PR-ICMP'
+PR_ICMPV6 = 'PR-ICMPV6'
 PR_TCP = 'PR-TCP'
 PRS_ICMP_TCP = 'CONT-ICMP-TCP'
 PRS_ICMP = 'CONT-ICMP'
@@ -66,8 +78,29 @@ ml2_vm_ntk_ip = {}
 gbp_vm_ntk_ip = {}
 comp1 = Compute(COMPUTE1)
 comp2 = Compute(COMPUTE2)
-neutron = neutronCli(CNTRLIP)
+neutron = neutronCli(CNTRLIP, username=CTRLR_USER, password=CTRLR_PSWD)
 neutron_api = neutronPy(CNTRLIP)
+
+
+def is_dual_stack():
+    return conf.get('dual_stack') and conf['dual_stack'] == True
+
+
+def _install_ipv6_fix(tnt):
+    def valid_uuid(test_uuids):
+        for test_uuid in test_uuids:
+            try:
+                valid = uuid.UUID(test_uuid, version=4)
+                return test_uuid
+            except:
+                continue
+    cmd = "nova --os-project-name %s secgroup-list  | grep default | awk -F '|' '{print $2}'" %  tnt
+    secgroups = neutron.runcmd(cmd)
+    secgroup_ids = [secgroup.strip() for secgroup in secgroups.split("\n") if secgroup]
+    secgroup_id = valid_uuid(secgroup_ids)
+    cmd = 'neutron --os-project-name %s security-group-rule-create --ethertype IPv6 --direction ingress --protocol 58 --remote-ip-prefix ::/0 %s' %  (tnt, secgroup_id)
+    neutron.runcmd(cmd)
+
 
 def create_external_network_subnets(nat):
 	#Needed for both GBP & ML2
@@ -76,31 +109,33 @@ def create_external_network_subnets(nat):
         "####  Create Shared External Network for ML2 Tenants   ####\n"
         "#########################################################\n"
         )
-	#For nonat, use pre-existing Datacenter-Out
+	#For nonat, use pre-existing L3OUT2
 	#Also just add one subnet to that nonat External-Network
 	if nat == 'nonat':
+            apic_dn = 'uni/tn-common/out-%(l3out)s/instP-%(l3out_net)s' % {
+                'l3out': L3OUT2, 'l3out_net': L3OUT2_NET}
             aimntkcfg = '--apic:distinguished_names type=dict'+\
-                 ' ExternalNetwork='+\
-                 'uni/tn-common/out-Datacenter-Out/instP-DcExtPol'+\
+                 ' ExternalNetwork='+apic_dn+\
 		 " --apic:nat_type ''"
 	else:
+            apic_dn = 'uni/tn-common/out-%(l3out)s/instP-%(l3out_net)s' % {
+                'l3out': L3OUT1, 'l3out_net': L3OUT1_NET}
             aimntkcfg = '--apic:distinguished_names type=dict'+\
-                 ' ExternalNetwork='+\
-                 'uni/tn-common/out-Management-Out/instP-MgmtExtPol'
+                 ' ExternalNetwork='+apic_dn
             aimsnat = '--apic:snat_host_pool True'
 	try:
 	    if nat == 'nonat':
-	        neutron.netcrud('Datacenter-Out','create',external=True,
+	        neutron.netcrud(L3OUT2,'create',external=True,
                             shared=True, aim = aimntkcfg)
-                EXTSUB3 = neutron.subnetcrud('extsub3','create','Datacenter-Out',
+                EXTSUB3 = neutron.subnetcrud('extsub3','create',L3OUT2,
  			       cidr=EXTNONATCIDR,extsub=True)
 		return EXTSUB3
 	    else:
-	        neutron.netcrud('Management-Out','create',external=True,
+	        neutron.netcrud(L3OUT1,'create',external=True,
                             shared=True, aim = aimntkcfg)
-                EXTSUB1 = neutron.subnetcrud('extsub1','create','Management-Out',
+                EXTSUB1 = neutron.subnetcrud('extsub1','create',L3OUT1,
  			       cidr=EXTDNATCIDR,extsub=True)
-                EXTSUB2 = neutron.subnetcrud('extsub2','create','Management-Out',
+                EXTSUB2 = neutron.subnetcrud('extsub2','create',L3OUT1,
  			       cidr=EXTSNATCIDR,extsub=True,aim=aimsnat)
 	        return EXTSUB1, EXTSUB2
       	except Exception as e:
@@ -121,7 +156,7 @@ def attach_fip_to_vms(tnt,mode):
 	   GBPFips[tnt]=[]
 	for vm in vms:
 	    cmd1 = 'nova --os-tenant-name %s' %(tnt)+\
-                  ' floating-ip-create Management-Out'
+                  ' floating-ip-create %s' %(L3OUT1)
 	    match = re.search('(%s\d+).*'%(FIPBYTES),
                                         neutron.runcmd(cmd1),
 					re.I)
@@ -152,22 +187,33 @@ class TestError(Exception):
 class crudML2(object):
     global ml2tnt1, ml2tnt2, ml2tnt3, ml2Ntks, ml2Subs, Cidrs, addscopename, \
 	   addscopename_shd, subpoolname, subpoolname_shd, subpool, \
-	   subpool_shd
+           subpool_shd, traffic_class, addscopename_v6, addscopename_shd_v6, \
+           subpoolname_v6, subpoolname_shd_v6, subpool_v6, subpool_shd_v6, CidrsV6, ml2SubsV6
     ml2tnt1, ml2tnt2, ml2tnt3 = TNT_LIST_ML2[0],TNT_LIST_ML2[1],TNT_LIST_ML2[2]
-    ml2Ntks,ml2Subs,Cidrs = {},{},{}
+    ml2Ntks,ml2Subs,ml2SubsV6,Cidrs,CidrsV6 = {},{},{},{},{}
     ml2Ntks[ml2tnt1] = ['Net1', 'Net2']
     ml2Ntks[ml2tnt2] = ['ntk3', 'ntk4']
     ml2Ntks[ml2tnt3] = ['gntk5', 'gntk6']
     ml2Subs[ml2tnt1] = ['Subnet1', 'Subnet2']
     ml2Subs[ml2tnt2] = ['sub3', 'sub4']
     ml2Subs[ml2tnt3] = ['gsub5', 'gsub6']
+    ml2SubsV6[ml2tnt1] = ['Subnet1V6', 'Subnet2V6']
+    ml2SubsV6[ml2tnt2] = ['sub3V6', 'sub4V6']
+    ml2SubsV6[ml2tnt3] = ['gsub5V6', 'gsub6V6']
     addscopename = 'asc1'
+    addscopename_v6 = 'asc1v6'
     addscopename_shd = 'ascs'
+    addscopename_shd_v6 = 'ascsv6'
     subpoolname = 'subpool1'
+    subpoolname_v6 = 'subpool1v6'
     subpoolname_shd = 'sps'
+    subpoolname_shd_v6 = 'spsv6'
     subpool = '22.22.22.0/24'
+    subpool_v6 = '2001:db8:3::/56'
     subpool_shd = NONATCIDR #Repurposing subpool_shd for NONAT
+    subpool_shd_v6 = NONATCIDRV6 #Repurposing subpool_shd for NONAT
     Cidrs[ml2tnt1] = ['11.11.11.0/28', '21.21.21.0/28']
+    CidrsV6[ml2tnt1] = ['2001:db8:1::/64', '2001:db8:2::/64']
 
     def create_ml2_tenants(self):
 	self.ml2tntIDs = neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create',getid=True)
@@ -194,6 +240,7 @@ class crudML2(object):
                 for index in range(len(ml2Ntks[tnt])):
                         network = ml2Ntks[tnt][index]
                         subnet = ml2Subs[tnt][index]
+                        subnet_v6 = ml2SubsV6[tnt][index]
                         netID = neutron.netcrud(network,'create',tnt)
                         self.netIDnames[tnt][network] = netID
                         self.networkIDs[tnt].append(netID)
@@ -205,6 +252,14 @@ class crudML2(object):
                                                            netID,
                                                            cidr=cidr,
                                                            tenant=tnt))
+                            if is_dual_stack():
+                                cidr = CidrsV6[tnt][index]
+                                self.subnetIDs[tnt].append(
+                                            neutron.subnetcrud(subnet_v6,
+                                                               'create',
+                                                               netID,
+                                                               cidr=cidr,
+                                                               tenant=tnt))
 		        elif tnt == ml2tnt3:
 			    self.subnetIDs[tnt].append( 
                                         neutron.subnetcrud(subnet,
@@ -212,6 +267,13 @@ class crudML2(object):
                                                            netID,
                                                            subnetpool=self.subpoolID,
                                                            tenant=tnt))
+                            if is_dual_stack():
+                               self.subnetIDs[tnt].append(
+                                            neutron.subnetcrud(subnet_v6,
+                                                               'create',
+                                                               netID,
+                                                               subnetpool=self.subpoolIDv6,
+                                                               tenant=tnt))
 		        else:
 			    self.subnetIDs[tnt].append( 
                                         neutron.subnetcrud(subnet,
@@ -219,6 +281,13 @@ class crudML2(object):
                                                            netID,
                                                            subnetpool=self.subpoolID,
                                                            tenant=tnt))
+                            if is_dual_stack():
+                               self.subnetIDs[tnt].append(
+                                            neutron.subnetcrud(subnet_v6,
+                                                               'create',
+                                                               netID,
+                                                               subnetpool=self.subpoolIDv6,
+                                                               tenant=tnt))
             except Exception as e:
                    LOG.error('Create Network/Subnet Failed: '+repr(e))
 	           return 0
@@ -236,13 +305,36 @@ class crudML2(object):
 					         tenant=tnt,
 					         shared=shared,
 						 apicvrf=APICVRF)
+            if is_dual_stack():
+               self.addscopIDv6 = neutron.addscopecrud(addscopename_shd_v6,
+                                                        'create',
+                                                        ip=6,
+                                                        tenant=tnt,
+                                                        shared=shared,
+                                                        apicvrf=APICVRF)
   	else:
 	    self.addscopID = neutron.addscopecrud(addscopename,
 						'create',
 					        tenant=tnt,
 					        shared=shared)
+            if is_dual_stack():
+                v4scope = neutron.addscopecrud(addscopename,
+                                               'get',
+                                               tenant=tnt,
+                                               shared=shared)
+                regex = r'"VRF": "(.*)"'
+                found = re.search(regex, v4scope)
+                self.addscopIDv6 = neutron.addscopecrud(addscopename_v6,
+                                                        'create',
+                                                        ip=6,
+                                                        tenant=tnt,
+                                                        shared=shared,
+                                                        apicvrf=found.group(1))
 	if not self.addscopID:
 	    	return 0
+        if is_dual_stack():
+            if not self.addscopIDv6:
+                return 0
 	
     def create_subnetpool(self,tnt,shared=False):
         LOG.info(
@@ -254,10 +346,16 @@ class crudML2(object):
 	    spname = subpoolname_shd
 	    sub_pool = subpool_shd
 	    ads_name=addscopename_shd
+            spname_v6 = subpoolname_shd_v6
+            ads_name_v6=addscopename_shd_v6
+            sub_pool_v6 = subpool_shd_v6
 	else:
 	    spname = subpoolname
 	    sub_pool = subpool
 	    ads_name=addscopename
+            spname_v6 = subpoolname_v6
+            sub_pool_v6 = subpool_v6
+            ads_name_v6=addscopename_v6
 	self.subpoolID = neutron.subpoolcrud(spname,'create',
                                              address_scope=ads_name,
 					     pool=sub_pool,
@@ -265,6 +363,14 @@ class crudML2(object):
 					     shared=shared)
     	if not self.subpoolID:
 		return 0
+        if is_dual_stack():
+           self.subpoolIDv6 = neutron.subpoolcrud(spname_v6,'create',
+                                                  address_scope=ads_name_v6,
+                                                  pool=sub_pool_v6,
+                                                  tenant=tnt,
+                                                  shared=shared)
+           if not self.subpoolIDv6:
+                return 0
 
     def create_routers(self):
         LOG.info(
@@ -304,9 +410,9 @@ class crudML2(object):
         "###############################################\n"
 	%(tnt))
 	if not nonat:
-	    gw = 'Management-Out'
+	    gw = L3OUT1
 	else:
-	    gw = 'Datacenter-Out'
+	    gw = L3OUT2
  	try:
 	    neutron.rtrcrud(self.rtrIDs[tnt], 'set', rtrprop='gateway',
 	   		    gw=gw, tenant=tnt)
@@ -314,23 +420,36 @@ class crudML2(object):
 	    LOG.error('Setting GW for the Router Failed: ' + repr(e))
 	    return 0
 
+    def reboot_vms(self, tnt):
+        for vm in ML2vms[tnt]:
+            neutron.runcmd(
+                'nova --os-tenant-name %s reboot %s'
+                % (tnt, vm))
+
+    def install_secgroup_rules(self, tnt, default_route = '0.0.0.0/0'):
+        # Since VMs are created with 'default' secgroup, hence
+        # adding rules to the default secgroup
+        neutron.runcmd(
+            'nova --os-project-name %s secgroup-add-rule default icmp -1 -1 %s'
+            % (tnt, default_route))
+        neutron.runcmd(
+            'nova --os-project-name %s secgroup-add-rule default tcp 22 22 %s'
+            % (tnt, default_route))
+        neutron.runcmd(
+            'nova --os-project-name %s secgroup-add-rule default tcp 80 80 %s'
+            % (tnt, default_route))
+
     def install_tenant_vms(self,tnt):
         LOG.info(
         "\n#############################################\n"
         "####  Install VM for the Tenant %s  ####\n"
         "###############################################\n"
 	%(tnt))
-        # Since VMs are created with 'default' secgroup, hence
-        # adding rules to the default secgroup
-        neutron.runcmd(
-            'nova --os-tenant-name %s secgroup-add-rule default icmp -1 -1 0.0.0.0/0'
-            % (tnt))
-        neutron.runcmd(
-            'nova --os-tenant-name %s secgroup-add-rule default tcp 22 22 0.0.0.0/0'
-            % (tnt))
-        neutron.runcmd(
-            'nova --os-tenant-name %s secgroup-add-rule default tcp 80 80 0.0.0.0/0'
-            % (tnt))
+
+        self.install_secgroup_rules(tnt, default_route='::/0')
+        self.install_secgroup_rules(tnt)
+        if is_dual_stack():
+            _install_ipv6_fix(tnt)
 	ml2_vm_ntk_ip[tnt] = {}
         az = neutron.alternate_az(AVZONE)
         for i in range(len(ML2vms[tnt])):
@@ -341,7 +460,9 @@ class crudML2(object):
                                            self.networkIDs[tnt][i],
                                            availzone=az.next()
                                        	   )
-		ml2_vm_ntk_ip[tnt][ML2vms[tnt][i]] = [vmcreate[0],self.networkIDs[tnt][i]]
+                ml2_vm_ntk_ip[tnt][ML2vms[tnt][i]] = {'ips': vmcreate[0],
+                                                      'nets': self.networkIDs[tnt][i]}
+
 	    except Exception as e:
                 LOG.error('VM Creation for tnt %s Failed: ' %(tnt)+repr(e))
                 return 0
@@ -365,7 +486,10 @@ class crudML2(object):
 	    #Delete Router-ports, gateway and router
 	    try:
 		if self.rtrIDs[tnt]:
-		    for subnet in ml2Subs[tnt]:
+                    subnets = ml2Subs[tnt]
+                    if is_dual_stack():
+                        subnets.extend(ml2SubsV6[tnt])
+                    for subnet in subnets:
 		        neutron.runcmd(
 		        'neutron router-interface-delete %s %s'
 			%(self.rtrIDs[tnt],subnet))
@@ -386,14 +510,27 @@ class crudML2(object):
 		           %(obj))
 	    except Exception:
 	        pass
+        if is_dual_stack():
+           for obj in [subpoolname_v6,subpoolname_shd_v6]:
+               try:
+                   neutron.runcmd('neutron subnetpool-delete %s'
+                              %(obj))
+               except Exception:
+                   pass
+           for obj in [addscopename_v6,addscopename_shd_v6]:
+               try:
+                   neutron.runcmd('neutron address-scope-delete %s'
+                              %(obj))
+               except Exception:
+                   pass
 	for obj in [addscopename,addscopename_shd]:
 	    try:    
 	        neutron.runcmd('neutron address-scope-delete %s'
 			   %(obj))
 	    except Exception:
 	        pass
-	neutron.runcmd('neutron net-delete Management-Out')
-	neutron.runcmd('neutron net-delete Datacenter-Out')
+	neutron.runcmd('neutron net-delete %s' % L3OUT1)
+	neutron.runcmd('neutron net-delete %s' % L3OUT2)
 	#Purge all resource/config if missed by above cleanups
 	for tnt in self.ml2tntIDs:
 	    neutron.purgeresource(tnt)
@@ -581,6 +718,8 @@ class crudGBP(object):
         "## Create VMs for Tenant %s ##\n"
         "##################################################\n"
         %(tnt))
+        if is_dual_stack():
+            _install_ipv6_fix(tnt)
         az = neutron.alternate_az(AVZONE)
         for vm,prop in gbp_vm_ntk_ip[tnt].iteritems():
             vm_image = 'ubuntu_multi_nics'
@@ -618,10 +757,10 @@ class crudGBP(object):
         )
 	self.extsegid = {}
 	if nattype == 'nat':
-	    es_name = 'Management-Out'
+	    es_name = L3OUT1
 	    extsub = create_external_network_subnets('nat')[0]
 	if nattype == 'nonat': 
-	    es_name = 'Datacenter-Out'
+	    es_name = L3OUT2
 	    extsub = create_external_network_subnets('nonat')
         self.extsegid = self.gbpadmin.create_gbp_external_segment(
                                         es_name,
@@ -644,9 +783,9 @@ class crudGBP(object):
         "###########################################\n"
         %(tnt)) 
 	if tnt == tnt1:
-	    extpolname = 'MgmtExtPol'
+	    extpolname = L3OUT1_NET
 	if tnt == tnt2:
-	    extpolname = 'DcExtPol'
+	    extpolname = L3OUT2_NET
 	gbptnt = GBPCrud(CNTRLIP,tenant=tnt)
 	self.extpol = gbptnt.create_gbp_external_policy(
 					extpolname,
@@ -702,6 +841,16 @@ class crudGBP(object):
             LOG.error(
                 "\nReqd ICMP Policy Classifier Create Failed")
             return 0
+        if is_dual_stack():
+            self.gbpadmin.create_gbp_policy_classifier(CLS_ICMPV6,
+                                                      direction= 'bi',
+                                                      protocol = 58,
+                                                     shared=True)
+            self.clsicmpidv6 = self.gbpadmin.verify_gbp_policy_classifier(CLS_ICMPV6)
+            if self.clsicmpidv6 == 0:
+                LOG.error(
+                    "\nReqd ICMP Policy Classifier Create Failed")
+                return 0
         #Create and Verify Policy-Rule ICMP
         self.gbpadmin.create_gbp_policy_rule(PR_ICMP,
                                             self.clsicmpid,
@@ -713,6 +862,17 @@ class crudGBP(object):
             LOG.error(
                 "\n## Reqd ICMP Policy Rule Create Failed")
             return 0
+        if is_dual_stack():
+            self.gbpadmin.create_gbp_policy_rule(PR_ICMPV6,
+                                                self.clsicmpidv6,
+                                                self.actid,
+                                                property_type = 'uuid',
+                                               shared=True)
+            self.ruleicmpidv6 = self.gbpadmin.verify_gbp_policy_rule(PR_ICMPV6)
+            if self.ruleicmpidv6 == 0:
+                LOG.error(
+                    "\n## Reqd ICMP Policy Rule Create Failed")
+                return 0
         # Create and Verify TCP Policy Classifier
         self.gbpadmin.create_gbp_policy_classifier(CLS_TCP,
                                                   direction= 'bi',
@@ -736,36 +896,74 @@ class crudGBP(object):
                 "\n## Reqd TCP Policy Rule Create Failed")
             return 0
 	self.prs_name_id = {}
-        # Create and Verify ICMP-TCP Policy Rule Set
-        self.gbpadmin.create_gbp_policy_rule_set(
-                                        PRS_ICMP_TCP,
-                                        rule_list=[
-                                          self.ruleicmpid,
-                                          self.ruletcpid
+        if is_dual_stack():
+            # Create and Verify ICMP-TCP Policy Rule Set
+            self.gbpadmin.create_gbp_policy_rule_set(
+                                            PRS_ICMP_TCP,
+                                            rule_list=[
+                                              self.ruleicmpid,
+                                              self.ruleicmpidv6,
+                                              self.ruletcpid
                                                 ],
-					shared=True,
-                                        property_type = 'uuid')
-        self.prsicmptcpid = self.gbpadmin.verify_gbp_policy_rule_set(PRS_ICMP_TCP)
-        if self.prsicmptcpid == 0:
-            LOG.error(
-                "\n## Reqd ICMP-TCP Policy RuleSet Create Failed")
-            return 0
-	else:
-	    self.prs_name_id[PRS_ICMP_TCP] = self.prsicmptcpid
-        # Create and Verify ICMP Policy Rule Set
-        self.gbpadmin.create_gbp_policy_rule_set(
-                                        PRS_ICMP,
-                                        rule_list=[self.ruleicmpid],
-                                        property_type = 'uuid',
-					shared=True
-                                        )
-        self.prsicmpid = self.gbpadmin.verify_gbp_policy_rule_set(PRS_ICMP)
-        if self.prsicmpid == 0:
-            LOG.error(
-                "\n## Reqd ICMP Policy RuleSet Create Failed")
-            return 0
-	else:
-	    self.prs_name_id[PRS_ICMP] = self.prsicmpid
+                                            shared=True,
+                                            property_type = 'uuid')
+            self.prsicmptcpid = self.gbpadmin.verify_gbp_policy_rule_set(PRS_ICMP_TCP)
+            if self.prsicmptcpid == 0:
+                LOG.error(
+                    "\n## Reqd ICMP-TCP Policy RuleSet Create Failed")
+                return 0
+            else:
+                self.prs_name_id[PRS_ICMP_TCP] = self.prsicmptcpid
+        else:
+            # Create and Verify ICMP-TCP Policy Rule Set
+            self.gbpadmin.create_gbp_policy_rule_set(
+                                            PRS_ICMP_TCP,
+                                            rule_list=[
+                                              self.ruleicmpid,
+                                              self.ruletcpid
+                                                ],
+                                           shared=True,
+                                            property_type = 'uuid')
+            self.prsicmptcpid = self.gbpadmin.verify_gbp_policy_rule_set(PRS_ICMP_TCP)
+            if self.prsicmptcpid == 0:
+                LOG.error(
+                    "\n## Reqd ICMP-TCP Policy RuleSet Create Failed")
+                return 0
+            else:
+                self.prs_name_id[PRS_ICMP_TCP] = self.prsicmptcpid
+        if is_dual_stack():
+            # Create and Verify ICMP Policy Rule Set
+            self.gbpadmin.create_gbp_policy_rule_set(
+                                            PRS_ICMP,
+                                            rule_list=[
+                                              self.ruleicmpid,
+                                              self.ruleicmpidv6
+                                                ],
+                                            property_type = 'uuid',
+                                           shared=True
+                                            )
+            self.prsicmpid = self.gbpadmin.verify_gbp_policy_rule_set(PRS_ICMP)
+            if self.prsicmpid == 0:
+                LOG.error(
+                    "\n## Reqd ICMP Policy RuleSet Create Failed")
+                return 0
+            else:
+                self.prs_name_id[PRS_ICMP] = self.prsicmpid
+        else:
+            # Create and Verify ICMP Policy Rule Set
+            self.gbpadmin.create_gbp_policy_rule_set(
+                                            PRS_ICMP,
+                                            rule_list=[self.ruleicmpid],
+                                            property_type = 'uuid',
+                                           shared=True
+                                            )
+            self.prsicmpid = self.gbpadmin.verify_gbp_policy_rule_set(PRS_ICMP)
+            if self.prsicmpid == 0:
+                LOG.error(
+                    "\n## Reqd ICMP Policy RuleSet Create Failed")
+                return 0
+            else:
+                self.prs_name_id[PRS_ICMP] = self.prsicmpid
         # Create and Verify TCP Policy Rule Set 
         self.gbpadmin.create_gbp_policy_rule_set(
                                         PRS_TCP,
@@ -918,10 +1116,11 @@ class crudGBP(object):
 		pass
 	neutron.runcmd('neutron subnetpool-delete %s' %(gbp_nonat_sps))
 	neutron.runcmd('neutron address-scope-delete %s' %(gbp_nonat_ads))
-	neutron.runcmd('neutron net-delete Management-Out')
-	neutron.runcmd('neutron net-delete Datacenter-Out')
+	neutron.runcmd('neutron net-delete %s' % L3OUT1)
+	neutron.runcmd('neutron net-delete %s' % L3OUT2)
 	#Purge all resource/config if missed by above cleanups
-	for tnt in self.gbptntIDs:
+        if self.gbptntIDs:
+	    for tnt in self.gbptntIDs:
 	    	neutron.purgeresource(tnt)
 	return 1
 
@@ -934,36 +1133,49 @@ class sendTraffic(object):
     #Ensure to inherit/instantiate the class after 
     #all VMs are created
     def generate_vm_prop(self,tnt,ext=False):
+        netns_dict = {}
 	print 'VM_to_NTK_IP inside Traffic Class for == ', ml2_vm_ntk_ip[tnt]
   	properties = {}
 	for vm,prop in ml2_vm_ntk_ip[tnt].iteritems():
-	    if ext:
-	        pingable_ips = [ip for val in ml2_vm_ntk_ip[tnt].values() for ip in val][0::2]+\
-			[EXTRTRIP1,EXTRTRIP2]
-	    else:
-	        pingable_ips = [ip for val in ml2_vm_ntk_ip[tnt].values() for ip in val][0::2]
-	    pingable_ips.remove(prop[0]) #Removing the Src_IP from the list of pingable_ips
-	    dest_ips = pingable_ips
-	    properties[vm] = {'netns' : 'qdhcp-'+prop[1],
-			      'src_ip' : prop[0],
-			      'dest_ip' : dest_ips
-			     }
-	return properties
+           pingable_ips = []
+           for val in ml2_vm_ntk_ip[tnt].values():
+                if type(val['ips']) is list:
+                    pingable_ips.extend([ip for ip in val['ips']])
+                    for ip in val['ips']:
+                        netns_dict[ip] = 'qdhcp-'+val['nets']
+                else:
+                    pingable_ips.extend([val['ips']])
+                    netns_dict[ip] = 'qdhcp-'+val['nets']
+	   if ext:
+               pingable_ips.extend([EXTRTRIP1,EXTRTRIP2])
+           #Removing the Src_IPs from the list of pingable_ips
+           if type(prop['ips']) is list:
+               for ip in prop['ips']:
+                   pingable_ips.remove(ip)
+           else:
+               pingable_ips.remove(prop['ips'])
+	   dest_ips = pingable_ips
+           properties[vm] = {'netns' : 'qdhcp-'+prop['nets'],
+                             'src_ip' : prop['ips'],
+			     'dest_ip' : dest_ips
+			    }
+        return properties, netns_dict
 	
-    def traff_from_ml2_tenants(self,tnt,ext=False,proto=['icmp','tcp','metadata']):
+    def traff_from_ml2_tenants(self,tnt,ext=False,proto=['icmp','tcp','metadata'],no_ipv6=False):
 	LOG.info(
         "\n#############################################\n"
         "## Sending Traffic from VMs in ML2-tenant %s ##\n"
         "###############################################\n"
         %(tnt))
 	tenant_vms  = ML2vms[tnt]
-	vm_property = self.generate_vm_prop(tnt,ext=ext)
+        vm_property, netns_dict = self.generate_vm_prop(tnt,ext=ext)
 	print "VM Properties == ", vm_property
 	for vm in tenant_vms:
 	    vm_traff = gbpExpTraff(COMPUTE1,vm_property[vm]['netns'],
 				vm_property[vm]['src_ip'],
-				vm_property[vm]['dest_ip'])
-	    if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1):
+                                vm_property[vm]['dest_ip'],
+                                netns_dict)
+            if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1,no_ipv6=no_ipv6):
 	    	return 0
 
     def get_epg_vms(self,tnt,tag):
@@ -972,33 +1184,72 @@ class sendTraffic(object):
 	based on their EPG or BD locations
 	"""
 	epg_vms = {}
+        netns_dict = {}
 	if tag == 'intra_epg':
 	    for vm,prop in gbp_vm_ntk_ip[tnt].iteritems():
 		#NOTE: pingable IPs are ONLY the VM_IPs in the same EPG
-		pingable_ips = [val['src_ip'] for val in gbp_vm_ntk_ip[tnt].values() if val['tag'] == tag]
+                pingable_ips = []
+                for val in gbp_vm_ntk_ip[tnt].values():
+                    if val['tag'] == tag:
+                        if type(val['src_ip']) is list:
+                            pingable_ips.extend(val['src_ip'])
+                            for ip in val['src_ip']:
+                                netns_dict[ip] = val['netns']
+                        else:
+                            pingable_ips.append(val['src_ip'])
+                            netns_dict[ip] = val['netns']
 	        if prop['tag'] == tag:
-		    pingable_ips.remove(prop['src_ip'])
+                    if type(prop['src_ip']) is list:
+                        for ip in prop['src_ip']:
+                            pingable_ips.remove(ip)
+                    else:
+                        pingable_ips.remove(prop['src_ip'])
 		    prop['dest_ip'] = pingable_ips
 		    epg_vms[vm] = prop
-	    return epg_vms	    
+            return epg_vms, netns_dict
 	if tag == 'intra_bd':
 	    for vm,prop in gbp_vm_ntk_ip[tnt].iteritems():
 		#NOTE: pingable IPs are ONLY the VM_IPs in the same BD
-		pingable_ips = [val['src_ip'] for val in gbp_vm_ntk_ip[tnt].values() if val['tag'] == 'intra_epg' or 'intra_bd']
+                pingable_ips = []
+                for val in gbp_vm_ntk_ip[tnt].values():
+                    if val['tag'] == 'intra_epg' or 'intra_bd':
+                        if type(val['src_ip']) is list:
+                            pingable_ips.extend(val['src_ip'])
+                            for ip in val['src_ip']:
+                                netns_dict[ip] = val['netns']
+                        else:
+                            pingable_ips.append(val['src_ip'])
+                            netns_dict[ip] = val['netns']
 	        if prop['tag'] == tag:
-		    pingable_ips.remove(prop['src_ip'])
+                    if type(prop['src_ip']) is list:
+                        for ip in prop['src_ip']:
+                            pingable_ips.remove(ip)
+                    else:
+                        pingable_ips.remove(prop['src_ip'])
 		    prop['dest_ip'] = pingable_ips
 		    epg_vms[vm] = prop
-	    return epg_vms	    
+            return epg_vms, netns_dict
 	if tag == 'inter_bd': 
 	    #NOTE: pingable IPs are all the VM_IPs in the same 
 	    for vm,prop in gbp_vm_ntk_ip[tnt].iteritems():
-		pingable_ips = [val['src_ip'] for val in gbp_vm_ntk_ip[tnt].values()]
+                pingable_ips = []
+                for val in gbp_vm_ntk_ip[tnt].values():
+                    if type(val['src_ip']) is list:
+                        pingable_ips.extend(val['src_ip'])
+                        for ip in val['src_ip']:
+                            netns_dict[ip] = val['netns']
+                    else:
+                        pingable_ips.append(val['src_ip'])
+                        netns_dict[ip] = val['netns']
 	        if prop['tag'] == tag:
-		    pingable_ips.remove(prop['src_ip'])
+                    if type(prop['src_ip']) is list:
+                        for ip in prop['src_ip']:
+                            pingable_ips.remove(ip)
+                    else:
+                        pingable_ips.remove(prop['src_ip'])
 		    prop['dest_ip'] = pingable_ips
 		    epg_vms[vm] = prop
-	    return epg_vms	    
+            return epg_vms, netns_dict
 		 
     def traff_from_gbp_tenant(self,tnt,traffic_type,ext=False,
 				proto=['icmp','tcp','metadata']
@@ -1009,7 +1260,7 @@ class sendTraffic(object):
         "###############################################\n"
         %(tnt))
 	# valid strings for traffic_type:: 'inter_bd', 'intra_bd', 'intra_epg'
-	test_vms = self.get_epg_vms(tnt,traffic_type)
+        test_vms, netns_dict = self.get_epg_vms(tnt,traffic_type)
 	print 'After EPG based classification of VMs ', test_vms	
         failed_traff = 0
 	for vm,vm_property in test_vms.iteritems():
@@ -1020,7 +1271,7 @@ class sendTraffic(object):
 	    print "Target IPs for the VM ", vm, target_ips
 	    vm_traff = gbpExpTraff(COMPUTE1,vm_property['netns'],
 				vm_property['src_ip'],
-				target_ips)
+                                target_ips, netns_dict)
             iter=1
             while True:
                if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1):

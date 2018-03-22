@@ -20,7 +20,12 @@ import re
 import string
 from commands import *
 from gbpclient.v2_0 import client as gbpclient
+from testcases.config import conf
 
+L3OUT1=conf.get('primary_L3out')
+L3OUT1_NET=conf.get('primary_L3out_net')
+L3OUT2=conf.get('secondary_L3out')
+L3OUT2_NET=conf.get('secondary_L3out_net')
 # Initialize logging
 logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)
 _log = logging.getLogger( __name__ )
@@ -1253,10 +1258,10 @@ class GBPCrud(object):
     def AddRouteInShadowL3Out(self,extseg_id,extseg_name,nattype,destrte,route=''):
         """
         Utility Method to add ext_routes to Ext_Seg
-        ONLY needed for NAT DP TESTs ONLY USED For Datacenter-Out ExtSeg
+        ONLY needed for NAT DP TESTs ONLY USED For secondary L3 Out ExtSeg
         TBD: To be enhanced
         """
-        if extseg_name == 'Datacenter-Out':
+        if extseg_name == L3OUT2:
             route_gw = ''
         if nattype == 'dnat' and route != '':
             _log.info("\nRoute added to ShadowL3Out corresponding to External Segment"
