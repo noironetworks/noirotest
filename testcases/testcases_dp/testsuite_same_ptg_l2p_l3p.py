@@ -176,9 +176,16 @@ class test_same_ptg_same_l2p_same_l3p(object):
         self._log.info('Results from the Testcase == %s' %(results))
         if results == 2:
             return 2
-        failed = {}
-        failed = {key: val for key, val in results[
-            dest_ip].iteritems() if val == 0}
+        if type(dest_ip) is list:
+            failed = {}
+            for ip in dest_ip:
+                ip_failed = {key: val for key, val in results[
+                    ip].iteritems() if val == 0}
+                if ip_failed:
+                    failed[ip] = ip_failed
+        else:
+            failed = {key: val for key, val in results[
+                dest_ip].iteritems() if val == 0}
         if len(failed) > 0:
             self._log.error('Following traffic_types %s = Failed' % (failed))
             return 0
