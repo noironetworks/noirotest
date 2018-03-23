@@ -186,7 +186,7 @@ class gbpNova(object):
 		In case of multi-home, pass list of values for
         """
 	try:
-            vm_image = self.nova.images.find(name=vm_image)
+            vm_image = self.nova.glance.find_image(vm_image)
             vm_flavor = self.nova.flavors.find(name=flavor_name)
             if avail_zone:
            	self.nova.servers.create(name=vmname,
