@@ -202,6 +202,8 @@ class neutronCli(object):
         with prefix(srcRc):
 		try:
                    _output = run(cmd)
+                   if 'deprecated' in _output:
+                       _output = _output.strip('neutron CLI is deprecated and will be removed in the future. Use openstack CLI instead.\r\n')
 		   return _output
 		except:
 		   pass
