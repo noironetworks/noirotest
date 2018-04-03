@@ -48,9 +48,9 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
     with settings(warn_only=True):
         os_flvr = run('cat /etc/os-release')
         if 'Red Hat' in os_flvr:
-            cmd_src = 'source ~/overcloudrc'
+            cmd_src = 'source ~/overcloudrc.v3'
 	if 'Ubuntu' in os_flvr:
-            cmd_src = 'source ~/openrc'
+            cmd_src = 'source ~/overcloudrc.v3'
         rr_cmd = 'apic route-reflector-create --ssl --no-secure '+\
                  '--apic-ip %s --apic-username %s --apic-password %s' %(apic_ip,apic_user,apic_pwd)
 	with prefix(cmd_src):

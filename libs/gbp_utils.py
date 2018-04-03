@@ -49,9 +49,9 @@ def run_openstack_cli(cmdList,cntrlrip,
     with settings(warn_only=True):
         os_flvr = run('cat /etc/os-release',quiet=True)
         if 'Red Hat' in os_flvr:
-            cmd_src = 'source ~/overcloudrc'
+            cmd_src = 'source ~/overcloudrc.v3'
         if 'Ubuntu' in os_flvr:
-            cmd_src = 'source ~/openrc'
+            cmd_src = 'source ~/overcloudrc.v3'
         with prefix(cmd_src):
             for cmd in cmdList:
                 if do_sudo:

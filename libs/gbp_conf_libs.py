@@ -32,7 +32,7 @@ class gbpCfgCli(object):
 
     def __init__(self, controllerIp, cntrlr_username='root',
                  cntrlr_passwd='noir0123',tenant='admin',
-                 rcfile = '~/overcloudrc'):
+                 rcfile = '~/overcloudrc.v3'):
       self.cntrlrip = controllerIp
       self.uname = cntrlr_username
       self.passwd = cntrlr_passwd
@@ -77,7 +77,7 @@ class gbpCfgCli(object):
                        -- name_uuid == UUID or name_string\n''')
            return 0
         #Build the command with mandatory param 'name_uuid' 
-        cmd_tnt = 'gbp --os-project-domain-name %s ' %(tenant)
+        cmd_tnt = 'gbp --os-project-name %s ' %(tenant)
         if cmd_val == 0:
            cmd = cmd_tnt+'policy-action-delete '+str(name_uuid)
         if cmd_val == 1:
@@ -114,7 +114,7 @@ class gbpCfgCli(object):
                       --name_uuid == UUID or name_string\n''')
            return 0
         #Build the command with mandatory param 'classifier_name'
-        cmd_tnt = 'gbp --os-project-domain-name %s ' %(tenant)
+        cmd_tnt = 'gbp --os-project-name %s ' %(tenant)
         if cmd_val == 0:
            cmd = cmd_tnt+'policy-classifier-delete '+str(name_uuid)
         if cmd_val == 1:
@@ -159,7 +159,7 @@ class gbpCfgCli(object):
                       -- name_uuid == UUID or name_string\n''')
            return 0
         #Build the command with mandatory params
-        cmd_tnt = 'gbp --os-project-domain-name %s ' %(tenant)
+        cmd_tnt = 'gbp --os-project-name %s ' %(tenant)
         if cmd_val == 0:
            cmd = cmd_tnt+'%s-delete ' % cfgobj_dict[cfgobj]+str(name_uuid)
         if cmd_val == 1:
@@ -239,7 +239,7 @@ class gbpCfgCli(object):
                       -- name_uuid == UUID or name_string\n''')
            return 0
         #Build the command with mandatory params
-        cmd_tnt = 'gbp --os-project-domain-name %s ' %(tenant)
+        cmd_tnt = 'gbp --os-project-name %s ' %(tenant)
         cmd = cmd_tnt+'%s-update ' % cfgobj_dict[cfgobj]+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
         for arg, value in attr.iteritems():
@@ -267,7 +267,7 @@ class gbpCfgCli(object):
            if cfgobj not in cfgobj_dict:
               raise KeyError
         #Build the command with mandatory params
-        cmd_tnt = 'gbp --os-project-domain-name %s ' %(tenant)
+        cmd_tnt = 'gbp --os-project-name %s ' %(tenant)
         cmd = cmd_tnt+'%s-list -c id ' % cfgobj_dict[cfgobj]
         cmd_out = self.exe_command(cmd)
         _out=cmd_out.split('\n')
