@@ -175,9 +175,8 @@ class gbp_main_config(object):
         sleep(5)  # Sleep 5s assuming that all objects are created in APIC
         #Fetch the Tenant's DN for Openstack project 'admin'
         if self.plugin:
-            self.keyst = Keystone(self.key_ip, username=self.key_user,
-                 password=self.key_passwd)
-	    tnt = self.keyst.get_tenant_attribute('admin','id')
+	    tnt = run_remote_cli("openstack project show admin -c id -f value",
+                                 self.cntlr_ip, self.cntlr_user, self.cntlr_passwd)
         else:
             tnt='admin'
         #Adding SSH-filter to Svc_Contract provided by Svc_Epgs
@@ -251,9 +250,8 @@ class gbp_main_config(object):
 			       %(tntname, obj) + " | grep sync_status" 
 		    if not "synced" in run_remote_cli(cmd,
 						      self.cntlr_ip,
-						      'root',
-						      'noir0123'
-							):
+                                                      self.cntlr_user,
+                                                      self.cntlr_passwd):
 			return 0
 		    return 1
 		for epg in operEpgs.keys():
@@ -310,7 +308,7 @@ class gbp_main_config(object):
 	   if self.plugin:
 	       # Remove the noiro-ssh filter from AIM
 	       run_remote_cli("python add_ssh_filter.py delete",
-                            self.cntlr_ip, 'root', 'noir0123')
+                            self.cntlr_ip, self.cntlr_user, self.cntlr_passwd))
            # Ntk namespace cleanup in Network-Node.. VM names are static
            # throughout the test-cycle
            del_netns(self.network_node)

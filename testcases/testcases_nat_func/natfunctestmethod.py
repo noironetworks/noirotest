@@ -83,7 +83,6 @@ gbpcrud = GBPCrud(CNTRLRIP)
 gbpnova = gbpNova(CNTRLRIP)
 neutron = neutronCli(CNTRLRIP, username=CTRLR_USER, password=CTRLR_PSWD)
 keystone = Keystone(KEY_AUTH_IP)
-ADMIN_TNTID = keystone.get_tenant_attribute('admin','id')
 
 class NatFuncTestMethods(object):
     """
