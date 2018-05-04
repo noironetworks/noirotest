@@ -164,7 +164,7 @@ try:
 
     sleep(10) #Almost immediate, so sleep
 
-    if conf.get('dual_stack') and conf['dual_stack'] == True:
+    if conf.get('dual_stack') and conf['dual_stack'] == 'True':
         if test_conf.reboot_vms(tnt2) == 0:
            raise TestError(
            "ML2-SANITY: Test-16.5: Rebooting VMs in tenant %s "
@@ -290,7 +290,7 @@ try:
     	"ML2-SANITY: Test-29: Attach router of tenant %s connects to shared External Ntk : PASS" %(tnt3))
 
     sleep(5)
-    if conf.get('dual_stack') and conf['dual_stack'] == True:
+    if conf.get('dual_stack') and conf['dual_stack'] == 'True':
         if test_conf.reboot_vms(tnt3) == 0:
            raise TestError(
            "ML2-SANITY: Test-29.5: Rebooting VMs in tenant %s "

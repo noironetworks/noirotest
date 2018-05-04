@@ -83,23 +83,7 @@ neutron_api = neutronPy(CNTRLIP)
 
 
 def is_dual_stack():
-    return conf.get('dual_stack') and conf['dual_stack'] == True
-
-
-def _install_ipv6_fix(tnt):
-    def valid_uuid(test_uuids):
-        for test_uuid in test_uuids:
-            try:
-                valid = uuid.UUID(test_uuid, version=4)
-                return test_uuid
-            except:
-                continue
-    cmd = "nova --os-project-name %s secgroup-list  | grep default | awk -F '|' '{print $2}'" %  tnt
-    secgroups = neutron.runcmd(cmd)
-    secgroup_ids = [secgroup.strip() for secgroup in secgroups.split("\n") if secgroup]
-    secgroup_id = valid_uuid(secgroup_ids)
-    cmd = 'neutron --os-project-name %s security-group-rule-create --ethertype IPv6 --direction ingress --protocol 58 --remote-ip-prefix ::/0 %s' %  (tnt, secgroup_id)
-    neutron.runcmd(cmd)
+    return conf.get('dual_stack') and conf['dual_stack'] == 'True'
 
 
 def create_external_network_subnets(nat):
@@ -448,8 +432,6 @@ class crudML2(object):
 
         self.install_secgroup_rules(tnt, default_route='::/0')
         self.install_secgroup_rules(tnt)
-        if is_dual_stack():
-            _install_ipv6_fix(tnt)
 	ml2_vm_ntk_ip[tnt] = {}
         az = neutron.alternate_az(AVZONE)
         for i in range(len(ML2vms[tnt])):
@@ -718,8 +700,6 @@ class crudGBP(object):
         "## Create VMs for Tenant %s ##\n"
         "##################################################\n"
         %(tnt))
-        if is_dual_stack():
-            _install_ipv6_fix(tnt)
         az = neutron.alternate_az(AVZONE)
         for vm,prop in gbp_vm_ntk_ip[tnt].iteritems():
             vm_image = 'ubuntu_multi_nics'
