@@ -1150,13 +1150,27 @@ class sendTraffic(object):
 	tenant_vms  = ML2vms[tnt]
         vm_property, netns_dict = self.generate_vm_prop(tnt,ext=ext)
 	print "VM Properties == ", vm_property
+        failed_traff = 0
 	for vm in tenant_vms:
 	    vm_traff = gbpExpTraff(COMPUTE1,vm_property[vm]['netns'],
 				vm_property[vm]['src_ip'],
                                 vm_property[vm]['dest_ip'],
                                 netns_dict)
-            if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1,no_ipv6=no_ipv6):
-	    	return 0
+            iter=1
+            while True:
+               if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1,no_ipv6=no_ipv6):
+                   iter+=1
+                   #Sleep for 1s and re-run traffic again
+                   sleep(1)
+                   if iter > 2:
+                        failed_traff = 1
+                        break
+               else:
+                   break
+        if failed_traff:
+            return 0
+        else:
+           return 1
 
     def get_epg_vms(self,tnt,tag):
 	"""
