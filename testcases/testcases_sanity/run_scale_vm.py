@@ -21,26 +21,36 @@ az = alternate_az()
 class scale(object):
 
     def create_vm(self):
-	network = neutron.create_net('SCALE-NET1')
-	neutron.create_subnet('SCALE-SUB',
-				'41.41.41.0/24',
-				network
-				)
-	for i in range(0,2):
-	    nova.vm_create_api('SCALE-VM','cirros',
-			    [{'net-id': network}],
-			    flavor_name='m1.tiny',
-			    avail_zone='nova',
-			    max_count = 20)
+        network = neutron.create_net('SCALE-NET1')
+        neutron.create_subnet('SCALE-SUB',
+                              '41.41.41.0/24',
+                              network)
+        """
+        for i in range(0,2):
+            nova.vm_create_api('SCALE-VM','cirros',
+                [{'net-id': network}],
+                flavor_name='m1.tiny',
+                avail_zone='nova',
+                max_count = 20)
+        """
+        nova.vm_create_api('SCALE-VM','cirros',
+            [{'net-id': network}],
+            flavor_name='m1.tiny',
+            avail_zone='nova',
+            max_count = 50)
 
-    def delete_vm(self)					
-	for vmobj in nova.nova.servers.list():
-	    nova.nova.servers.delete(vmobj)
+    def delete_vm(self):
+        for vmobj in nova.nova.servers.list():
+            nova.nova.servers.delete(vmobj)
+            sleep(2)
+        #neutron.delete_net('SCALE-NET1')
 
 run = scale()
 run.create_vm()
+sleep(5)
+run.delete_vm()
 
-nova.nova.servers.delete
+#nova.nova.servers.delete
 """
 for j in range(1, 7):                                                                                      
 
