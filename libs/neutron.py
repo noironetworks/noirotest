@@ -189,7 +189,7 @@ class neutronPy(object):
 
 class neutronCli(object):
 
-    def __init__(self,controllerIp,username='root',password='noir0123'):
+    def __init__(self,controllerIp,username='heat-admin',password='noir0123'):
 	self.controller = controllerIp
 	self.username = username
 	self.password = password

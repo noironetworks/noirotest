@@ -34,7 +34,7 @@ L3OUT2=conf.get('secondary_L3out')
 L3OUT2_NET=conf.get('secondary_L3out_net')
 
 def run_openstack_cli(cmdList,cntrlrip,
-                      username='root',passwd='noir0123', do_sudo=False):
+                      username='heat-admin',passwd='noir0123', do_sudo=False):
     """
     This function enables the user to
     run cli-cmds on openstack env
@@ -205,7 +205,7 @@ def del_netns(net_node_ip,netns=[]):
         Associated with every VM
         """
         env.host_string = net_node_ip
-        env.user = 'root'
+        env.user = 'heat-admin'
         env.password = 'noir0123'
         run("neutron-netns-cleanup")
         if netns == []:
@@ -218,7 +218,7 @@ def del_netns(net_node_ip,netns=[]):
                result = run("ip netns delete %s" %(ns))
 
 def action_service(hostIp,service='agent-ovs',
-                  action='restart',user='root',pwd='noir0123'):
+                  action='restart',user='heat-admin',pwd='noir0123'):
         """
         Action = Stop,Start,Restart on Any Service
         """
@@ -270,7 +270,7 @@ def editneutronconf(controllerIp,
                         pattern,
 			add=True,
 			section='ml2_cisco_apic',
-		   	user='root',
+		   	user='heat-admin',
 			pwd='noir0123',
                         restart=True):
     """
@@ -317,7 +317,7 @@ def preExistingL3Out(controllerIp,
                      nonat=False,
                      revert=False,
                      l3out=[L3OUT1, L3OUT2],
-                     user='root',
+                     user='heat-admin',
                      pwd='noir0123',
                      restart=True):
     """
