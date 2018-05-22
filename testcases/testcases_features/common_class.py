@@ -50,9 +50,6 @@ comp = Compute(COMPUTE2)
 neutron = neutronCli(CNTRLIP)
 neutron_api = neutronPy(CNTRLIP,tenant=TNT)
 
-#Create TNT
-TNT_ID = neutron.addDelkeystoneTnt(TNT, 'create')
-LOG.info("Tenant ID for Tenant %s = %s" %(TNT,TNT_ID))
 
 class resource(object):
 
@@ -71,6 +68,9 @@ class resource(object):
 	self.sub_name = '%s_sub' %(feature.upper())
 	self.vm1 = '%s_VM1' %(feature.upper())
 	self.vm2 = '%s_VM2' %(feature.upper())
+        #Create TNT
+        self.TNT_ID = neutron.addDelkeystoneTnt(TNT, 'create')
+        LOG.info("Tenant ID for Tenant %s = %s" %(TNT,self.TNT_ID))
 	    
     def create_network_subnet(self,repeat=False):
 	try:
@@ -208,4 +208,4 @@ class resource(object):
         neutron.runcmd('nova --os-tenant-name %s delete %s %s' 
 			%(TNT, self.vm1, self.vm2))
 	#Purge Openstack/AIM resources
-	neutron.purgeresource(TNT_ID,resourceOnly=resourceOnly)
+	neutron.purgeresource(self.TNT_ID,resourceOnly=resourceOnly)
