@@ -52,7 +52,6 @@ class gbpExpTraffHping3(object):
         self.vm_prompt = '#'
 	if conf.get('image_prompt'):
 	    self.vm_prompt = conf['image_prompt']
-	self.host_prompt = '#'
 	self.netns_dict = netns_dict
 
     def host_sudo(self, pexpect_session):
@@ -149,6 +148,45 @@ class gbpExpTraffHping3(object):
 	    sleep(10)
 	    login_retry +=1
 	return 0
+
+    def vm_scp_file(self, pexpect_session, file_to_scp, ip_list=None):
+	login_retry = 1
+
+	# only use the IPv4 address if dual-stack
+	src_ip = None
+	for ip in ip_list:
+	    ip_type = netaddr.IPAddress(ip)
+	    if ip_type.version == 4:
+		src_ip = ip
+		break
+	while login_retry < 4:
+	    try:
+		print "Trying to SCP file to VM %s....." % src_ip
+		if self.netns_dict.get(src_ip):
+		    ns = self.netns_dict[src_ip]
+		else:
+		    ns = self.netns
+		cmd = 'ip netns exec %s scp %s %s@%s:~' %(ns,file_to_scp,self.vm_user,src_ip)
+		print cmd
+		pexpect_session.sendline(cmd)
+		ssh_newkey = 'Are you sure you want to continue connecting (yes/no)?'
+		i = pexpect_session.expect([ssh_newkey,'password:',pexpect.EOF])
+		if i == 0:
+		    pexpect_session.sendline('yes')
+		    i = pexpect_session.expect([ssh_newkey,'password:',pexpect.EOF])
+		if i == 1:
+		    pexpect_session.sendline(self.vm_password)
+		pexpect_session.expect(self.host_prompt)
+		break
+	    except Exception as e:
+		if login_retry == 3:
+		    print "After 3 attempts Failed to scp file to the VM from the Namespace\n"
+		    print "\nException Error: %s\n" %(e)
+		    return 2
+	    sleep(10)
+	    login_retry +=1
+	return 0
+
 
     def vm_sudo(self, pexpect_session):
 	pexpect_session.sendline('sudo -s')
@@ -314,51 +352,17 @@ class gbpExpTraffHping3(object):
 	aap_ip :: should be ip address of AAP with mask
 		  eg: 1.1.1.1/24
 	"""
-	pexpect_session = pexpect.spawn('ssh root@%s' %(self.net_node))
-	pexpect_session.expect(self.vm_prompt) #Expecting passwordless access
-	pexpect_session.sendline('hostname')
-	pexpect_session.expect(self.vm_prompt)
-	print pexpect_session.before
-	pexpect_session.sendline('ip netns exec %s ping %s -c 2' %(self.netns,self.src_ep)) ## Check whether ping works first
-	pexpect_session.expect(self.vm_prompt)
-	print pexpect_session.before
-	if len(re.findall('100% packet loss',pexpect_session.before)): #Count of ping pkts
-	   print "Cannot run any traffic test since Source VM is Unreachable"
-	   return 0
+	pexpect_session = self.ssh_to_compute_host()
+	if self.vm_reachable(pexpect_session, ip_list=self.src_ep, no_ipv6=True):
+	    return 2
+
 	pkg = 'iputils-arping_20121221-4ubuntu1_amd64.deb'
-	scp_retry = 1
-	while scp_retry < 4:
-	    try:
-		print "SecureCopy the Arping-tool into VM"
-		pexpect_session.sendline('ip netns exec %s scp %s %s@%s:'
-		    %(self.netns, self.vm_user,pkg,self.src_ep))
-		ssh_newkey = 'Are you sure you want to continue connecting (yes/no)?'
-		i = pexpect_session.expect([ssh_newkey,'password:',pexpect.EOF])
-		if i == 0:
-		    pexpect_session.sendline('yes')
-		    i = pexpect_session.expect([ssh_newkey,'password:',pexpect.EOF])
-		if i == 1:
-		    pexpect_session.sendline(self.vm_password)
-		pexpect_session.expect(self.vm_prompt)
-		print "Trying to SSH into VM ....."
-		pexpect_session.sendline('ip netns exec %s ssh %s@%s' \
-			    %(self.netns,self.vm_user,self.src_ep))
-		pexpect_session.expect('password:')
-		pexpect_session.sendline(self.vm_password)
-		pexpect_session.expect(self.vm_prompt)
-		break
-	    except Exception as e:
-		if scp_retry == 3:
-		    print "After 3 attempts Failed to SecureCopy/Login into VM from Namespace\n"
-		    print "\nException Error: %s\n" %(e)
-		    return 0
-	    sleep(10)
-	    scp_retry +=1
-	pexpect_session.sendline('sudo -s')
-	userstring = self.vm_user + ':'
-	pexpect_session.expect(userstring)
-	pexpect_session.sendline(self.vm_password)
-	pexpect_session.expect(self.vm_prompt)
+        if self.vm_scp_file(pexpect_session, pkg, ip_list=self.src_ep):
+            return 2
+        if self.vm_ssh_login(pexpect_session, ip_list=self.src_ep):
+            return 2
+
+	self.vm_sudo(pexpect_session)
 
 	pexpect_session.sendline('dpkg -i %s ' %(pkg))
 	pexpect_session.expect(self.vm_prompt)
