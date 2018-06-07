@@ -11,6 +11,7 @@ KEY_PASSWORD = conf.get('keystone_password')
 CNTRLRIP = conf['controller_ip']
 APICIP = conf['apic_ip']
 NTKNODE = conf['network_node']
+CONTAINERIZED_SERVICES = conf.get('containerized_services')
 
 def main():
     check_ssh = raw_input(
@@ -42,7 +43,18 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
 		'sudo systemctl restart openstack-heat-engine.service',
 		'sudo systemctl restart openstack-heat-api.service'
                ]:
-       run(cmd)
+       if not CONTAINERIZED_SERVICES:
+           run(cmd)
+       else:
+           # For newer releases, it's containerized, so restart the containers
+           service = cmd.split()[-1][10:-8].replace('-','_')
+           cmd = "sudo docker ps | grep %s$" % service
+           output = run(cmd)
+           container_id = output.split()[0]
+           cmd = "sudo docker restart %s" % container_id
+           print cmd
+           run(cmd)
+
 
     #Step-3: Update the Nova-quotas and Enable ACI Route-reflector
     with settings(warn_only=True):

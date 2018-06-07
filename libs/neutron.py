@@ -433,26 +433,34 @@ class neutronCli(object):
         print(cmd)
         if self.runcmd(cmd):
 	    sleep(20)
-	    vmout = self.runcmd('nova --os-project-name %s show %s | grep network' %(tenant,vmname))
-	    match = re.search("\\b(\d+.\d+.\d+.\d+)\\b.*",vmout,re.I)
-	    if match:
-                ips = [ip.strip() for ip in vmout.split('|')[2].split(',')]
-		num_try = 1
-		while num_try < max_vm_tries:
+            num_try = 1
+            while num_try < max_vm_tries:
+                match = None
+                try:
+                    vmout = self.runcmd('nova --os-project-name %s show %s | grep network' %(tenant,vmname))
+	            match = re.search("\\b(\d+.\d+.\d+.\d+)\\b.*",vmout,re.I)
+	            if match:
+                        ips = [ip.strip() for ip in vmout.split('|')[2].split(',')]
+                except Exception:
 		    sleep(max_vm_wait)
-		    _out = self.runcmd('nova --os-project-name %s interface-list %s | grep ACTIVE'\
-				   %(tenant,vmname))
-		    if _out or num_try == (max_vm_tries - 1):
-		         break
 		    num_try+=1
-		if _out: #It may happen even after above 5 retries,_out is still NoneType, so check for that
-		    if _out.succeeded:
-		        portMAC = re.search(r'(([0-9a-f]{2}:){5}[0-9a-f]{2})',_out,re.I).group()
-		        _match = [i.strip(' ') for i in _out.split('|')]
-		        portID = _match[_match.index('ACTIVE')+1]
+                    continue
+		sleep(max_vm_wait)
+		_out = self.runcmd('nova --os-project-name %s interface-list %s | grep ACTIVE'\
+				   %(tenant,vmname))
+		if _out or num_try == (max_vm_tries - 1):
+		    break
+		num_try+=1
+            if _out: #It may happen even after above 5 retries,_out is still NoneType, so check for that
+                if _out.succeeded:
+                    portMAC = re.search(r'(([0-9a-f]{2}:){5}[0-9a-f]{2})',_out,re.I).group()
+                    _match = [i.strip(' ') for i in _out.split('|')]
+                    portID = _match[_match.index('ACTIVE')+1]
                     return [ips,portID,portMAC]
-		else:
-		     return []
+                else:
+                    return []
+            else:
+                return []
 	else:
 	    return []
 
