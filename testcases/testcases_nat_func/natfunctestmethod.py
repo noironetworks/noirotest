@@ -82,7 +82,6 @@ PRS_TCP = 'PrsTcp'
 gbpcrud = GBPCrud(CNTRLRIP)
 gbpnova = gbpNova(CNTRLRIP)
 neutron = neutronCli(CNTRLRIP, username=CTRLR_USER, password=CTRLR_PSWD)
-keystone = Keystone(KEY_AUTH_IP)
 
 class NatFuncTestMethods(object):
     """

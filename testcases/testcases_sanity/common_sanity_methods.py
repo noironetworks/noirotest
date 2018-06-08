@@ -3,6 +3,7 @@
 import logging
 import re
 import string
+import subprocess
 import sys
 import uuid
 from commands import *
@@ -141,10 +142,11 @@ def attach_fip_to_vms(tnt,mode):
 	   vms = GBPvms[tnt]
 	   GBPFips[tnt]=[]
 	for vm in vms:
-	    cmd1 = 'nova --os-tenant-name %s' %(tnt)+\
-                  ' floating-ip-create %s' %(L3OUT1)
+	    cmd1 = ('source ~/overcloudrc.v3 && nova --os-tenant-name %s' %(tnt)+
+                    ' floating-ip-create %s' %(L3OUT1))
+            fip_data = subprocess.check_output(['bash','-c', cmd1])
 	    match = re.search('(%s\d+).*'%(FIPBYTES),
-                                        neutron.runcmd(cmd1),
+                                        fip_data,
 					re.I)
 	    if match:
 		fip = match.group(1)
@@ -152,9 +154,9 @@ def attach_fip_to_vms(tnt,mode):
 		    ML2Fips[tnt].append(fip)
 		else:
 		    GBPFips[tnt].append(fip)
-	    cmd2 = 'nova --os-tenant-name %s ' %(tnt)+\
-                   'floating-ip-associate %s %s' %(vm,fip)
-	    neutron.runcmd(cmd2)
+	    cmd2 = ('source ~/overcloudrc.v3 && nova --os-tenant-name %s ' %(tnt)+
+                    'floating-ip-associate %s %s' %(vm,fip))
+            fip_data = subprocess.check_output(['bash','-c', cmd2])
 
 def migrate_vm(mode,dest_host):
     from libs.gbp_nova import gbpNova
@@ -415,15 +417,12 @@ class crudML2(object):
     def install_secgroup_rules(self, tnt, default_route = '0.0.0.0/0'):
         # Since VMs are created with 'default' secgroup, hence
         # adding rules to the default secgroup
-        neutron.runcmd(
-            'nova --os-project-name %s secgroup-add-rule default icmp -1 -1 %s'
-            % (tnt, default_route))
-        neutron.runcmd(
-            'nova --os-project-name %s secgroup-add-rule default tcp 22 22 %s'
-            % (tnt, default_route))
-        neutron.runcmd(
-            'nova --os-project-name %s secgroup-add-rule default tcp 80 80 %s'
-            % (tnt, default_route))
+        cmd = 'source ~/overcloudrc.v3 && nova --os-project-name %s secgroup-add-rule default icmp -1 -1 %s' % (tnt, default_route)
+        subprocess.check_output(['bash','-c', cmd])
+        cmd = 'source ~/overcloudrc.v3 && nova --os-project-name %s secgroup-add-rule default tcp 22 22 %s' % (tnt, default_route)
+        subprocess.check_output(['bash','-c', cmd])
+        cmd = 'source ~/overcloudrc.v3 && nova --os-project-name %s secgroup-add-rule default tcp 80 80 %s' % (tnt, default_route)
+        subprocess.check_output(['bash','-c', cmd])
 
     def install_tenant_vms(self,tnt):
         LOG.info(
@@ -461,9 +460,8 @@ class crudML2(object):
 	    try:
 	        if ML2Fips:
 		    for fip in ML2Fips[tnt]:
-		        neutron.runcmd(
-		        'nova --os-tenant-name %s floating-ip-delete %s'
- 			 %(tnt,fip))
+		        cmd = 'nova --os-tenant-name %s floating-ip-delete %s' %(tnt,fip)
+                        subprocess.check_output(['bash','-c', cmd])
 	    except Exception:
 		print 'FIPs do not exist for ',tnt
 		pass
@@ -1036,9 +1034,8 @@ class crudGBP(object):
 	    try:
 	        if GBPFips:
 		    for fip in GBPFips[tnt]:
-		        neutron.runcmd(
-		        'nova --os-tenant-name %s floating-ip-delete %s'
- 			 %(tnt,fip))
+		        cmd = 'nova --os-tenant-name %s floating-ip-delete %s' %(tnt,fip)
+                        subprocess.check_output(['bash','-c', cmd])
             except Exception:
                 print 'FIPs do not exist for ',tnt
                 pass
