@@ -16,6 +16,7 @@ from testcases.config import conf
 
 cntlr_user = conf.get('controller_user') or 'root'
 cntlr_passwd = conf.get('controller_password') or 'noir0123'
+rcfile = conf.get('rcfile') or 'overcloudrc.v3'
 
 
 class test_diff_ptg_same_l2p_l3p(object):
@@ -41,7 +42,7 @@ class test_diff_ptg_same_l2p_l3p(object):
     def __init__(self, objs_uuid):
 
         self.gbpcfg = gbpCfgCli(super_hdr.cntlr_ip, cntrlr_username=cntlr_user,
-                 cntrlr_passwd=cntlr_passwd)
+                 cntrlr_passwd=cntlr_passwd, rcfile=rcfile)
         self.gbpdeftraff = gbpFabTraff()
         stack_name = super_hdr.stack_name
         heat_temp = super_hdr.heat_temp

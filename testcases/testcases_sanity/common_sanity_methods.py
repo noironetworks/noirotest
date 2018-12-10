@@ -24,6 +24,7 @@ L3OUT2=conf.get('secondary_L3out')
 L3OUT2_NET=conf.get('secondary_L3out_net')
 L3OUT2_VRF=conf.get('secondary_L3out_vrf')
 KEY_AUTH_IP = conf.get('keystone_ip')
+RCFILE = conf.get('rcfile', 'overcloudrc.v3')
 
 max_traff_attempts = conf.get('traffic_attempts', 5)
 
@@ -142,8 +143,12 @@ def attach_fip_to_vms(tnt,mode):
 	   vms = GBPvms[tnt]
 	   GBPFips[tnt]=[]
 	for vm in vms:
-	    cmd1 = ('source ~/overcloudrc.v3 && nova --os-tenant-name %s' %(tnt)+
-                    ' floating-ip-create %s' %(L3OUT1))
+	    cmd1 = ('source ~/%s && neutron --os-project-name %s' %(RCFILE,tnt)+
+                    ' floatingip-create %s -c id -f value' %(L3OUT1))
+            fip_id = subprocess.check_output(['bash','-c', cmd1])
+            fip_id = fip_id.split()[0]
+	    cmd1 = ('source ~/%s && neutron --os-project-name %s' %(RCFILE,tnt)+
+                    ' floatingip-show %s -c floating_ip_address -f value' %(fip_id))
             fip_data = subprocess.check_output(['bash','-c', cmd1])
 	    match = re.search('(%s\d+).*'%(FIPBYTES),
                                         fip_data,
@@ -154,8 +159,14 @@ def attach_fip_to_vms(tnt,mode):
 		    ML2Fips[tnt].append(fip)
 		else:
 		    GBPFips[tnt].append(fip)
-	    cmd2 = ('source ~/overcloudrc.v3 && nova --os-tenant-name %s ' %(tnt)+
-                    'floating-ip-associate %s %s' %(vm,fip))
+            # Get the fixed IP
+            cmd1 = "source ~/%s && nova --os-project-name %s" % (RCFILE,tnt)
+            cmd2 = " interface-list %s | grep ACTIVE | awk -F'|' '{print $3}'" % vm
+            cmd = cmd1 + cmd2
+            fixed_port_id = subprocess.check_output(['bash','-c', cmd])
+            fixed_port_id = fixed_port_id.split()[0]
+	    cmd2 = ('source ~/%s && neutron --os-project-name %s ' %(RCFILE,tnt)+
+                    'floatingip-associate %s %s' %(fip_id,fixed_port_id))
             fip_data = subprocess.check_output(['bash','-c', cmd2])
 
 def migrate_vm(mode,dest_host):
@@ -417,11 +428,11 @@ class crudML2(object):
     def install_secgroup_rules(self, tnt, default_route = '0.0.0.0/0'):
         # Since VMs are created with 'default' secgroup, hence
         # adding rules to the default secgroup
-        cmd = 'source ~/overcloudrc.v3 && nova --os-project-name %s secgroup-add-rule default icmp -1 -1 %s' % (tnt, default_route)
+        cmd = 'source ~/%s && nova --os-project-name %s secgroup-add-rule default icmp -1 -1 %s' % (RCFILE, tnt, default_route)
         subprocess.check_output(['bash','-c', cmd])
-        cmd = 'source ~/overcloudrc.v3 && nova --os-project-name %s secgroup-add-rule default tcp 22 22 %s' % (tnt, default_route)
+        cmd = 'source ~/%s && nova --os-project-name %s secgroup-add-rule default tcp 22 22 %s' % (RCFILE, tnt, default_route)
         subprocess.check_output(['bash','-c', cmd])
-        cmd = 'source ~/overcloudrc.v3 && nova --os-project-name %s secgroup-add-rule default tcp 80 80 %s' % (tnt, default_route)
+        cmd = 'source ~/%s && nova --os-project-name %s secgroup-add-rule default tcp 80 80 %s' % (RCFILE, tnt, default_route)
         subprocess.check_output(['bash','-c', cmd])
 
     def install_tenant_vms(self,tnt):
@@ -460,7 +471,7 @@ class crudML2(object):
 	    try:
 	        if ML2Fips:
 		    for fip in ML2Fips[tnt]:
-		        cmd = 'nova --os-tenant-name %s floating-ip-delete %s' %(tnt,fip)
+		        cmd = 'neutron --os-project-name %s floatingip-delete %s' %(tnt,fip)
                         subprocess.check_output(['bash','-c', cmd])
 	    except Exception:
 		print 'FIPs do not exist for ',tnt
@@ -1034,7 +1045,7 @@ class crudGBP(object):
 	    try:
 	        if GBPFips:
 		    for fip in GBPFips[tnt]:
-		        cmd = 'nova --os-tenant-name %s floating-ip-delete %s' %(tnt,fip)
+		        cmd = 'neutron --os-project-name %s floatingip-delete %s' %(tnt,fip)
                         subprocess.check_output(['bash','-c', cmd])
             except Exception:
                 print 'FIPs do not exist for ',tnt

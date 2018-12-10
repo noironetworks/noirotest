@@ -7,19 +7,31 @@ from fabric.api import cd, run, env, hide, get, settings
 from fabric.context_managers import *
 from neutronclient.v2_0 import client as nclient
 from testcases.config import conf
+from keystoneauth1 import identity
+from keystoneauth1 import session
 
 VRF_PREFIX = "--apic:distinguished_names type=dict VRF='"
 
 max_vm_wait = conf.get('vm_wait', 20)
 max_vm_tries = conf.get('vm_tries', 10)
+rcfile = conf.get('rcfile', 'overcloudrc.v3')
+
 class neutronPy(object):
     def __init__(self, controllerIp, username='admin', password='noir0123', tenant='admin'):
         cred = {}
         cred['username'] = username
         cred['password'] = password
         cred['tenant_name'] = tenant
-        cred['auth_url'] = "http://%s:5000/v2.0/" % controllerIp
-        self.client = nclient.Client(**cred)
+        cred['auth_url'] = "http://%s:5000/v3/" % controllerIp
+        auth = identity.Password(auth_url=cred['auth_url'],
+                                 username=username,
+                                 password=password,
+                                 project_name=tenant,
+                                 project_domain_name='Default',
+                                 user_domain_name='Default')
+        sess = session.Session(auth=auth)
+
+        self.client = nclient.Client(session=sess)
 
     def create_router(self,name,shared=False):
 	body_value = {'router': {
@@ -198,7 +210,7 @@ class neutronCli(object):
         env.host_string = self.controller
         env.user = self.username
         env.password = self.password
-        srcRc = 'source ~/overcloudrc.v3'
+        srcRc = 'source ~/%s' % rcfile
         with prefix(srcRc):
 		try:
                    _output = run(cmd)
@@ -244,7 +256,7 @@ class neutronCli(object):
 
     def netcrud(self,name,action,\
                 tenant='admin',external=False, 
-                shared=False, aim=''):
+                shared=False, aim='', otherargs=None):
         if action == 'create':
 	   if external:
 	        if shared:
@@ -255,16 +267,32 @@ class neutronCli(object):
                    cmd = cmd + ' %s' %(aim)
 	   else:
 	        cmd = 'neutron --os-project-name %s net-create %s' %(tenant,name)
+           if otherargs:
+               cmd = cmd + otherargs
 	   ntkId = self.getuuid(self.runcmd(cmd))
 	   if ntkId:
 	       #print 'Output of ID ==\n', ntkId
 	       return ntkId
 	if action == 'delete':
 	   cmd = 'neutron --os-project-name %s net-delete %s' %(tenant,name)
+           if otherargs:
+               cmd = cmd + otherargs
            self.runcmd(cmd)
 
+	if action == 'list':
+	   cmd = 'neutron --os-project-name %s net-list' %(tenant)
+           if otherargs:
+               cmd = cmd + otherargs
+           return self.runcmd(cmd)
+
+	if action == 'show':
+	   cmd = 'neutron --os-project-name %s net-show %s' %(tenant,name)
+           if otherargs:
+               cmd = cmd + otherargs
+           return self.runcmd(cmd)
+
     def subnetcrud(self,name,action,ntkNameId,cidr=None,tenant='admin',
-                   extsub=False,aim='',subnetpool='' ):
+                   extsub=False,aim='',subnetpool='', otherargs=None):
 	"""
 	Create/Delete subnets for a given tenant
 	action: 'create' or 'delete' are the only valid strings to pass
@@ -279,6 +307,8 @@ class neutronCli(object):
             # Get the ip_version field from the subnetpool
             cmd = 'neutron --os-tenant-name %s subnetpool-show %s | grep ip_version'\
                   %(tenant,subnetpool)
+            if otherargs:
+                cmd += otherargs
             version_string = self.runcmd(cmd)
             ip_version = int(version_string.split()[3])
 	if action == 'create':
@@ -298,12 +328,21 @@ class neutronCli(object):
 		else:
                    cmd = 'neutron --os-tenant-name %s subnet-create %s %s --name %s %s'\
                          %(tenant,ntkNameId,cidr,name,ip_version_string)
+            if otherargs:
+                cmd += otherargs
 	    subnetId = self.getuuid(self.runcmd(cmd))
 	    if subnetId:
 	       return subnetId
 	if action == 'delete':
 	   cmd = 'neutron --os-project-name %s subnet-delete %s' %(tenant,name)	  
+           if otherargs:
+               cmd += otherargs
 	   self.runcmd(cmd)
+	if action == 'show':
+	   cmd = 'neutron --os-project-name %s subnet-show %s' %(tenant,name)
+           if otherargs:
+               cmd += otherargs
+	   return self.runcmd(cmd)
 
     def rtrcrud(self,name,action,rtrprop='',gw='',subnet='',tenant='admin'):
         """
@@ -374,6 +413,63 @@ class neutronCli(object):
 	if action == 'delete':
 	   cmd = 'neutron --os-project-name %s subnetpool-delete %s' %(tenant,name)
            self.runcmd(cmd)
+
+    def fipcrud(self, action, tenant='admin', network_id_or_name=None,
+                floatingip_id=None, port_id=None, otherargs=None):
+        if action == 'list':
+            cmd = ('neutron --os-project-name %s floatingip-list' %(tenant))
+            if otherargs:
+                cmd = cmd + otherargs
+            return self.runcmd(cmd)
+        if action == 'show':
+            cmd = ('neutron --os-project-name %s floatingip-show %s'
+                   %(tenant,floatingip_id))
+            if otherargs:
+                cmd = cmd + otherargs
+            return self.runcmd(cmd)
+        if action == 'create':
+            cmd = ('neutron --os-project-name %s floatingip-create %s'
+                   %(tenant,network_id_or_name))
+            if otherargs:
+                cmd = cmd + otherargs
+            return self.runcmd(cmd)
+        if action == 'associate':
+            cmd = ('neutron --os-project-name %s floatingip-associate %s %s'
+                   %(tenant,floatingip_id,port_id))
+            if otherargs:
+                cmd = cmd + otherargs
+            return self.runcmd(cmd)
+        if action == 'disassociate':
+            cmd = ('neutron --os-project-name %s floatingip-disassociate %s'
+                   %(tenant,floatingip_id))
+            if otherargs:
+                cmd = cmd + otherargs
+            return self.runcmd(cmd)
+        if action == 'delete':
+            cmd = ('neutron --os-project-name %s floatingip-delete %s'
+                   %(tenant,floatingip_id))
+            if otherargs:
+                cmd = cmd + otherargs
+            return self.runcmd(cmd)
+
+    def associate_floatingip(self, floatingip_id, port_id):
+        return self_update_floatingip(floatingip_id, port_id)
+
+    def disassociate_floatingip(self, floatingip_id):
+        return self_update_floatingip(floatingip_id, None)
+
+    def _update_floatingip(floatingip_id, port_id):
+        body_value = {'floatingip': {
+                         'floatingip_id' : floatingip_id,
+                         'port_id' : port_id,
+                     }}
+        try:
+            floatingip = self.client.update_floatingip(body=body_value)
+            return floatingip['floatingip']['id']
+        except Exception as e:
+            print "FLoatingip Create failed: ", repr(e)
+            raise
+
 
     def Stripper(self,cmdout):
 	"""

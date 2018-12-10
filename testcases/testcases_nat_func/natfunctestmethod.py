@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import datetime
+import json
 import logging
 import sys
 
@@ -511,7 +512,7 @@ class NatFuncTestMethods(object):
             LOG.info("\nStep: Dynamically Associate FIPs to VMs\n")
             self.vm_to_fip = {}
             for vm in VMs:
-                results = gbpnova.action_fip_to_vm(
+                results = self.action_fip_to_vm(
                                           'associate',
                                           vm,
                                           extsegname=ExtSegName
@@ -523,19 +524,19 @@ class NatFuncTestMethods(object):
                    #then it may or may not have already created the FIPs
                    #So ensure to delete those FIPs(apparently this we were
                    #not doing so TC-4 was failing at Step=Negative Check
-                   gbpnova.delete_release_fips()
+                   self._delete_release_fips()
                    return 0
                 else:
                    self.vm_to_fip[vm] = results[0]
         if ic:
             LOG.info(
             "\nStep: Statically Inter-Changing Association of FIPs to VMs\n")
-            if gbpnova.action_fip_to_vm(
+            if self.action_fip_to_vm(
                                             'associate',
                                             VMs[0],
                                             vmfip=self.vm_to_fip[VMs[1]]
                                             ) and \
-               gbpnova.action_fip_to_vm(
+               self.action_fip_to_vm(
                                             'associate',
                                             VMs[1],
                                             vmfip=self.vm_to_fip[VMs[0]]
@@ -555,7 +556,7 @@ class NatFuncTestMethods(object):
         if vmname:
             vmname = VM2_NAME
             LOG.info("\nStep: Disassociate FIP from VM %s\n" %(vmname))
-            if not gbpnova.action_fip_to_vm(
+            if not self.action_fip_to_vm(
                                           'disassociate',
                                           vmname,
                                           vmfip = self.vm_to_fip[vmname]
@@ -566,7 +567,7 @@ class NatFuncTestMethods(object):
         else:
             LOG.info("\nStep: Disassociate FIPs from all VMs\n")
             for vm,fip in self.vm_to_fip.iteritems():
-                if not gbpnova.action_fip_to_vm(
+                if not self.action_fip_to_vm(
                                           'disassociate',
                                           vm,
                                           vmfip = fip
@@ -575,7 +576,7 @@ class NatFuncTestMethods(object):
                     "\n//// Disassociating FIP from VM %s failed ////" %(vm))
                     return 0
         if release_fip:
-           gbpnova.delete_release_fips()
+           self._delete_release_fips()
 	return 1
 
     def testApplyUpdatePrsToPtg(self,ptgtype,prs):
@@ -659,7 +660,7 @@ class NatFuncTestMethods(object):
         if fip:
            vmfips = self.vm_to_fip[VM1_NAME]
         else:
-           vmfips = gbpnova.get_floating_ips(ret=1)
+           vmfips = self._get_floating_ips(ret=1)
 	if not vmfips:
 		LOG.error(
 		"\n///// There are no FIPs to test Traffic /////")
@@ -724,9 +725,13 @@ class NatFuncTestMethods(object):
                     aci=gbpApic(apicip)
                 aci.create_add_filter('admin')
 	else:
-		if isinstance (run_remote_cli(
-                              "python add_ssh_filter.py create",
-                               CNTRLRIP, CTRLR_USER, CTRLR_PSWD), tuple):
+                if not CONTAINERIZED_SERVICES:
+                    cmd = "python add_ssh_filter.py create"
+                else:
+                    cmd = "python /home/add_ssh_filter.py create"
+		if isinstance (run_remote_cli(cmd,
+                               CNTRLRIP, CTRLR_USER, CTRLR_PSWD,
+                               service='aim'), tuple):
                         LOG.warning("adding filter to SvcEpg failed in AIM")
 			return 0
         sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
@@ -754,7 +759,7 @@ class NatFuncTestMethods(object):
            for vm in [VM1_NAME, VM2_NAME]:
                gbpnova.vm_delete(vm)
            LOG.info("\nStep: Blind CleanUp: Release FIPs")
-           gbpnova.delete_release_fips()
+           self._delete_release_fips()
            LOG.info("\nStep: Blind CleanUp: Delete PTs")
            pt_list = gbpcrud.get_gbp_policy_target_list()
            if len(pt_list):
@@ -793,3 +798,176 @@ class NatFuncTestMethods(object):
               for extseg in extseg_list:
                  gbpcrud.delete_gbp_external_segment(extseg)
            LOG.info("\nStep: Blind CleanUp of Resources: Completed")
+
+    def _get_floating_ips(self,ret=0):
+        """
+        ret = 0::Returns a dict of VM UUID & FIP
+        OR
+        Returns a list of FIPs
+        """
+        try:
+           vm_to_fip = {}
+           fiplist = []
+           fipdata = neutron.fipcrud('list', otherargs=' -f json')
+           fipdata_json = json.loads(fipdata)
+           for obj in fipdata_json:
+               if ret == 0:
+                  vm_to_fip[obj['instance_id']] = obj['floating_ip_address']
+               elif ret == 2:
+                  fiplist.append(obj)
+               else:
+                  fiplist.append(obj['floating_ip_address'])
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            LOG.error('Exception Type = %s, Exception Object = %s' %(exc_type,exc_traceback))
+            return None
+        if ret == 0:
+           return vm_to_fip
+        else:
+           return fiplist
+
+    def _delete_release_fips(self,fip=''):
+        """
+        Run this method ONLY when fips
+        are disassociated from VMs
+        fip:: pass specific FIP
+        """
+        try:
+           disassociatedFips = self._get_floating_ips(ret=2)
+           if fip:
+               for _fip in disassociatedFips:
+                   if _fip['floating_ip_address'] == fip:
+                       neutron.fipcrud('delete', floatingip_id=_fip['id'])
+                       break
+           else:
+               for fip in disassociatedFips:
+                   neutron.fipcrud('delete', floatingip_id=fip['id'])
+               print "Any Stale FIPs:: ", self._get_floating_ips(ret=1)
+        except Exception:
+           exc_type, exc_value, exc_traceback = sys.exc_info()
+           LOG.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
+           return 0
+        return 1
+
+
+    def _filter_fip_nets(self, net):
+        networkdata = neutron.netcrud(net['name'],'show', otherargs=' -f json')
+        network_json = json.loads(networkdata)
+        if network_json['router:external']:
+            subnets = network_json['subnets']
+            # Older clients didn't do proper JSON formatting
+            if not isinstance(subnets, list):
+                subnets = subnets.split()
+            for subnet in subnets:
+                subnetdata = neutron.subnetcrud(subnet, 'show', None,
+                                                otherargs=' -f json')
+                subnet_json = json.loads(subnetdata)
+                if not subnet_json['apic:snat_host_pool']:
+                    return True
+        return False
+
+    def _floating_ip_pools_list(self):
+        networks = neutron.netcrud(None,'list', otherargs=' -f json')
+        networks_json = json.loads(networks)
+        fip_networks = list(filter(self._filter_fip_nets, networks_json))
+        return [net['name'] for net in fip_networks]
+
+    def action_fip_to_vm(self,action,vmname,extsegname=None,vmfip=None):
+        """
+        Cargo-culted from gbpnova and modified to use neutron APIs.
+        Depending on action type caller
+        Can associate or disassociate a FIP
+        action:: valid strings are 'associate' or 'disassociate'
+        extsegname:: Must be passed ONLY in case of 'associate'
+        vmfip:: In case of 'disassociate', vmfip MUST be passed
+                In case of 'associate', default = None, for method to
+                create FIP-pool and dynamically allocate FIPs to VM
+        """
+        if action == 'associate':
+            if not vmfip:
+                fip_pools = self._floating_ip_pools_list()
+                if len(fip_pools):
+                   print 'FIP POOLS', fip_pools
+                   for pool in fip_pools:
+                       print pool
+                       if extsegname in pool:
+                          print 'MATCH'
+                          try:
+                              fip = self._action_fip_to_vm(action, vmname,
+                                    external_network=pool)
+                          except Exception:
+                              exc_type, exc_value, exc_traceback = sys.exc_info()
+                              LOG.error(
+                              'Dynamic FIP Exception & Traceback = %s\n %s'\
+                              %(exc_type,exc_traceback))
+                              return 0
+                          # Returning the attr of fip(address)
+                          # and the fip object itself
+                          return fip['floating_ip_address'],fip
+                else:
+                    LOG.error('There are NO Floating IP Pools')
+                    return 0
+            else: #statically associate FIP to VM
+                try:
+                    fipdata = neutron.fipcrud('list', otherargs=' -f json')
+                    fipdata_json = json.loads(fipdata)
+                    if len(fipdata_json):
+                        for fip in fipdata_json:
+                            if fip['floating_ip_address'] == vmfip:
+                                fipdata = neutron.fipcrud('show',
+                                    floatingip_id=fip['id'], otherargs=' -f json')
+                                fip_json = json.loads(fipdata)
+                                result = self._action_fip_to_vm(action, vmname,
+                                    external_network=fip_json['floating_network_id'],
+                                    vm_fip=fip_json)
+                                return 1
+                except Exception:
+                   exc_type, exc_value, exc_traceback = sys.exc_info()
+                   LOG.error(
+                   'Static FIP Exception & Traceback = %s\n %s' \
+                   %(exc_type,exc_traceback))
+                   return 0
+
+        if action == 'disassociate':
+           try:
+              allfips = neutron.fipcrud('list', otherargs=' -f json')
+              allfips_json = json.loads(allfips)
+              for fip in allfips_json:
+                  if fip['floating_ip_address'] == vmfip:
+                      fipdata = neutron.fipcrud('show',
+                          floatingip_id=fip['id'], otherargs=' -f json')
+                      fip_json = json.loads(fipdata)
+                      result = self._action_fip_to_vm(action, vmname,
+                          external_network=fip_json['floating_network_id'],
+                          vm_fip=fip_json)
+           except Exception:
+              exc_type, exc_value, exc_traceback = sys.exc_info()
+              LOG.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
+              return 0
+        return 1
+
+    def _action_fip_to_vm(self, action, vmname, external_network=None, vm_fip=None):
+        server = gbpnova.get_server(vmname)
+        port_id = server.interface_list()[0].port_id
+        network = neutron.netcrud(external_network,'show', otherargs=' -f json')
+        network_json = json.loads(network)
+        fip = None
+        if action == 'associate' and not vm_fip:
+            fipdata = neutron.fipcrud('create',
+                                      network_id_or_name=network_json['id'],
+                                      otherargs=' -f json')
+            fip = json.loads(fipdata)
+        # Note: covers both associate and disassociate cases
+        elif 'associate' in action and vm_fip:
+            fip = vm_fip
+        result = neutron.fipcrud(action, floatingip_id=fip['id'],
+                                 port_id=port_id)
+        if action == 'associate' and 'Associated floating IP' not in result and not vm_fip:
+            #if the above function is called for a negative check
+            #then it may or may not have already created the FIPs
+            #So ensure to delete those FIPs(apparently this we were
+            #not doing so TC-4 was failing at Step=Negative Check
+            neutron.fipcrud('delete', floatingip_id=fip['id'])
+            return 0
+        else:
+            return fip

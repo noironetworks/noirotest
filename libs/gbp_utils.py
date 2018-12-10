@@ -32,6 +32,8 @@ L3OUT1=conf.get('primary_L3out')
 L3OUT1_NET=conf.get('primary_L3out_net')
 L3OUT2=conf.get('secondary_L3out')
 L3OUT2_NET=conf.get('secondary_L3out_net')
+CONTAINERIZED_SERVICES=conf.get('containerized_services', [])
+RCFILE=conf.get('rcfile', 'overcloudrc.v3')
 
 def run_openstack_cli(cmdList,cntrlrip,
                       username='heat-admin',passwd='noir0123', do_sudo=False):
@@ -49,9 +51,9 @@ def run_openstack_cli(cmdList,cntrlrip,
     with settings(warn_only=True):
         os_flvr = run('cat /etc/os-release',quiet=True)
         if 'Red Hat' in os_flvr:
-            cmd_src = 'source ~/overcloudrc.v3'
+            cmd_src = 'source ~/%s' % RCFILE
         if 'Ubuntu' in os_flvr:
-            cmd_src = 'source ~/overcloudrc.v3'
+            cmd_src = 'source ~/%s' % RCFILE
         with prefix(cmd_src):
             for cmd in cmdList:
                 if do_sudo:
@@ -64,7 +66,8 @@ def run_openstack_cli(cmdList,cntrlrip,
     return results
 
 def run_remote_cli(cmdList,hostip,username,
-                   password,passOnFailure=True, do_sudo=False):
+                   password,passOnFailure=True, do_sudo=False,
+                   service=None):
     "Run cmd on a remote machine"
     env.host_string = hostip
     env.user = username
@@ -73,9 +76,19 @@ def run_remote_cli(cmdList,hostip,username,
        cmdList = [cmdList]
     with settings(warn_only=True):
         run("hostname")
+        prefix = None
+        if service and service in CONTAINERIZED_SERVICES:
+            cid_cmd = "docker ps | grep '%s$' | awk '{print $1}'" % service
+            results = sudo(cid_cmd)
+            if not results.succeeded:
+                return 0,results
+            prefix = "docker exec -i -t %s " % str(results)
+            do_sudo = True
         for cmd in cmdList:
+            if prefix:
+                cmd = prefix + cmd
             if do_sudo:
-                results = do_sudo(cmd)
+                results = sudo(cmd)
             else:
                 results = run(cmd)
             if not results.succeeded:

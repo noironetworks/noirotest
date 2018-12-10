@@ -28,6 +28,10 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
     env.user = cntlr_user
     env.password = cntlr_pwd
 
+    #Step-0.5: Make sure GBP client is installed on the controller
+    cmd = "sudo yum -y install python-gbpclient.noarch"
+    run(cmd)
+
     #Step-1: Copy the Heat Templates to the Controller
     for heat_templt in ['~/noirotest/testcases/heat_temps/heat_dnat_only.yaml',
 			'~/noirotest/testcases/heat_temps/heat_snat_only.yaml',
@@ -37,6 +41,12 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
 			'~/noirotest/add_ssh_filter.py'
 			]:
          put(heat_templt,'~/')
+    if CONTAINERIZED_SERVICES and 'aim' in CONTAINERIZED_SERVICES:
+         cmd = "sudo docker ps | grep aim$"
+         output = run(cmd)
+         cid = output.split()[0]
+         cmd = "sudo docker exec -i %s /bin/bash -c 'cat > /home/add_ssh_filter.py' < /home/heat-admin/add_ssh_filter.py" % cid
+         run(cmd)
     #Step-2: Restart the below services
     for cmd in ['sudo systemctl restart openstack-nova-api.service',
 		'sudo systemctl restart openstack-nova-scheduler.service',
@@ -50,6 +60,7 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
            service = cmd.split()[-1][10:-8].replace('-','_')
            cmd = "sudo docker ps | grep %s$" % service
            output = run(cmd)
+           print(output)
            container_id = output.split()[0]
            cmd = "sudo docker restart %s" % container_id
            print cmd
@@ -60,9 +71,9 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
     with settings(warn_only=True):
         os_flvr = run('cat /etc/os-release')
         if 'Red Hat' in os_flvr:
-            cmd_src = 'source ~/overcloudrc.v3'
+            cmd_src = 'source ~/overcloudrc'
 	if 'Ubuntu' in os_flvr:
-            cmd_src = 'source ~/overcloudrc.v3'
+            cmd_src = 'source ~/overcloudrc'
         rr_cmd = 'apic route-reflector-create --ssl --no-secure '+\
                  '--apic-ip %s --apic-username %s --apic-password %s' %(apic_ip,apic_user,apic_pwd)
 	with prefix(cmd_src):

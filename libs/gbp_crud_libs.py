@@ -21,6 +21,9 @@ import string
 from commands import *
 from gbpclient.v2_0 import client as gbpclient
 from testcases.config import conf
+from keystoneauth1 import identity
+from keystoneauth1 import session
+
 
 L3OUT1=conf.get('primary_L3out')
 L3OUT1_NET=conf.get('primary_L3out_net')
@@ -47,8 +50,16 @@ class GBPCrud(object):
         cred['username']=username
         cred['password']=password
         cred['tenant_name']=tenant
-        cred['auth_url'] = "http://%s:5000/v2.0/" % ostack_controller
-        self.client = gbpclient.Client(**cred)
+        cred['auth_url'] = "http://%s:5000/v3/" % ostack_controller
+        auth = identity.Password(auth_url=cred['auth_url'],
+                                 username=username,
+                                 password=password,
+                                 project_name=tenant,
+                                 project_domain_name='Default',
+                                 user_domain_name='Default')
+        sess = session.Session(auth=auth)
+
+        self.client = gbpclient.Client(session=sess)
 
     def create_gbp_policy_action(self,name,**kwargs):
         """

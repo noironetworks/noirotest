@@ -11,6 +11,8 @@ from libs.gbp_nova_libs import gbpNova
 from libs.raise_exceptions import *
 from testcases.config import conf
 
+rcfile = conf.get('rcfile') or 'overcloudrc.v3'
+
 class super_hdr(object):
     # Name of the config file is static
     nova_az = conf['nova_az_name']
@@ -28,9 +30,8 @@ class super_hdr(object):
     apicsystemID = conf['apic_system_id']
     pausetodebug = conf['pausetodebug']
     plugin = conf['plugin-type']
-    gbpcfg = gbpCfgCli(cntlr_ip)
     gbpcfg = gbpCfgCli(cntlr_ip, cntrlr_username=cntlr_user,
-                       cntrlr_passwd=cntlr_passwd)
+                       cntrlr_passwd=cntlr_passwd, rcfile=rcfile)
     gbpnova = gbpNova(cntlr_ip)
     gbpheat = gbpHeat(cntlr_ip)
 
