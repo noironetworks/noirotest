@@ -17,6 +17,7 @@ CNTRLR_USR = conf.get('controller_user') or 'root'
 CNTRLR_PASSWD = conf.get('controller_password') or 'noir0123'
 KEY_USER = conf.get('keystone_user') or 'admin'
 KEY_PASSWD = conf.get('keystone_password') or 'noir0123'
+RCFILE = conf.get('rcfile') or 'overcloudrc.v3'
 
 
 class NatTraffic(object):
@@ -28,7 +29,7 @@ class NatTraffic(object):
 
         self.ntk_node = ntk_node
         self.gbpcfg = gbpCfgCli(ostack_cntrlr_ip, cntrlr_username=CNTRLR_USR,
-                 cntrlr_passwd=CNTRLR_PASSWD)
+                 cntrlr_passwd=CNTRLR_PASSWD, rcfile=RCFILE)
         self.gbpnova = gbpNova(ostack_cntrlr_ip,cntrlr_uname=CNTRLR_USR,cntrlr_passwd=CNTRLR_PASSWD,
                   keystone_user=KEY_USER,keystone_password=KEY_PASSWD)
         self.vm_list = vm_list

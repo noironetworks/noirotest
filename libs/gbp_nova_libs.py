@@ -22,6 +22,8 @@ import datetime
 from time import sleep
 from novaclient.client import Client
 from gbp_utils import *
+from keystoneauth1 import identity
+from keystoneauth1 import session
 
 
 # Initialize logging
@@ -44,8 +46,20 @@ class gbpNova(object):
         self.cred['password'] = keystone_password
         self.cred['project_name'] = tenant
         self.cred['auth_url'] = "http://%s:5000/v2.0/" % self.cntrlrip
-        self.nova = Client(**self.cred)
+        self.cred['auth_url'] = "http://%s:5000/v3/" % self.cntrlrip
+        auth = identity.Password(auth_url=self.cred['auth_url'],
+                                 username='admin',
+                                 password=self.cred['password'],
+                                 project_name=self.cred['project_name'],
+                                 project_domain_name='Default',
+                                 user_domain_name='Default')
+        sess = session.Session(auth=auth)
+
+        self.nova = Client("2", session=sess)
         self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown','Exception']
+
+    def get_server(self, server_name):
+        return self.nova.servers.find(name=server_name)
 
     def cmd_error_check(self,cmd_out):
         """
