@@ -14,7 +14,7 @@ VRF_PREFIX = "--apic:distinguished_names type=dict VRF='"
 
 max_vm_wait = conf.get('vm_wait', 20)
 max_vm_tries = conf.get('vm_tries', 10)
-rcfile = conf.get('rcfile', 'overcloudrc.v3')
+rcfile = conf.get('rcfile', 'overcloudrc')
 
 class neutronPy(object):
     def __init__(self, controllerIp, username='admin', password='noir0123', tenant='admin'):

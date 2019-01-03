@@ -33,7 +33,7 @@ L3OUT1_NET=conf.get('primary_L3out_net')
 L3OUT2=conf.get('secondary_L3out')
 L3OUT2_NET=conf.get('secondary_L3out_net')
 CONTAINERIZED_SERVICES=conf.get('containerized_services', [])
-RCFILE=conf.get('rcfile', 'overcloudrc.v3')
+RCFILE=conf.get('rcfile', 'overcloudrc')
 
 def run_openstack_cli(cmdList,cntrlrip,
                       username='heat-admin',passwd='noir0123', do_sudo=False):
