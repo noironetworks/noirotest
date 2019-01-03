@@ -11,7 +11,7 @@ from libs.gbp_nova_libs import gbpNova
 from libs.raise_exceptions import *
 from testcases.config import conf
 
-rcfile = conf.get('rcfile') or 'overcloudrc.v3'
+rcfile = conf.get('rcfile') or 'overcloudrc'
 
 class super_hdr(object):
     # Name of the config file is static

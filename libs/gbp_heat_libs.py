@@ -104,12 +104,7 @@ class gbpHeat(object):
               _log.info("The stack does not exist, so no need of delete")
               return 1 
            # Else then proceed with delete as the said stack exists
-           ostack_version = self.run_heat_cli('nova-manage version', sudo=True)
-	   if ostack_version.find('2015') == 0 or ostack_version.find('2014') == 0:
-    	      cmd_cfg = "heat --os-tenant-name %s stack-delete %s" %(tenant,name)
-           else:
-              cmd_cfg = "heat --os-tenant-name %s stack-delete %s -y"\
-                        %(tenant,name)
+           cmd_cfg = "heat --os-tenant-name %s stack-delete %s -y" %(tenant,name)
            cfg_out = self.run_heat_cli(cmd_cfg)
            _log.info("Sleeping for 10 secs ... to check if stack got deleted")
            sleep(10)

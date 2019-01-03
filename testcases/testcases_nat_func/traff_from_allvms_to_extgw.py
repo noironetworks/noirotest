@@ -17,7 +17,7 @@ CNTRLR_USR = conf.get('controller_user') or 'root'
 CNTRLR_PASSWD = conf.get('controller_password') or 'noir0123'
 KEY_USER = conf.get('keystone_user') or 'admin'
 KEY_PASSWD = conf.get('keystone_password') or 'noir0123'
-RCFILE = conf.get('rcfile') or 'overcloudrc.v3'
+RCFILE = conf.get('rcfile') or 'overcloudrc'
 
 
 class NatTraffic(object):

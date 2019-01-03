@@ -16,7 +16,7 @@ from testcases.config import conf
 
 cntlr_user = conf.get('controller_user') or 'root'
 cntlr_passwd = conf.get('controller_password') or 'noir0123'
-rcfile = conf.get('rcfile') or 'overcloudrc.v3'
+rcfile = conf.get('rcfile') or 'overcloudrc'
 
 
 class test_diff_ptg_same_l2p_l3p(object):

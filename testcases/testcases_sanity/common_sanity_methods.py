@@ -24,7 +24,7 @@ L3OUT2=conf.get('secondary_L3out')
 L3OUT2_NET=conf.get('secondary_L3out_net')
 L3OUT2_VRF=conf.get('secondary_L3out_vrf')
 KEY_AUTH_IP = conf.get('keystone_ip')
-RCFILE = conf.get('rcfile', 'overcloudrc.v3')
+RCFILE = conf.get('rcfile', 'overcloudrc')
 
 max_traff_attempts = conf.get('traffic_attempts', 5)
 
