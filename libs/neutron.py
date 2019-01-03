@@ -365,9 +365,11 @@ class neutronCli(object):
 	self.runcmd(cmd) 	   		
 	
     def addscopecrud(self, name, action, tenant='admin', ip=4,
-		     shared=False, apicvrf=''):
+		     shared=False, apicvrf='', otherargs=None):
         if action == 'get':
             cmd = 'neutron --os-project-name %s address-scope-show %s' %(tenant,name)
+            if otherargs:
+                cmd = cmd + otherargs
             return self.runcmd(cmd)
         if action == 'create':
 	    if shared:
@@ -378,12 +380,16 @@ class neutronCli(object):
 			 'address-scope-create %s %s ' %(name,ip)
 	    if apicvrf:
                 cmd = cmd + " %s%s'" %(VRF_PREFIX,apicvrf)
+            if otherargs:
+                cmd = cmd + otherargs
 	    ascId = self.getuuid(self.runcmd(cmd))
 	    if ascId:
 	       #print 'Output of ID ==\n', ascId
 	       return ascId
 	if action == 'delete':
 	   cmd = 'neutron --os-project-name %s address-scope-delete %s' %(tenant,name)
+           if otherargs:
+               cmd = cmd + otherargs
            self.runcmd(cmd)
 
     def subpoolcrud(self,name,action,address_scope='', pool='',
