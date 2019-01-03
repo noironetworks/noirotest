@@ -317,10 +317,12 @@ class crudML2(object):
 					        tenant=tnt,
 					        shared=shared)
             if is_dual_stack():
+                vrfargs = ' -c apic:distinguished_names -f value'
                 v4scope = neutron.addscopecrud(addscopename,
                                                'get',
                                                tenant=tnt,
-                                               shared=shared)
+                                               shared=shared,
+                                               otherargs=vrfargs)
                 regex = r'"VRF": "(.*)"'
                 found = re.search(regex, v4scope)
                 self.addscopIDv6 = neutron.addscopecrud(addscopename_v6,
