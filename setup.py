@@ -14,11 +14,6 @@ NTKNODE = conf['network_node']
 CONTAINERIZED_SERVICES = conf.get('containerized_services')
 
 def main():
-    check_ssh = raw_input(
-               'Passwordless ssh setup to nodes done(YES/NO): ')
-    if check_ssh == 'NO':
-	print ('ENSURE to SETUP Passwordless SSH to nodes in your setup')
-	sys.exit(0)
     setup(CNTRLRIP,APICIP,NTKNODE)
 
 def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin',
