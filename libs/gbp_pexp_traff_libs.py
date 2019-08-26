@@ -228,7 +228,12 @@ class gbpExpTraffHping3(object):
 			 if self.parse_ping_output(result,self.pkt_cnt) !=0:
 			    results[dest_ep]['tcp']=1
 			 else:
-			    results[dest_ep]['tcp']=0
+                            # Disregard if we passed SYN, but fail any with ACK
+                            # (connection tracking expects SYN only as first packet)
+                            if "-A" in cmd and results[dest_ep]['tcp'] == 1:
+                               results[dest_ep]['tcp']=1
+                            else:
+                               results[dest_ep]['tcp']=0
 		   else:
 			#Over-riding the label cmd_s,to run simple ncat
 			cmd_s = "nc -w 1 -v %s -z 22" %(dest_ep)
