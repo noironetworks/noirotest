@@ -211,11 +211,11 @@ class gbpExpTraffHping3(object):
 		   else:
 		      results[dest_ep]['icmp']=0
 		if protocol=='tcp'or protocol=='all':
-		   cmd_s = "sudo hping3 %s -S -V -p %s -c %s --fast -q" \
+		   cmd_s = "sudo hping3 %s -S -V -p %s -c %s --fast -q --tcp-timestamp" \
 			    %(dest_ep,port,self.pkt_cnt)
-		   cmd_sa = "sudo hping3 %s -S -A -V -p %s -c %s --fast -q" \
+		   cmd_sa = "sudo hping3 %s -S -A -V -p %s -c %s --fast -q --tcp-timestamp" \
 			    %(dest_ep,port,self.pkt_cnt)
-		   cmd_saf = "sudo hping3 %s -S -A -F -V -p %s -c %s --fast -q" \
+		   cmd_saf = "sudo hping3 %s -S -A -F -V -p %s -c %s --fast -q --tcp-timestamp" \
 			    %(dest_ep,port,self.pkt_cnt)
 		   if not tcp_syn_only:
 		      for cmd in [cmd_s,cmd_sa,cmd_saf]:
