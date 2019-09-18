@@ -325,6 +325,11 @@ class crudML2(object):
                                                otherargs=vrfargs)
                 regex = r'"VRF": "(.*)"'
                 found = re.search(regex, v4scope)
+                if not found:
+                    # It looks like different client versions use different
+                    # formatting of the output
+                    regex = r"'VRF': u'(.*)'"
+                    found = re.search(regex, v4scope)
                 self.addscopIDv6 = neutron.addscopecrud(addscopename_v6,
                                                         'create',
                                                         ip=6,
