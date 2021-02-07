@@ -13,6 +13,12 @@ from testcases.config import conf
 
 rcfile = conf.get('rcfile') or 'overcloudrc'
 
+def get_cntlr_ip(cntlr_ip):
+    if isinstance(cntlr_ip, list):
+        return cntlr_ip[0]
+    else:
+        return cntlr_ip
+
 class super_hdr(object):
     # Name of the config file is static
     nova_az = conf['nova_az_name']
@@ -30,10 +36,10 @@ class super_hdr(object):
     apicsystemID = conf['apic_system_id']
     pausetodebug = conf['pausetodebug']
     plugin = conf['plugin-type']
-    gbpcfg = gbpCfgCli(cntlr_ip, cntrlr_username=cntlr_user,
+    gbpcfg = gbpCfgCli(get_cntlr_ip(cntlr_ip), cntrlr_username=cntlr_user,
                        cntrlr_passwd=cntlr_passwd, rcfile=rcfile)
-    gbpnova = gbpNova(cntlr_ip)
-    gbpheat = gbpHeat(cntlr_ip)
+    gbpnova = gbpNova(get_cntlr_ip(cntlr_ip))
+    gbpheat = gbpHeat(get_cntlr_ip(cntlr_ip))
 
     def vm_create(self, ptgs, vmlist):
         """

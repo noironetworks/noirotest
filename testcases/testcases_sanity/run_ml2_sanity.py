@@ -102,6 +102,7 @@ try:
 
     #Step 11:
     if attach_fip_to_vms(tnt1,'ml2') == 0:
+        raw_input("Hit any key to continue")
     	raise TestError(
     	"ML2-SANITY: Test-11: Attach FIP to VMs in tenant %s " %(tnt1))
     else:

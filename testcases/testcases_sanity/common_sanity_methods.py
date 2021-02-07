@@ -18,6 +18,8 @@ from libs.gbp_pexp_traff_libs import gbpExpTraff
 from testcases.config import conf
 from testcases.testcases_nat_func.traff_from_extgw import *
 
+SAUTO_L3OUT1 = 'sauto_l3out-1'
+SAUTO_L3OUT2 = 'sauto_l3out-2'
 L3OUT1=conf.get('primary_L3out')
 L3OUT1_NET=conf.get('primary_L3out_net')
 L3OUT2=conf.get('secondary_L3out')
@@ -41,6 +43,9 @@ LOG.addHandler(hdlr)
 #Extract and set global vars from config file
 #NOTE:The external-segment is hardcoded to L3OUT1
 CNTRLIP = conf['controller_ip']
+RESTIP = conf['rest_ip']
+if isinstance(CNTRLIP, list):
+    CNTRLIP = CNTRLIP[0]
 APICIP = conf['apic_ip']
 TNT_LIST_ML2 =  ['PENGUIN','OCTON','GARTH']
 TNT_LIST_GBP = ['MANDRAKE', 'BATMAN']
@@ -113,17 +118,17 @@ def create_external_network_subnets(nat):
             aimsnat = '--apic:snat_host_pool True'
 	try:
 	    if nat == 'nonat':
-	        neutron.netcrud(L3OUT2,'create',external=True,
+	        neutron.netcrud(SAUTO_L3OUT2,'create',external=True,
                             shared=True, aim = aimntkcfg)
-                EXTSUB3 = neutron.subnetcrud('extsub3','create',L3OUT2,
+                EXTSUB3 = neutron.subnetcrud('extsub3','create',SAUTO_L3OUT2,
  			       cidr=EXTNONATCIDR,extsub=True)
 		return EXTSUB3
 	    else:
-	        neutron.netcrud(L3OUT1,'create',external=True,
+	        neutron.netcrud(SAUTO_L3OUT1,'create',external=True,
                             shared=True, aim = aimntkcfg)
-                EXTSUB1 = neutron.subnetcrud('extsub1','create',L3OUT1,
+                EXTSUB1 = neutron.subnetcrud('extsub1','create',SAUTO_L3OUT1,
  			       cidr=EXTDNATCIDR,extsub=True)
-                EXTSUB2 = neutron.subnetcrud('extsub2','create',L3OUT1,
+                EXTSUB2 = neutron.subnetcrud('extsub2','create',SAUTO_L3OUT1,
  			       cidr=EXTSNATCIDR,extsub=True,aim=aimsnat)
 	        return EXTSUB1, EXTSUB2
       	except Exception as e:
@@ -144,7 +149,7 @@ def attach_fip_to_vms(tnt,mode):
 	   GBPFips[tnt]=[]
 	for vm in vms:
 	    cmd1 = ('source ~/%s && neutron --os-project-name %s' %(RCFILE,tnt)+
-                    ' floatingip-create %s -c id -f value' %(L3OUT1))
+                    ' floatingip-create %s -c id -f value' %(SAUTO_L3OUT1))
             fip_id = subprocess.check_output(['bash','-c', cmd1])
             fip_id = fip_id.split()[0]
 	    cmd1 = ('source ~/%s && neutron --os-project-name %s' %(RCFILE,tnt)+
@@ -172,7 +177,7 @@ def attach_fip_to_vms(tnt,mode):
 def migrate_vm(mode,dest_host):
     from libs.gbp_nova import gbpNova
     if mode == 'ml2':
-        nova = gbpNova(CNTRLIP,tenant=TNT_LIST_ML2[0])
+        nova = gbpNova(RESTIP,tenant=TNT_LIST_ML2[0])
         nova.vm_migrate(method='api')
 
 def dump_results(mode):
@@ -416,9 +421,9 @@ class crudML2(object):
         "###############################################\n"
 	%(tnt))
 	if not nonat:
-	    gw = L3OUT1
+	    gw = SAUTO_L3OUT1
 	else:
-	    gw = L3OUT2
+	    gw = SAUTO_L3OUT2
  	try:
 	    neutron.rtrcrud(self.rtrIDs[tnt], 'set', rtrprop='gateway',
 	   		    gw=gw, tenant=tnt)
@@ -529,8 +534,8 @@ class crudML2(object):
 			   %(obj))
 	    except Exception:
 	        pass
-	neutron.runcmd('neutron net-delete %s' % L3OUT1)
-	neutron.runcmd('neutron net-delete %s' % L3OUT2)
+	neutron.runcmd('neutron net-delete %s' % SAUTO_L3OUT1)
+	neutron.runcmd('neutron net-delete %s' % SAUTO_L3OUT2)
 	#Purge all resource/config if missed by above cleanups
 	for tnt in self.ml2tntIDs:
 	    neutron.purgeresource(tnt)
@@ -556,11 +561,11 @@ class crudGBP(object):
     def create_gbp_tenants(self):
         self.gbptntIDs = neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create',getid=True)
 	from libs.gbp_nova_libs import gbpNova
-        self.gbptnt1 = GBPCrud(CNTRLIP,tenant=tnt1)
-        self.gbptnt2 = GBPCrud(CNTRLIP,tenant=tnt2)
-        self.gbpadmin = GBPCrud(CNTRLIP)
-        self.novatnt1 = gbpNova(CNTRLIP,tenant=tnt1)
-        self.novatnt2 = gbpNova(CNTRLIP,tenant=tnt2)
+        self.gbptnt1 = GBPCrud(RESTIP,tenant=tnt1)
+        self.gbptnt2 = GBPCrud(RESTIP,tenant=tnt2)
+        self.gbpadmin = GBPCrud(RESTIP)
+        self.novatnt1 = gbpNova(RESTIP,tenant=tnt1)
+        self.novatnt2 = gbpNova(RESTIP,tenant=tnt2)
     
     def create_l2p_l3p(self,tnt):
 	if tnt == tnt1:
@@ -572,6 +577,8 @@ class crudGBP(object):
             LOG.info(
             "\n## Create L2Policy along with it implicit L3Policy ##\n"
 	    )
+            import pdb
+            pdb.set_trace()
 	    self.l2p1_uuid,self.l2p1_impl3p,self.l2p1_autoptg,self.l2p1_ntkid = \
              self.gbptnt1.create_gbp_l2policy(gbpL2p[tnt1][0],
 					      getl3p=True,
@@ -755,10 +762,10 @@ class crudGBP(object):
         )
 	self.extsegid = {}
 	if nattype == 'nat':
-	    es_name = L3OUT1
+	    es_name = SAUTO_L3OUT1
 	    extsub = create_external_network_subnets('nat')[0]
 	if nattype == 'nonat': 
-	    es_name = L3OUT2
+	    es_name = SAUTO_L3OUT2
 	    extsub = create_external_network_subnets('nonat')
         self.extsegid = self.gbpadmin.create_gbp_external_segment(
                                         es_name,
@@ -784,7 +791,7 @@ class crudGBP(object):
 	    extpolname = L3OUT1_NET
 	if tnt == tnt2:
 	    extpolname = L3OUT2_NET
-	gbptnt = GBPCrud(CNTRLIP,tenant=tnt)
+	gbptnt = GBPCrud(RESTIP,tenant=tnt)
 	self.extpol = gbptnt.create_gbp_external_policy(
 					extpolname,
 					external_segments=[self.extsegid]
@@ -804,7 +811,7 @@ class crudGBP(object):
 	    l3p = self.l2p1_impl3p
 	if tnt == tnt2:
 	    l3p = self.l3p_uuid
-	gbptnt = GBPCrud(CNTRLIP,tenant=tnt)
+	gbptnt = GBPCrud(RESTIP,tenant=tnt)
 	if gbptnt.update_gbp_l3policy(l3p,
 					    property_type='uuid',
 					    external_segments=self.extsegid
@@ -1058,7 +1065,7 @@ class crudGBP(object):
                 print 'FIPs do not exist for ',tnt
                 pass
 	    try:
-		gbpclean = GBPCrud(CNTRLIP,tenant=tnt)
+		gbpclean = GBPCrud(RESTIP,tenant=tnt)
                 pt_list = gbpclean.get_gbp_policy_target_list()
             	if len(pt_list):
               	    for pt in pt_list:
@@ -1113,8 +1120,8 @@ class crudGBP(object):
 		pass
 	neutron.runcmd('neutron subnetpool-delete %s' %(gbp_nonat_sps))
 	neutron.runcmd('neutron address-scope-delete %s' %(gbp_nonat_ads))
-	neutron.runcmd('neutron net-delete %s' % L3OUT1)
-	neutron.runcmd('neutron net-delete %s' % L3OUT2)
+	neutron.runcmd('neutron net-delete %s' % SAUTO_L3OUT1)
+	neutron.runcmd('neutron net-delete %s' % SAUTO_L3OUT2)
 	#Purge all resource/config if missed by above cleanups
         if self.gbptntIDs:
 	    for tnt in self.gbptntIDs:

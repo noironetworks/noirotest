@@ -14,6 +14,12 @@ from libs.keystone import Keystone
 from libs.gbp_utils import *
 from testcases.config import conf
 
+def get_cntlr_ip(cntlr_ip):
+    if isinstance(cntlr_ip, list):
+        return cntlr_ip[0]
+    else:
+        return cntlr_ip
+
 APICSYSTEM_ID = conf['apic_system_id']
 network_node = conf['network_node']
 cntlr_ip = conf['controller_ip']
@@ -33,9 +39,9 @@ pausetodebug = conf['pausetodebug']
 test_parameters = conf['test_parameters']
 plugin = conf['plugin-type']
 CONTAINERIZED_SERVICES=conf.get('containerized_services', [])
-gbpnova = gbpNova(cntlr_ip,cntrlr_uname=cntlr_user,cntrlr_passwd=cntlr_passwd,
+gbpnova = gbpNova(get_cntlr_ip(cntlr_ip),cntrlr_uname=cntlr_user,cntrlr_passwd=cntlr_passwd,
                   keystone_user=key_user,keystone_password=key_passwd)
-gbpheat = gbpHeat(cntlr_ip,cntrlr_uname=cntlr_user, cntrlr_passwd=cntlr_passwd)
+gbpheat = gbpHeat(get_cntlr_ip(cntlr_ip),cntrlr_uname=cntlr_user, cntrlr_passwd=cntlr_passwd)
 
 if plugin: #Incase of MergedPlugin
     if apic_passwd:
@@ -88,7 +94,7 @@ class gbp_main_config(object):
         self.cntlr_ip = conf['controller_ip']
         self.cntlr_user = conf.get('controller_user') or 'root'
         self.cntlr_passwd = conf.get('controller_password') or 'noir0123'
-        self.key_ip = conf.get('keystone_ip') or self.cntlr_ip
+        self.key_ip = conf.get('keystone_ip') or get_cntlr_ip(self.cntlr_ip)
         self.key_user = conf.get('keystone_user') or 'admin'
         self.key_passwd = conf.get('keystone_password') or 'noir0123'
         self.apic_ip = conf['apic_ip']
@@ -102,9 +108,9 @@ class gbp_main_config(object):
 	self.pausetodebug = conf['pausetodebug']
         self.test_parameters = conf['test_parameters']
 	self.plugin = conf['plugin-type']
-        self.gbpnova = gbpNova(self.cntlr_ip,cntrlr_uname=self.cntlr_user,cntrlr_passwd=self.cntlr_passwd,
+        self.gbpnova = gbpNova(get_cntlr_ip(self.cntlr_ip),cntrlr_uname=self.cntlr_user,cntrlr_passwd=self.cntlr_passwd,
                   keystone_user=self.key_user,keystone_password=self.key_passwd)
-        self.gbpheat = gbpHeat(self.cntlr_ip,cntrlr_uname=self.cntlr_user, cntrlr_passwd=self.cntlr_passwd)
+        self.gbpheat = gbpHeat(get_cntlr_ip(self.cntlr_ip),cntrlr_uname=self.cntlr_user, cntrlr_passwd=self.cntlr_passwd)
 	if self.plugin: #Incase of MergedPlugin
             if self.apic_passwd:
                 self.gbpaci = gbpApic(self.apic_ip, mode='aim',
@@ -177,7 +183,7 @@ class gbp_main_config(object):
         #Fetch the Tenant's DN for Openstack project 'admin'
         if self.plugin:
 	    tnt = run_remote_cli("openstack project show admin -c id -f value",
-                                 self.cntlr_ip, self.cntlr_user, self.cntlr_passwd)
+                                 get_cntlr_ip(self.cntlr_ip), self.cntlr_user, self.cntlr_passwd)
         else:
             tnt='admin'
         #Adding SSH-filter to Svc_Contract provided by Svc_Epgs
@@ -192,9 +198,11 @@ class gbp_main_config(object):
                    cmd = "python add_ssh_filter.py create"
                else:
                    cmd = "python /home/add_ssh_filter.py create"
-	       if isinstance (run_remote_cli(cmd,
-                               self.cntlr_ip, self.cntlr_user, self.cntlr_passwd,
-                               service='aim'), tuple):
+               cntlr_ips = self.cntlr_ip if isinstance(self.cntlr_ip, list) else [self.cntlr_ip]
+               for cntlr_ip in cntlr_ips:
+	           if isinstance (run_remote_cli(cmd,
+                                   cntlr_ip, self.cntlr_user, self.cntlr_passwd,
+                                   service='aim'), tuple):
 		        raise Exception("adding filter to SvcEpg failed in AIM")
 	except Exception as e:
                  self._log.error(
@@ -253,12 +261,14 @@ class gbp_main_config(object):
 		    if objtype == 'bd':
 		        cmd = "aimctl manager bridge-domain-get %s %s"\
 			       %(tntname, obj) + " | grep sync_status" 
-		    if not "synced" in run_remote_cli(cmd,
-						      self.cntlr_ip,
-                                                      self.cntlr_user,
-                                                      self.cntlr_passwd,
-                                                      service='aim'):
-			return 0
+                    cntlr_ips = self.cntlr_ip if isinstance(self.cntlr_ip, list) else [self.cntlr_ip]
+                    for cntlr_ip in cntlr_ips:
+		        if not "synced" in run_remote_cli(cmd,
+						          cntlr_ip,
+                                                          self.cntlr_user,
+                                                          self.cntlr_passwd,
+                                                          service='aim'):
+			    return 0
 		    return 1
 		for epg in operEpgs.keys():
 		    if not aimcheck(epg,'epg'):
@@ -317,9 +327,11 @@ class gbp_main_config(object):
                    cmd = "python add_ssh_filter.py delete"
                else:
                    cmd = "python /home/add_ssh_filter.py delete"
-	       run_remote_cli(cmd,
-                              self.cntlr_ip, self.cntlr_user,
-                              self.cntlr_passwd, service='aim')
+               cntlr_ips = self.cntlr_ip if isinstance(self.cntlr_ip, list) else [self.cntlr_ip]
+               for cntlr_ip in cntlr_ips:
+	           run_remote_cli(cmd,
+                                  cntlr_ip, self.cntlr_user,
+                                  self.cntlr_passwd, service='aim')
            # Ntk namespace cleanup in Network-Node.. VM names are static
            # throughout the test-cycle
            del_netns(self.network_node)

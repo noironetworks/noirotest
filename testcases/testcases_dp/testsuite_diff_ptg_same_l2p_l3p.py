@@ -41,6 +41,8 @@ class test_diff_ptg_same_l2p_l3p(object):
 
     def __init__(self, objs_uuid):
 
+        if isinstance(super_hdr.cntlr_ip, list):
+            super_hdr.cntlr_ip = super_hdr.cntlr_ip[0]
         self.gbpcfg = gbpCfgCli(super_hdr.cntlr_ip, cntrlr_username=cntlr_user,
                  cntrlr_passwd=cntlr_passwd, rcfile=rcfile)
         self.gbpdeftraff = gbpFabTraff()
