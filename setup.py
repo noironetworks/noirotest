@@ -14,7 +14,11 @@ NTKNODE = conf['network_node']
 CONTAINERIZED_SERVICES = conf.get('containerized_services')
 
 def main():
-    setup(CNTRLRIP,APICIP,NTKNODE)
+    global CNTRLRIP
+    if not isinstance(CNTRLRIP, list):
+        CNTRLRIP = [CNTRLRIP]
+    for ctrl_ip in CNTRLRIP:
+        setup(ctrl_ip,APICIP,NTKNODE)
 
 def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin',
           apic_pwd = 'noir0123', cntlr_pwd='noir0123'):
@@ -69,25 +73,25 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
             cmd_src = 'source ~/overcloudrc'
 	if 'Ubuntu' in os_flvr:
             cmd_src = 'source ~/overcloudrc'
-        rr_cmd = 'apic route-reflector-create --ssl --no-secure '+\
-                 '--apic-ip %s --apic-username %s --apic-password %s' %(apic_ip,apic_user,apic_pwd)
+        #rr_cmd = 'apic route-reflector-create --ssl --no-secure '+\
+        #         '--apic-ip %s --apic-username %s --apic-password %s' %(apic_ip,apic_user,apic_pwd)
 	with prefix(cmd_src):
             for cmd in ['nova quota-class-update --instances -1 default',
 			'nova quota-class-update --ram -1 default',
 			'nova quota-class-update --cores -1 default',
-			'nova quota-show',
-                        rr_cmd]:
+                        'nova quota-show']:
+                        #rr_cmd]:
 		run(cmd)
  
     #Step-4: Add availability zone 
     NOVA_AGG = conf['nova_agg_name']
     AVAIL_ZONE = conf['nova_az_name']
     AZ_COMP_NODE = conf['az_comp_node']
-    gbpnova = gbpNova(CNTRLRIP,cntrlr_uname=cntlr_user,cntrlr_passwd=cntlr_pwd,
+    gbpnova = gbpNova(controller_ip,cntrlr_uname=cntlr_user,cntrlr_passwd=cntlr_pwd,
                       keystone_user=KEY_USER,keystone_password=KEY_PASSWORD)
     try:
     	# Check if Agg already exists then delete
-        cmdagg = run_openstack_cli("nova aggregate-list", CNTRLRIP, username=cntlr_user,passwd=cntlr_pwd)
+        cmdagg = run_openstack_cli("nova aggregate-list", controller_ip, username=cntlr_user,passwd=cntlr_pwd)
         if NOVA_AGG in cmdagg:
         	print("Residual Nova Agg exits, hence deleting it")
                 gbpnova.avail_zone('cli', 'removehost',

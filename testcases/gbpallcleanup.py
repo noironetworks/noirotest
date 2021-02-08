@@ -77,6 +77,8 @@ def main():
     with open(cfgfile, 'rt') as f:
 	conf = yaml.load(f)
     controllerIp = conf['controller_ip']
+    if isinstance(controllerIp, list):
+        controllerIp = controllerIp[0]
     apicIp = conf['apic_ip']
     Log.info("controllerIp == %s" %(controllerIp))
     Log.info("ApicIp == %s" %(apicIp))

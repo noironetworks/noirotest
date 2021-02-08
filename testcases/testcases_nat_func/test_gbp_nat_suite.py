@@ -73,19 +73,24 @@ class NatGbpTestSuite(object):
 	  	sys.exit(1)
         self.globalcfg.CfgGlobalObjs() 
         test_results = {}
-        test_list = [self.test_nat_func_1,
-                     self.test_nat_func_2,
-                     self.test_nat_func_3,
-		     self.test_nat_func_4,
-		     self.test_nat_func_5,
-		     self.test_nat_func_6,
-		     self.test_nat_func_7,
-		     self.test_nat_func_8,
-		     self.test_snat_func_9,
+        test_list = [self.test_snat_func_9,
 		     self.test_snat_func_10,
 		     self.test_snat_func_11,
                      self.test_snat_func_12
                      ]
+        #test_list = [self.test_nat_func_1,
+        #             self.test_nat_func_2,
+        #             self.test_nat_func_3,
+	#	     self.test_nat_func_4,
+	#	     self.test_nat_func_5,
+	#	     self.test_nat_func_6,
+	#	     self.test_nat_func_7,
+	#	     self.test_nat_func_8,
+	#	     self.test_snat_func_9,
+	#	     self.test_snat_func_10,
+	#	     self.test_snat_func_11,
+        #             self.test_snat_func_12
+        #             ]
         if self.flag:
            self.steps.addhostpoolcidr(flag=self.flag)
         matchsnat = 0

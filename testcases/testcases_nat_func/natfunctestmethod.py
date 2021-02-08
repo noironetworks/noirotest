@@ -27,9 +27,17 @@ hdlr.setFormatter(formatter)
 # Add the handler to the logger
 LOG.addHandler(hdlr)
 
+def get_cntrlr_ip(cntrlrip):
+    if isinstance(cntrlrip, list):
+        return cntrlrip[0]
+    else:
+        return cntrlrip
 # CONSTANTS & CONFIG DEFINITION
+EXTSEG_L3OUT1 = 'sauto_l3out-1'
+EXTSEG_L3OUT2 = 'sauto_l3out-2'
 PLUGIN_TYPE = conf['plugin-type']
 CNTRLRIP = conf['controller_ip']
+RESTIP = conf['rest_ip']
 CNTRLR_USR = conf.get('controller_user') or 'root'
 CNTRLR_PASSWD = conf.get('controller_password') or 'noir0123'
 APICIP = conf['apic_ip']
@@ -70,8 +78,7 @@ EXTPOL_DC = EXTSEG_SEC_NET
 VM1_NAME = 'TestVM1'
 VM2_NAME = 'TestVM2'
 VMLIST = [VM1_NAME, VM2_NAME]
-traffic = NatTraffic(
-            CNTRLRIP, VMLIST, NTKNODE)
+traffic = NatTraffic(CNTRLRIP, VMLIST, NTKNODE)
 ACTION = 'ActAllow'
 CLSF_ICMP = 'ClsIcmp'
 CLSF_TCP = 'ClsTcp'
@@ -80,9 +87,9 @@ PR_TCP = 'PrTcp'
 PRS_ICMP_TCP = 'PrsIcmpTcp'
 PRS_ICMP = 'PrsIcmp'
 PRS_TCP = 'PrsTcp'
-gbpcrud = GBPCrud(CNTRLRIP)
-gbpnova = gbpNova(CNTRLRIP)
-neutron = neutronCli(CNTRLRIP, username=CTRLR_USER, password=CTRLR_PSWD)
+gbpcrud = GBPCrud(RESTIP)
+gbpnova = gbpNova(RESTIP)
+neutron = neutronCli(get_cntrlr_ip(CNTRLRIP), username=CTRLR_USER, password=CTRLR_PSWD)
 
 class NatFuncTestMethods(object):
     """
@@ -142,47 +149,52 @@ class NatFuncTestMethods(object):
         else:
              pattern = 'host_pool_cidr=%s' %(SNATCIDR)
         section = 'apic_external_network:%s' %(l3out)
+        cntrlrips = CNTRLRIP if isinstance(CNTRLRIP, list) else [CNTRLRIP]
         if not delete:
             if flag == 'default_external_segment_name':
                LOG.info(
                "\nAdding default_external_segment_name to neutron conf")
                pat='default_external_segment_name=%s' %(l3out)
                sect='group_policy_implicit_policy'
-               editneutronconf(CNTRLRIP,
-                            fileloc,
-                            pat,
-                            user=CNTRLR_USR,
-                            pwd=CTRLR_PSWD,
-                            section=sect
-                           )
+               for cntrlrip in cntrlrips:
+                   editneutronconf(cntrlrip,
+                                fileloc,
+                                pat,
+                                user=CNTRLR_USR,
+                                pwd=CTRLR_PSWD,
+                                section=sect
+                               )
             else:
                 LOG.info("\nAdding host_pool_cidr to neutron conf")
-                editneutronconf(CNTRLRIP,
-                            fileloc,
-                            pattern,
-                            user=CNTRLR_USR,
-                            pwd=CTRLR_PSWD,
-                            section=section
-                           )
+                for cntrlrip in cntrlrips:
+                    editneutronconf(cntrlrip,
+                                fileloc,
+                                pattern,
+                                user=CNTRLR_USR,
+                                pwd=CTRLR_PSWD,
+                                section=section
+                               )
         if delete:
             LOG.info(
             "\nDeleting if any, host_pool_cidr & def_ext_seg_name"
             "from neutron conf")
             if not flag:
-                editneutronconf(CNTRLRIP,
-                            fileloc,
-                            'default_external_segment_name',
-                            user=CNTRLR_USR,
-                            pwd=CTRLR_PSWD,
-                            add=False,
-                            restart=False
-                           )
-            editneutronconf(CNTRLRIP,
-                            fileloc,
-                            patternchk,
-                            user=CNTRLR_USR,
-                            pwd=CTRLR_PSWD,
-                            add=False) 
+                for cntrlrip in cntrlrips:
+                    editneutronconf(cntrlrip,
+                                fileloc,
+                                'default_external_segment_name',
+                                user=CNTRLR_USR,
+                                pwd=CTRLR_PSWD,
+                                add=False,
+                                restart=False
+                               )
+            for cntrlrip in cntrlrips:
+                editneutronconf(cntrlrip,
+                                fileloc,
+                                patternchk,
+                                user=CNTRLR_USR,
+                                pwd=CTRLR_PSWD,
+                                add=False) 
 
     def testCreateExtSegWithDefault(self,extsegname):
         """
@@ -729,11 +741,13 @@ class NatFuncTestMethods(object):
                     cmd = "python add_ssh_filter.py create"
                 else:
                     cmd = "python /home/add_ssh_filter.py create"
-		if isinstance (run_remote_cli(cmd,
-                               CNTRLRIP, CTRLR_USER, CTRLR_PSWD,
-                               service='aim'), tuple):
-                        LOG.warning("adding filter to SvcEpg failed in AIM")
-			return 0
+                cntrlrips = CNTRLRIP if isinstance(CNTRLRIP, list) else [CNTRLRIP]
+                for cntrlrip in cntrlrips:
+		    if isinstance (run_remote_cli(cmd,
+                                   cntrlrip, CTRLR_USER, CTRLR_PSWD,
+                                   service='aim'), tuple):
+                            LOG.warning("adding filter to SvcEpg failed in AIM")
+			    return 0
         sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
 	return 1
 
