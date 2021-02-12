@@ -20,6 +20,7 @@ def get_cntlr_ip(cntlr_ip):
     else:
         return cntlr_ip
 
+RCFILE = conf.get('rcfile', 'overcloudrc')
 APICSYSTEM_ID = conf['apic_system_id']
 network_node = conf['network_node']
 cntlr_ip = conf['controller_ip']
@@ -169,6 +170,7 @@ class gbp_main_config(object):
         if self.gbpheat.cfg_all_cli(0, self.heat_stack_name) != 1:
            self._log.error(
                "\n ABORTING THE TESTSUITE RUN, Delete of Residual Heat-Stack Failed") 
+           raw_input("hit any key to continue")
            self.cleanup(stack=1) # Because residual stack-delete already failed above
            sys.exit(1)
         self._log.info("\n Checking for heat parameter args in config")
@@ -182,8 +184,8 @@ class gbp_main_config(object):
         sleep(5)  # Sleep 5s assuming that all objects are created in APIC
         #Fetch the Tenant's DN for Openstack project 'admin'
         if self.plugin:
-	    tnt = run_remote_cli("openstack project show admin -c id -f value",
-                                 get_cntlr_ip(self.cntlr_ip), self.cntlr_user, self.cntlr_passwd)
+            cmd = ('source ~/%s && openstack project show admin -c id -f value' % RCFILE)
+	    tnt = run_remote_cli(cmd, get_cntlr_ip(self.cntlr_ip), self.cntlr_user, self.cntlr_passwd)
         else:
             tnt='admin'
         #Adding SSH-filter to Svc_Contract provided by Svc_Epgs

@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import json
 import sys
 import logging
 import re
@@ -62,7 +63,7 @@ class gbpHeat(object):
         """
         if not tenant:
            tenant = self.tenant
-        cmd_ver = "heat --os-tenant-name %s stack-show %s" %(tenant,name)
+        cmd_ver = "openstack --os-tenant-name %s stack show %s" %(tenant,name)
         if val ==1: ## Create & Verify Stack
 	    if upload:
                 upload_files(self.cntrlrip,
@@ -160,11 +161,13 @@ class gbpHeat(object):
         # This comprise dictionary with keys as in [outputs] block
         # of yaml-based heat template
         #print outputs_dict
+        cmd = 'openstack stack show %s -f json' % heat_stack_name
+        cmd_out = self.run_heat_cli(cmd)
+        heat_dict = json.loads(cmd_out)
+        output_dict = {}
+        for output in heat_dict['outputs']:
+            output_dict[output['output_key']] = output['output_value']
         for key in outputs_dict.iterkeys():
-            cmd = 'heat stack-show %s | grep -B 2 %s' %(heat_stack_name,key)
-            cmd_out = self.run_heat_cli(cmd)
-            if cmd_out:
-                match = re.search('\"\\boutput_value\\b\": \"(.*)\"' ,cmd_out,re.I)
-                if match != None:
-                   obj_uuid[key] = match.group(1)
+            if output_dict.get(key):
+                obj_uuid[key] = output_dict[key]
         return obj_uuid
