@@ -33,6 +33,7 @@ L3OUT1_NET=conf.get('primary_L3out_net')
 L3OUT2=conf.get('secondary_L3out')
 L3OUT2_NET=conf.get('secondary_L3out_net')
 CONTAINERIZED_SERVICES=conf.get('containerized_services', [])
+CONTAINERIZED_CLI = conf.get('containerized_cli', 'docker')
 RCFILE=conf.get('rcfile', 'overcloudrc')
 
 def run_openstack_cli(cmdList,cntrlrip,
@@ -78,11 +79,11 @@ def run_remote_cli(cmdList,hostip,username,
         run("hostname")
         prefix = None
         if service and service in CONTAINERIZED_SERVICES:
-            cid_cmd = "docker ps | grep '%s$' | awk '{print $1}'" % service
+            cid_cmd = "%s ps | grep '%s$' | awk '{print $1}'" % (CONTAINERIZED_CLI, service)
             results = sudo(cid_cmd)
             if not results.succeeded:
                 return 0,results
-            prefix = "docker exec -i -t %s " % str(results)
+            prefix = "%s exec -i -t %s " % (CONTAINERIZED_CLI, str(results))
             do_sudo = True
         for cmd in cmdList:
             if prefix:

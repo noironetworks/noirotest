@@ -328,13 +328,16 @@ class crudML2(object):
                                                tenant=tnt,
                                                shared=shared,
                                                otherargs=vrfargs)
-                regex = r'"VRF": "(.*)"'
+                regex = r'"VRF": "(.*)"'.encode('utf-8')
                 found = re.search(regex, v4scope)
                 if not found:
                     # It looks like different client versions use different
                     # formatting of the output
                     regex = r"'VRF': u'(.*)'"
                     found = re.search(regex, v4scope)
+                    if not found:
+                        regex = r"'VRF': '(.*)'"
+                        found = re.search(regex, v4scope)
                 self.addscopIDv6 = neutron.addscopecrud(addscopename_v6,
                                                         'create',
                                                         ip=6,
@@ -577,8 +580,6 @@ class crudGBP(object):
             LOG.info(
             "\n## Create L2Policy along with it implicit L3Policy ##\n"
 	    )
-            import pdb
-            pdb.set_trace()
 	    self.l2p1_uuid,self.l2p1_impl3p,self.l2p1_autoptg,self.l2p1_ntkid = \
              self.gbptnt1.create_gbp_l2policy(gbpL2p[tnt1][0],
 					      getl3p=True,
