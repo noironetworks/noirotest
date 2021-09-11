@@ -443,11 +443,20 @@ class crudML2(object):
     def install_secgroup_rules(self, tnt, default_route = '0.0.0.0/0'):
         # Since VMs are created with 'default' secgroup, hence
         # adding rules to the default secgroup
-        cmd = 'source ~/%s && nova --os-project-name %s secgroup-add-rule default icmp -1 -1 %s' % (RCFILE, tnt, default_route)
+        cmd = 'source ~/%s && openstack --os-project-name %s project show %s -c id -f value' % (RCFILE, tnt, tnt)
+        result = subprocess.check_output(['bash','-c', cmd])
+        proj_id = result.split()[0]
+        cmd = "source ~/%s && openstack --os-project-name %s security group list | grep %s | awk '{print $2}'"  % (RCFILE, tnt, proj_id)
+        result = subprocess.check_output(['bash','-c', cmd])
+        secgroup_id = result.split()[0]
+        ethertype = '--ethertype IPv4'
+        if default_route == "::/0":
+            ethertype = '--ethertype IPv6'
+        cmd = 'source ~/%s && openstack --os-project-name %s security group rule create --ingress %s --protocol icmp --icmp-type -1 --icmp-code -1 --remote-ip %s %s' % (RCFILE, tnt, ethertype, default_route, secgroup_id)
         subprocess.check_output(['bash','-c', cmd])
-        cmd = 'source ~/%s && nova --os-project-name %s secgroup-add-rule default tcp 22 22 %s' % (RCFILE, tnt, default_route)
+        cmd = 'source ~/%s && openstack --os-project-name %s security group rule create --ingress %s --protocol tcp --dst-port 22 --remote-ip %s %s' % (RCFILE, tnt, ethertype, default_route, secgroup_id)
         subprocess.check_output(['bash','-c', cmd])
-        cmd = 'source ~/%s && nova --os-project-name %s secgroup-add-rule default tcp 80 80 %s' % (RCFILE, tnt, default_route)
+        cmd = 'source ~/%s && openstack --os-project-name %s security group rule create --ingress %s --protocol tcp --dst-port 80 --remote-ip %s %s' % (RCFILE, tnt, ethertype, default_route, secgroup_id)
         subprocess.check_output(['bash','-c', cmd])
 
     def install_tenant_vms(self,tnt):
