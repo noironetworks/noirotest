@@ -221,10 +221,10 @@ def del_netns(net_node_ip,netns=[]):
         env.host_string = net_node_ip
         env.user = 'heat-admin'
         env.password = 'noir0123'
-        run("neutron-netns-cleanup")
+        #run("neutron-netns-cleanup")
         if netns == []:
          with settings(warn_only=True):
-                run("neutron-netns-cleanup")
+                #run("neutron-netns-cleanup")
                 result = run("ip netns | grep qdhcp")
                 netns = [x.strip() for x in result.split('\n')]
         for ns in netns:
