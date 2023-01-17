@@ -60,6 +60,7 @@ CTRLR_PSWD = conf['controller_password']
 KEY_AUTH_IP = conf['keystone_ip']
 KEY_USER = conf.get('keystone_user') or 'admin'
 KEY_PASSWD = conf.get('keystone_password') or 'noir0123'
+PYCMD = conf.get("python_interpreter") or "python"
 NATPOOLNAME1 = 'GbpNatPoolTest1'
 NATPOOLNAME2 = 'GbpNatPoolTest2'
 NATIPPOOL1 = '50.50.50.0/24'
@@ -738,9 +739,9 @@ class NatFuncTestMethods(object):
                 aci.create_add_filter('admin')
 	else:
                 if not CONTAINERIZED_SERVICES:
-                    cmd = "python add_ssh_filter.py create"
+                    cmd = "%s add_ssh_filter.py create" % PYCMD
                 else:
-                    cmd = "python /home/add_ssh_filter.py create"
+                    cmd = "%s /home/add_ssh_filter.py create" % PYCMD
                 cntrlrips = CNTRLRIP if isinstance(CNTRLRIP, list) else [CNTRLRIP]
                 for cntrlrip in cntrlrips:
 		    if isinstance (run_remote_cli(cmd,
