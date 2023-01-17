@@ -40,6 +40,7 @@ pausetodebug = conf['pausetodebug']
 test_parameters = conf['test_parameters']
 plugin = conf['plugin-type']
 CONTAINERIZED_SERVICES=conf.get('containerized_services', [])
+PYCMD = conf.get("python_interpreter") or "python"
 gbpnova = gbpNova(get_cntlr_ip(cntlr_ip),cntrlr_uname=cntlr_user,cntrlr_passwd=cntlr_passwd,
                   keystone_user=key_user,keystone_password=key_passwd)
 gbpheat = gbpHeat(get_cntlr_ip(cntlr_ip),cntrlr_uname=cntlr_user, cntrlr_passwd=cntlr_passwd)
@@ -170,7 +171,6 @@ class gbp_main_config(object):
         if self.gbpheat.cfg_all_cli(0, self.heat_stack_name) != 1:
            self._log.error(
                "\n ABORTING THE TESTSUITE RUN, Delete of Residual Heat-Stack Failed") 
-           raw_input("hit any key to continue")
            self.cleanup(stack=1) # Because residual stack-delete already failed above
            sys.exit(1)
         self._log.info("\n Checking for heat parameter args in config")
@@ -197,9 +197,9 @@ class gbp_main_config(object):
 			raise Exception("Adding filter to SvcEpg failed")
 	    else: #i.e. if MergedPlugin
                if not CONTAINERIZED_SERVICES:
-                   cmd = "python add_ssh_filter.py create"
+                   cmd = "%s add_ssh_filter.py create" % PYCMD
                else:
-                   cmd = "python /home/add_ssh_filter.py create"
+                   cmd = "%s /home/add_ssh_filter.py create" % PYCMD
                cntlr_ips = self.cntlr_ip if isinstance(self.cntlr_ip, list) else [self.cntlr_ip]
                for cntlr_ip in cntlr_ips:
 	           if isinstance (run_remote_cli(cmd,
@@ -326,9 +326,9 @@ class gbp_main_config(object):
 	   if self.plugin:
 	       # Remove the noiro-ssh filter from AIM
                if not CONTAINERIZED_SERVICES:
-                   cmd = "python add_ssh_filter.py delete"
+                   cmd = "%s add_ssh_filter.py delete" % PYCMD
                else:
-                   cmd = "python /home/add_ssh_filter.py delete"
+                   cmd = "%s /home/add_ssh_filter.py delete" % PYCMD
                cntlr_ips = self.cntlr_ip if isinstance(self.cntlr_ip, list) else [self.cntlr_ip]
                for cntlr_ip in cntlr_ips:
 	           run_remote_cli(cmd,

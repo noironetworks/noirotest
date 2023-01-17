@@ -41,7 +41,10 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
          cmd = "sudo %s ps | grep aim$" % CONTAINERIZED_CLI
          output = run(cmd)
          cid = output.split()[0]
-         cmd = "sudo %s exec -i %s /bin/bash -c 'cat > /home/add_ssh_filter.py' < /home/heat-admin/add_ssh_filter.py" % (CONTAINERIZED_CLI, cid)
+         if 'podman' in CONTAINERIZED_CLI:
+             cmd = "sudo %s cp /home/heat-admin/add_ssh_filter.py %s:/home/add_ssh_filter.py" % (CONTAINERIZED_CLI, cid)
+         else:
+             cmd = "sudo %s exec -i %s /bin/bash -c 'cat > /home/add_ssh_filter.py' < /home/heat-admin/add_ssh_filter.py" % (CONTAINERIZED_CLI, cid)
          run(cmd)
     #Step-2: Restart the below services
     for cmd in ['sudo systemctl restart openstack-nova-api.service',
