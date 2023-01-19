@@ -30,10 +30,6 @@ leaf1_ip: '10.30.120.51'
 leaf2_ip: '10.30.120.52'
 spine_ip: '10.30.120.53'
 rest_ip: '10.30.120.57'
-controller_ip:
-    - "10.30.120.54"
-    - "10.30.120.57"
-    - "10.30.120.56"
 controller_user: 'heat-admin'
 controller_password: 'noir0123'
 neutronconffile: '/etc/neutron/neutron.conf' #Ensure it has the VALID apic_external_network config section defined

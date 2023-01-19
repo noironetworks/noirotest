@@ -29,7 +29,6 @@ apic_passwd: 'noir0123'
 leaf1_ip: '172.28.184.41'
 leaf2_ip: '172.28.184.42'
 spine_ip: '172.28.184.43'
-controller_ip: '172.28.184.48'
 controller_user: 'heat-admin'
 controller_password: 'noir0123'
 neutronconffile: '/etc/neutron/neutron.conf' #Ensure it has the VALID apic_external_network config section defined
