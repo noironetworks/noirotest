@@ -22,7 +22,6 @@ apic_passwd: 'noir0123'
 leaf1_ip: '172.28.184.31'
 leaf2_ip: '172.28.184.32'
 spine_ip: '172.28.184.33'
-controller_ip: '172.28.184.35'
 neutronconffile: '/etc/neutron/neutron.conf' #Ensure it has the VALID apic_external_network config section defined
 network_node: '172.28.184.36' #in our lab env, compute-1=network_node
 az_comp_node: 'f2-compute-2.noiro.lab'
