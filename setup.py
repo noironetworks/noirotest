@@ -14,8 +14,15 @@ NTKNODE = conf['network_node']
 CONTAINERIZED_SERVICES = conf.get('containerized_services')
 CONTAINERIZED_CLI = conf.get('containerized_cli', 'docker')
 
+def get_controller_ip():
+    if isinstance(CNTRLRIP, list):
+        return CNTRLRIP[0]
+    else:
+        return CNTRLRIP
+
 def main():
-    setup(CNTRLRIP,APICIP,NTKNODE)
+    controller_ip = get_controller_ip()
+    setup(controller_ip,APICIP,NTKNODE)
 
 def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin',
           apic_pwd = 'noir0123', cntlr_pwd='noir0123'):
@@ -87,11 +94,13 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
     NOVA_AGG = conf['nova_agg_name']
     AVAIL_ZONE = conf['nova_az_name']
     AZ_COMP_NODE = conf['az_comp_node']
-    gbpnova = gbpNova(CNTRLRIP,cntrlr_uname=cntlr_user,cntrlr_passwd=cntlr_pwd,
+    controller_ip = get_controller_ip()
+    gbpnova = gbpNova(controller_ip,cntrlr_uname=cntlr_user,cntrlr_passwd=cntlr_pwd,
                       keystone_user=KEY_USER,keystone_password=KEY_PASSWORD)
     try:
     	# Check if Agg already exists then delete
-        cmdagg = run_openstack_cli("nova aggregate-list", CNTRLRIP, username=cntlr_user,passwd=cntlr_pwd)
+        controller_ip = get_controller_ip()
+        cmdagg = run_openstack_cli("nova aggregate-list", controller_ip, username=cntlr_user,passwd=cntlr_pwd)
         if NOVA_AGG in cmdagg:
         	print("Residual Nova Agg exits, hence deleting it")
                 gbpnova.avail_zone('cli', 'removehost',
