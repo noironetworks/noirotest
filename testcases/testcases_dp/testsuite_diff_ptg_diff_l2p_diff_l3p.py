@@ -86,15 +86,15 @@ class test_diff_ptg_diff_l2p_diff_l3p(object):
                     ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
                 else:
                     if 'test_1' in test.__name__ or 'test_2' in test.__name__:
-                        test_results[string.upper(test.__name__.lstrip('self.'))] = 'PASS'
-                        self._log.info("\n%s_%s_%s 10 subtestcases == PASS" % (self.__class__.__name__.upper(
-                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        test_results[test.__name__.lstrip('self.').upper()] = 'PASS'
+                        self._log.info("\n%s_%s_%s 10 subtestcases == PASS" % (self.__class__.__name__.upper(),
+                                    log_string.upper(), test.__name__.lstrip('self.').upper())) 
                     else:
-                        test_results[string.upper(test.__name__.lstrip('self.'))] = 'PASS'
-                        self._log.info("\n%s_%s_%s == PASS" % (self.__class__.__name__.upper(
-                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        test_results[test.__name__.lstrip('self.').upper()] = 'PASS'
+                        self._log.info("\n%s_%s_%s == PASS" % (self.__class__.__name__.upper(),
+                                    log_string.upper(), test.__name__.lstrip('self.').upper()))   
             except TestFailed as err:
-                print err
+                print(err)
 
     def verify_traff(self):
         """
@@ -121,12 +121,12 @@ class test_diff_ptg_diff_l2p_diff_l3p(object):
         if type(dest_ip) is list:
             for ip in dest_ip:
                 ip_failed = {key: val for key, val in results[
-                    ip].iteritems() if val == 1}
+                    ip].items() if val == 1}
                 if ip_failed:
                     failed[ip] = ip_failed
         else:
             failed = {key: val for key, val in results[
-                dest_ip].iteritems() if val == 1}
+                dest_ip].items() if val == 1}
         if len(failed) > 0:
             self._log.error('Following traffic_types %s = Failed' % (failed))
             return 0

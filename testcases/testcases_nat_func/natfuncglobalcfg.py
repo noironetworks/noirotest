@@ -155,13 +155,13 @@ class GbpNatFuncGlobalCfg(object):
         if len(act_list) > 0:
            for act in act_list:
                gbpcrud.delete_gbp_policy_action(act, property_type='uuid')
-	if PLUGIN_TYPE:
+        if PLUGIN_TYPE:
             cntrlrip = CNTRLRIP[0] if isinstance(CNTRLRIP, list) else CNTRLRIP
             ADMIN_TNTID = run_openstack_cli("openstack project show admin -c id -f value",
                                          cntrlrip, CTRLR_USER, CTRLR_PSWD)
-	    for l3out in [EXTSEG_PRI, EXTSEG_SEC]:
-	 	neutron.runcmd('neutron net-delete %s' %(l3out))
-	 	neutron.runcmd('gbp purge %s' %(ADMIN_TNTID))
+            for l3out in [EXTSEG_PRI, EXTSEG_SEC]:
+                neutron.runcmd('neutron net-delete %s' %(l3out))
+                neutron.runcmd('gbp purge %s' %(ADMIN_TNTID))
         else:
             nets = neutron.runcmd("neutron net-list -F name -f value")
             for net in nets:

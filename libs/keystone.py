@@ -23,17 +23,17 @@ class Keystone(object):
     def get_tenant_list(self,obj=False):
         """ 
         Returns list of tenants as a dict of ID & Name
-	obj:: if set to True, then it will return of list
-	tenant objects
-	"""
-	if obj:
-	    return self.client.projects.list()
-	else:
-	    tntnameID = {}
+        obj:: if set to True, then it will return of list
+        tenant objects
+        """
+        if obj:
+            return self.client.projects.list()
+        else:
+            tntnameID = {}
             tntlist = self.client.projects.list()
-	    for tnt in tntlist:
-		tntnameID[tnt.name.encode()]=tnt.id.encode()
-	    return tntnameID	
+            for tnt in tntlist:
+                tntnameID[tnt.name.encode()]=tnt.id.encode()
+            return tntnameID    
 
     def get_tenant(self, tenant_name):
         tntlist = self.client.projects.list()

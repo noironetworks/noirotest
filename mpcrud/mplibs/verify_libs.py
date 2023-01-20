@@ -37,8 +37,8 @@ class Gbp_Verify(object):
       self.tenant = 'admin'
       self.rcfile = rcfile
       self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown',
-			'Exception','Invalid','read-only','not supported',
-			'prefix greater than subnet mask']
+                        'Exception','Invalid','read-only','not supported',
+                        'prefix greater than subnet mask']
 
     def exe_command(self,cmdList):
       """
@@ -68,7 +68,7 @@ class Gbp_Verify(object):
             cmd = "gbp policy-action-show " + str(action_name)
         # Execute the policy-action-verify-cmd
         cmd_out = self.exe_command(cmd)
-	if not cmd_out:
+        if not cmd_out:
             return 0
         if cmd_val == 0:
             for arg in args:
@@ -80,7 +80,7 @@ class Gbp_Verify(object):
         # If try clause succeeds for "verify" cmd then parse the cmd_out to
         # match the user-fed expected attributes & their values
         if cmd_val == 1:
-            for arg, val in kwargs.items():
+            for arg, val in list(kwargs.items()):
                 if re.search("\\b%s\\b\s+\| \\b%s\\b.*" %
                              (arg, val), cmd_out, re.I) is None:
                     _log.info(
@@ -111,7 +111,7 @@ class Gbp_Verify(object):
             cmd = "gbp policy-classifier-show " + str(classifier_name)
         # Execute the policy-classifier-verify-cmd
         cmd_out = self.exe_command(cmd)
-	if not cmd_out:
+        if not cmd_out:
             return 0
         if cmd_val == 0:
             for arg in args:
@@ -125,7 +125,7 @@ class Gbp_Verify(object):
         # If try clause succeeds for "verify" cmd then parse the cmd_out to
         # match the user-fed expected attributes & their values
         if cmd_val == 1:
-            for arg, val in kwargs.items():
+            for arg, val in list(kwargs.items()):
                 if re.search("\\b%s\\b\s+\| \\b%s\\b.*" %
                              (arg, val), cmd_out, re.I) is None:
                     _log.info(
@@ -169,7 +169,7 @@ class Gbp_Verify(object):
             cmd = 'gbp %s-show ' % verifyobj_dict[verifyobj] + str(name_uuid)
         # Execute the policy-object-verify-cmd
         cmd_out = self.exe_command(cmd)
-	if not cmd_out:
+        if not cmd_out:
             return 0
         if cmd_val == 0:
             if cmd_out == '':  # The case when grep returns null
@@ -187,7 +187,7 @@ class Gbp_Verify(object):
         # If "verify" cmd succeeds then parse the cmd_out to match the user-fed
         # expected attributes & their values
         if cmd_val == 1:
-            for arg, val in kwargs.items():
+            for arg, val in list(kwargs.items()):
                 if re.search("\\b%s\\b\s+\| \\b%s\\b.*" %
                              (arg, val), cmd_out, re.I) is None:
                     _log.info(
@@ -230,7 +230,7 @@ class Gbp_Verify(object):
             cmd = 'gbp %s-show ' % verifyobj_dict[verifyobj] + str(name_uuid)
         # Execute the policy-object-verify-cmd
         cmd_out = self.exe_command(cmd)
-	if not cmd_out:
+        if not cmd_out:
             return 0
         if cmd_val == 0:
             if cmd_out == '':  # The case when grep returns null
@@ -247,22 +247,22 @@ class Gbp_Verify(object):
         # If "verify" succeeds cmd then parse the cmd_out to match the user-fed
         # expected attributes & their values
         if cmd_val == 1 and ret == 'default':
-            for arg, val in kwargs.items():
+            for arg, val in list(kwargs.items()):
                 if re.search("\\b%s\\b\s+\| \\b%s\\b.*" %
                              (arg, val), cmd_out, re.I) is None:
-		    #incase of attribute has more than one value then
-		    #then below function will help us validating the values
-		    #or the only value among all for the given attr.
-		    #Example: L2P can have multiple PTGs, L3P can have multi
-		    #L2Ps
-		    if not self.gbp_obj_ver_attr_all_values(verifyobj,
-						        name_uuid,
-						        arg, [val]):
+                    #incase of attribute has more than one value then
+                    #then below function will help us validating the values
+                    #or the only value among all for the given attr.
+                    #Example: L2P can have multiple PTGs, L3P can have multi
+                    #L2Ps
+                    if not self.gbp_obj_ver_attr_all_values(verifyobj,
+                                                        name_uuid,
+                                                        arg, [val]):
                         _log.info(
                         "The Attribute== %s and its Value== %s DID NOT MATCH "
                         "for the PolicyObject == %s" %
                         (arg, val, verifyobj))
-                    	return 0
+                        return 0
             if verifyobj == "l2p":
                 match = re.search(
                     "\\bl3_policy_id\\b\s+\| (.*) \|", cmd_out, re.I)
@@ -274,16 +274,16 @@ class Gbp_Verify(object):
             if verifyobj == "l3p":
                 match = re.search("\\brouters\\b\s+\| (.*) \|", cmd_out, re.I)
                 rtrid = match.group(1)
-            	match = re.search(
+                match = re.search(
                             "\\baddress_scope_v4_id\\b\s+\| (.*) \|",cmd_out,re.I)
-            	asc4_uuid = match.group(1)
-            	match = re.search(
+                asc4_uuid = match.group(1)
+                match = re.search(
                            "\\bsubnetpools_v4\\b\s+\| (.*) \|",cmd_out,re.I)
-		subpool4_uuid = match.group(1)
+                subpool4_uuid = match.group(1)
                 return rtrid.rstrip(),asc4_uuid.rstrip(),\
-			subpool4_uuid.rstrip()
+                        subpool4_uuid.rstrip()
         elif cmd_val == 1:
-            for arg, val in kwargs.items():
+            for arg, val in list(kwargs.items()):
                 if arg == 'network_service_params':
                     if re.findall('(%s)' % (val), cmd_out) == []:
                         _log.info(
@@ -298,7 +298,7 @@ class Gbp_Verify(object):
                         "for the PolicyObject == %s" %
                         (arg, val, verifyobj))
                     return 0
-	    return 1 
+            return 1 
         else:
             return 1
 
@@ -318,15 +318,15 @@ class Gbp_Verify(object):
         # Execute the policy-object-verify-cmd
         cmd_out = self.exe_command(cmd)
         # Catch for non-exception error strings
-	if not cmd_out:
-	    return 0
+        if not cmd_out:
+            return 0
         if ret != '':
             match = re.search("\\b%s\\b\s+\| (.*) \|" % (ret), cmd_out, re.I)
             if match is not None:
                 return match.group(1).rstrip()
             else:
                 return 0
-        for arg, val in kwargs.items():
+        for arg, val in list(kwargs.items()):
             if isinstance(val, list):  # More than 1 value is to be verified
                 for i in val:
                     if cmd_out.find(i) == -1:
@@ -372,8 +372,8 @@ class Gbp_Verify(object):
         # Execute the policy-object-verify-cmd
         cmd_out = self.exe_command(cmd)
         # Catch for non-exception error strings
-	if not cmd_out:
-	    return 0
+        if not cmd_out:
+            return 0
         _misses = []
         for val in values:
             if cmd_out.find(val) == -1:

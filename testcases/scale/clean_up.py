@@ -15,7 +15,7 @@ from okeystone import Keystone
 
 for j in range(1, 7):
 
-    tenantName = 'scale_tenant_%s' %(j)	
+    tenantName = 'scale_tenant_%s' %(j) 
 #    key_stone = Keystone(ostack_controller=sys.argv[1])
     print "tenant name = " + tenantName
 
@@ -32,7 +32,7 @@ gbp_crud = GBPCrud(ostack_controller=sys.argv[1])
     
 """ 
 action_ids = gbp_crud.get_gbp_policy_action_list(getlist=True)
-classifier_ids = gbp_crud.get_gbp_policy_classifier_list(getlist=True)	
+classifier_ids = gbp_crud.get_gbp_policy_classifier_list(getlist=True)  
 policy_rule_ids = gbp_crud.get_gbp_policy_rule_list(getlist=True)
 policy_ruleset_ids = gbp_crud.get_gbp_policy_rule_set_list(getlist=True)
 """

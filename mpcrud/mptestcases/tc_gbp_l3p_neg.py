@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import commands
+import subprocess
 import logging
 import sys
 
@@ -46,7 +46,7 @@ class test_gbp_l3p_neg(object):
         level=logging.WARNING)
     _log = logging.getLogger(__name__)
     cmd = 'rm /tmp/test_gbp_l3p_neg.log'
-    commands.getoutput(cmd)
+    subprocess.getoutput(cmd)
     hdlr = logging.FileHandler('/tmp/test_gbp_l3p_neg.log')
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     hdlr.setFormatter(formatter)
@@ -59,7 +59,7 @@ class test_gbp_l3p_neg(object):
         Init def
         """
         self._log.info("\n## START OF GBP L3_POLICY NEGATIVE TESTSUITE\n")
-	self.controller_ip = controller_ip
+        self.controller_ip = controller_ip
         self.gbpcfg = config_libs.Gbp_Config(self.controller_ip)
         self.gbpverify = verify_libs.Gbp_Verify(self.controller_ip)
         self.l3p_name = 'demo_l3p'
@@ -171,7 +171,7 @@ class test_gbp_l3p_neg(object):
         # Testcase work-flow starts
         mix_attr = {'x.y.0.0/24': '30', '20.20.20.0/24': '32'}
         _pass = 0
-        for ip, pref in mix_attr.iteritems():
+        for ip, pref in mix_attr.items():
             self._log.info(
                 "\n## Step 1A: Create L3Policy with IP-Pool = %s & "
                 "Subnet-Pref-Len = %s ##" %
@@ -277,7 +277,7 @@ class test_gbp_l3p_neg(object):
         if not l3p_uuid:
             self._log.info("\n## Step 1: Create L3Policy == Failed")
             return 0
-	self._log.info(
+        self._log.info(
         "\n## Step 2: Updating L3Policy's Subnet-Prefix-Length > default Mask-length")
         if self.gbpcfg.gbp_policy_cfg_all(
                 2, 'l3p', l3p_uuid, subnet_prefix_length='4'):
@@ -297,8 +297,8 @@ class test_gbp_l3p_neg(object):
                 "\n## Step 3: L3Policy config did NOT roll back "
                 "to original default values")
             return 0
-	self._log.info(
-	"\n## Step 4: Creating L3Policy with Subnet-Prefix-Length > Mask-Length")
+        self._log.info(
+        "\n## Step 4: Creating L3Policy with Subnet-Prefix-Length > Mask-Length")
         if self.gbpcfg.gbp_policy_cfg_all(
                 1,
                 'l3p',

@@ -48,14 +48,14 @@ class super_hdr(object):
         # ptg_id should be a dict with keys as 'data' & 'mgmt'
         # vm_list: list of dicts
         for vm in vmlist:
-            for key, val in ptgs.iteritems():
+            for key, val in ptgs.items():
                 port = self.gbpcfg.gbp_policy_cfg_all(
                     1, 'target', 'vm_%s' % (key), policy_target_group='%s' % (val))
                 if port != 0:
                     vm[key] = port[1]
                 else:
                     raise TestSuiteAbort("Policy Targets creation Failed")
-                print vm
+                print(vm)
             # removed mgmt_nic
             if self.gbpnova.vm_create_cli(vm['name'], self.vm_image, vm['data'], avail_zone=vm['az']) == 0:
                 return 0
@@ -85,7 +85,7 @@ class header1(super_hdr):
         # ptgs['mgmt']=self.gbpheat.get_output_cli(self.stack_name,self.heat_temp)['demo_mgmt_ptg_id']
         ptgs['data'] = self.gbpheat.get_output_cli(self.stack_name, self.heat_temp)[
             'demo_same_ptg_l2p_l3p_ptg_id']
-        print ptgs
+        print(ptgs)
         vm1 = {'name': 'VM1', 'az': self.nova_az}
         vm2 = {'name': 'VM2', 'az': self.nova_az}
         vm3 = {'name': 'VM3', 'az': ''}
@@ -96,7 +96,7 @@ class header1(super_hdr):
                 # Jishnu self.cleanup()
                 raise TestSuiteAbort("VM Creation Failed")
         except TestSuiteAbort as err:
-            print err
+            print(err)
             pass
 
     def cleanup(self):
@@ -133,7 +133,7 @@ class header2(super_hdr):
             'demo_diff_ptg_same_l2p_l3p_ptg1_id']
         ptg_pair_2['data'] = self.gbpheat.get_output_cli(self.stack_name, self.heat_temp)[
             'demo_diff_ptg_same_l2p_l3p_ptg2_id']
-        print ptg_pair_1, ptg_pair_2
+        print(ptg_pair_1, ptg_pair_2)
         vm1 = {'name': 'VM4', 'az': self.nova_az}
         vm2 = {'name': 'VM5', 'az': self.nova_az}
         vm3 = {'name': 'VM6', 'az': ''}
@@ -149,7 +149,7 @@ class header2(super_hdr):
                 # Jishnu  self.cleanup()
                 raise TestSuiteAbort("VM Creation Failed")
         except TestSuiteAbort as err:
-            print err
+            print(err)
             pass
 
     def cleanup(self):
@@ -203,7 +203,7 @@ class header3(super_hdr):
                 # Jishnu  self.cleanup()
                 raise TestSuiteAbort("VM Creation Failed")
         except TestSuiteAbort as err:
-            print err
+            print(err)
             pass
 
     def cleanup(self):
@@ -242,7 +242,7 @@ class header4(super_hdr):
             'demo_diff_ptg_l2p_l3p_ptg1_id']
         ptg_pair_2['data'] = self.gbpheat.get_output_cli(self.stack_name, self.heat_temp)[
             'demo_diff_ptg_l2p_l3p_ptg2_id']
-        print ptg_pair_1, ptg_pair_2
+        print(ptg_pair_1, ptg_pair_2)
         vm1 = {'name': 'VM10', 'az': self.nova_az}
         vm2 = {'name': 'VM11', 'az': self.nova_az}
         vm3 = {'name': 'VM12', 'az': ''}
@@ -258,7 +258,7 @@ class header4(super_hdr):
                 # Jishnu  self.cleanup()
                 raise TestSuiteAbort("VM Creation Failed")
         except TestSuiteAbort as err:
-            print err
+            print(err)
             pass
 
     def cleanup(self):

@@ -11,6 +11,7 @@ apic_pwd=$3
 # Install Pexpect & Fabric needed for running GBP Automated TestSuite
 pip install pexpect
 pip install fabric
+pip install fabric3
 pip install mailer
 
 # Add to PYTHONPATH

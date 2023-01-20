@@ -52,7 +52,7 @@ class DNAT_VMs_to_VMs(object):
         self.test_4_prs = {objs_uuid['shared_ruleset_tcp_id']}
         self.test_5_prs = {objs_uuid['shared_ruleset_icmp_tcp_id']}
         self.pausetodebug = objs_uuid['pausetodebug']
-	self.routefordest = objs_uuid['routefordest']
+        self.routefordest = objs_uuid['routefordest']
         self.vmfortraff = ['App-Server', 'Web-Server', 'Web-Client-1', 'Web-Client-2']
         self.vmtuple = ('App-Server', 'Web-Server', 'Web-Client-1', 'Web-Client-2')
         # Note: vmfortraff & vmtuple could have been addressed as a single
@@ -81,7 +81,7 @@ class DNAT_VMs_to_VMs(object):
         self.gbpcrud.AddRouteInShadowL3Out(self.ext_seg_2,
                                                       L3OUT2,
                                                       'dnat',
-						      self.routefordest,
+                                                      self.routefordest,
                                                       route='66.66.66.0/24',
                                                       ) #Hard-coded reference from yaml file param dc_nat_ip_pool
 
@@ -203,7 +203,7 @@ class DNAT_VMs_to_VMs(object):
         for vm in self.vmtuple:
             self._log.info(
                 "\nTestcase_DNAT_%s_to_RESTOFVMs: APPLY ICMP CONTRACT and VERIFY TRAFFIC" % (vm))
-            for vm_name, ptg in self.vm_to_ptg_dict.iteritems():
+            for vm_name, ptg in self.vm_to_ptg_dict.items():
                 if vm_name != vm:
                     if self.gbpcrud.update_gbp_policy_target_group(ptg,
                                                                     property_type='uuid',
@@ -249,7 +249,7 @@ class DNAT_VMs_to_VMs(object):
         for vm in self.vmtuple:
             self._log.info(
                 "\nTestcase_DNAT_%s_to_RESTOFVMs: APPLY TCP CONTRACT and VERIFY TRAFFIC" % (vm))
-            for vm_name, ptg in self.vm_to_ptg_dict.iteritems():
+            for vm_name, ptg in self.vm_to_ptg_dict.items():
                 if vm_name != vm:
                     if self.gbpcrud.update_gbp_policy_target_group(ptg,
                                                                     property_type='uuid',
@@ -295,7 +295,7 @@ class DNAT_VMs_to_VMs(object):
         for vm in self.vmtuple:
             self._log.info(
                 "\nTestcase_DNAT_%s_to_RESTOFVMs: APPLY TCP-ICMP-COMBO CONTRACT and VERIFY TRAFFIC" % (vm))
-            for vm_name, ptg in self.vm_to_ptg_dict.iteritems():
+            for vm_name, ptg in self.vm_to_ptg_dict.items():
                 if vm_name != vm:
                     if self.gbpcrud.update_gbp_policy_target_group(ptg,
                                                                     property_type='uuid',

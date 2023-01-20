@@ -18,9 +18,9 @@ def traff_from_extgwrtr(extgwrtr_ip, fipsOftargetVMs, proto='all', jumbo=0):
     traff = gbpFabTraff()
     targetvm_list = ['Web-Server', 'Web-Client-1',
                      'Web-Client-2', 'App-Server']
-    print 'FIPs of Target VMs == %s' % (fipsOftargetVMs)
+    print('FIPs of Target VMs == %s' % (fipsOftargetVMs))
     # List of FIPs ExtGWRtr will ping:
-    ping_fips = [fip for x in fipsOftargetVMs.values() for fip in x]
+    ping_fips = [fip for x in list(fipsOftargetVMs.values()) for fip in x]
     if proto == 'all':
         if jumbo == 1:
             results_icmp = traff.test_regular_icmp(
@@ -29,11 +29,11 @@ def traff_from_extgwrtr(extgwrtr_ip, fipsOftargetVMs, proto='all', jumbo=0):
             results_icmp = traff.test_regular_icmp(extgwrtr_ip, ping_fips)
         results_tcp = traff.test_regular_tcp(extgwrtr_ip, ping_fips)
         if results_icmp != 1 and results_tcp != 1:
-            return {'ICMP': results_icmp.keys(), 'TCP': results_tcp.keys()}
+            return {'ICMP': list(results_icmp.keys()), 'TCP': list(results_tcp.keys())}
         elif results_icmp != 1:
-            return {'ICMP': results_icmp.keys()}
+            return {'ICMP': list(results_icmp.keys())}
         elif results_tcp != 1:
-            return {'TCP': results_tcp.keys()}
+            return {'TCP': list(results_tcp.keys())}
         else:
             return 1
     if proto == 'icmp':
@@ -43,8 +43,8 @@ def traff_from_extgwrtr(extgwrtr_ip, fipsOftargetVMs, proto='all', jumbo=0):
         else:
             results_icmp = traff.test_regular_icmp(extgwrtr_ip, ping_fips)
         if isinstance(results_icmp, dict):
-            return {'ICMP': results_icmp.keys()}
+            return {'ICMP': list(results_icmp.keys())}
     if proto == 'tcp':
         results_tcp = traff.test_regular_tcp(extgwrtr_ip, ping_fips)
         if isinstance(results_tcp, dict):
-            return {'TCP': results_tcp.keys()}
+            return {'TCP': list(results_tcp.keys())}

@@ -28,7 +28,7 @@ def verify_traff(ntk_node,vm_loc='default',proto=['all']):
         dhcp_ns = gbpcfg.get_netns('VM4')
         vm5_ip = gbpcfg.get_vm_subnet('VM5',ret='ip')
         vm6_ip = gbpcfg.get_vm_subnet('VM6',ret='ip')
-        print "VM4_IP = %s, VM4_SUBN = %s, VM5_IP = %s, VM6_IP = %s, DHCP_NS = %s" %(vm4_ip,vm4_subn,vm5_ip,vm6_ip,dhcp_ns)
+        print("VM4_IP = %s, VM4_SUBN = %s, VM5_IP = %s, VM6_IP = %s, DHCP_NS = %s" %(vm4_ip,vm4_subn,vm5_ip,vm6_ip,dhcp_ns))
         if vm_loc == 'diff_host_same_leaf':
            gbppexptraff = Gbp_pexp_traff(ntk_node,dhcp_ns,vm4_ip,vm6_ip)
         if vm_loc == 'same_host':
@@ -48,21 +48,21 @@ def verify_traff(ntk_node,vm_loc='default',proto=['all']):
            results = gbppexptraff.test_run()
            if results == 2:
               return 0
-        print 'Results from the Testcase == ', results
+        print('Results from the Testcase == ', results)
         failed={}
         if proto[0] == 'all' and vm_loc != 'default': 
-           failed = {key: val for key,val in results.iteritems() if val == 0}
+           failed = {key: val for key,val in results.items() if val == 0}
            if len(failed) > 0:
-              print 'Following traffic_types %s = Failed' %(failed)
+              print('Following traffic_types %s = Failed' %(failed))
               return 0
            else:
               return 1
         if proto[0] == 'all' and vm_loc == 'default':
            _fail = 0
-           for loc,trf_reslt in results.iteritems():
-              failed = {key: val for key,val in trf_reslt.iteritems() if val == 0}
+           for loc,trf_reslt in results.items():
+              failed = {key: val for key,val in trf_reslt.items() if val == 0}
               if len(failed) > 0:
-                 print 'Following traffic_types %s = Failed for %s' %(failed,loc.upper())
+                 print('Following traffic_types %s = Failed for %s' %(failed,loc.upper()))
                  _fail += 1
            if _fail > 0: 
               return 0
@@ -80,14 +80,14 @@ def SetUpConfig(cntlr_ip,apic_ip,agg_name,avail_zone_name,az_comp_node_name,heat
         if agg_id == 0:
             print ("\n ABORTING THE TESTSUITE RUN,nova host aggregate creation Failed")
             return 0
-        print (" Agg %s" %(self.agg_id))
+        print((" Agg %s" %(self.agg_id)))
         if gbpnova.avail_zone('api','addhost',agg_id,hostname=az_comp_node_name) == 0:
             print ("\n ABORTING THE TESTSUITE RUN, availability zone creation Failed")
             gbpnova.avail_zone('api','delete',self.nova_agg,avail_zone_name=self.nova_az) # Cleaning up
             return 0
         sleep(3)
         if self.gbpheat.cfg_all_cli(1,heat_stack_name,heat_temp=heat_temp_file) == 0:
-           print ("\n ABORTING THE TESTSUITE RUN, HEAT STACK CREATE of %s Failed" %(heat_stack_name))
+           print(("\n ABORTING THE TESTSUITE RUN, HEAT STACK CREATE of %s Failed" %(heat_stack_name)))
            CleanUp(agg_id,az_comp_node_name,heat_stack_name)
            return 0
         sleep(5) # Sleep 5s assuming that all objects areated in APIC

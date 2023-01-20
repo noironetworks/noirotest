@@ -12,36 +12,62 @@ nova_az_name: 'gbp_zone'
 heat_dp_stack_name: 'dpstack'
 heat_dp_nat_stack_name: 'dpnatstack'
 key_name: 'gbpkey' #Ensure that it is same as mentioned in heat template
-apic_system_id: 'noirolab'
-primary_L3out: 'Management-Out' #Ensure to keep these names as is
-secondary_L3out: 'Datacenter-Out'
+apic_system_id: 'osd10-fab3'
+primary_L3out: 'sauto_fab6_l3out-1' #Ensure to keep these names as is
+primary_L3out_net: 'sauto_fab6_l3out-1_epg' #Ensure to keep these names as is
+primary_L3out_vrf: 'sauto_fab6_l3out-1_vrf' #Ensure to keep these names as is
+secondary_L3out: 'sauto_fab6_l3out-2'
+secondary_L3out_net: 'sauto_fab6_l3out-2_epg'
+secondary_L3out_vrf: 'sauto_fab6_l3out-2_vrf'
+keystone_user: 'admin'
+keystone_ip: "1.121.101.187"
+keystone_password: 'noir0123'
 # User editable config params
 num_comp_nodes: 2
-apic_ip: '172.28.184.30'
+apic_ip: '172.28.184.50'
 apic_passwd: 'noir0123'
-leaf1_ip: '172.28.184.31'
-leaf2_ip: '172.28.184.32'
-spine_ip: '172.28.184.33'
+leaf1_ip: '172.28.184.51'
+leaf2_ip: '172.28.184.52'
+spine_ip: '172.28.184.53'
+rest_ip: "172.28.184.55"
+controller_ip:
+- "172.28.184.56"
+controller_ip:
+- "172.28.184.56"
+controller_user: 'heat-admin'
+controller_password: 'noir0123'
 neutronconffile: '/etc/neutron/neutron.conf' #Ensure it has the VALID apic_external_network config section defined
-network_node: '172.28.184.36' #in our lab env, compute-1=network_node
-az_comp_node: 'f2-compute-2.noiro.lab'
-compute-2: '172.28.184.37'
-ext_rtr: '172.28.184.38'
-gwip1_extrtr: '1.102.1.254'
-gwip2_extrtr: '1.102.2.254'
-extrtr_ip1: '1.102.1.1'
-extrtr_ip2: '1.102.2.1'
+network_node: "1.100.1.73"
+az_comp_node: 'overcloud-compute-0.localdomain'
+compute-2: 'overcloud-compute-1.localdomain'
+ext_rtr: '172.28.184.59'
+gwip1_extrtr: '1.106.1.254'
+gwip2_extrtr: '1.106.2.254'
+extrtr_ip1: '1.106.1.1'
+extrtr_ip2: '1.106.2.1'
 #NOTE:Below Flag 'preexist' if True,then ensure 'Datacenter-Out' & 'Management-Out' are configured in APIC
 #with their resp external-policies as 'DcExtPol' & 'MgmtExtPol' << ensure name staring are as EXACT as given
 #here
 #preexist: True #See NOTE immediate above. For now 'commented out' as its fed from command-line
 #vm_image: '"trusty-multi-if"'
 vm_image: 'ubuntu_multi_nics'
+vm_flavor: 'm1.medium'
 test_parameters:
   bd_type: vxlan
   ip_version: ipv4
   vpc_type: vpc
 vm_image: ubuntu_multi_nics
+image_prompt: '\#'
 # Enable the below flag inorder to live-debug on Failure of a Testcase
-pausetodebug: false
-
+pausetodebug: False
+director_deploy: 'True'
+containerized_services:
+  - nova
+  - aim
+  - neutron
+rcfile: 'overcloudrc'
+containerized_services:
+  - nova
+  - aim
+  - neutron
+rcfile: 'overcloudrc'

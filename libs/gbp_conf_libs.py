@@ -21,7 +21,7 @@ import logging
 import string
 import re
 from fabric.api import cd,run,env, hide, get, settings
-from gbp_utils import *
+from libs.gbp_utils import *
 
 # Initialize logging
 #logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)
@@ -39,13 +39,15 @@ class gbpCfgCli(object):
       self.tenant = tenant
       self.rcfile = rcfile
       self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown',
-			'Exception','Invalid','read-only','not supported',
-			'prefix greater than subnet mask']
+                        'Exception','Invalid','read-only','not supported',
+                        'prefix greater than subnet mask']
       
     def exe_command(self,cmdList):
       """
       Execute system calls
       """
+      if isinstance(self.cntrlrip, list):
+          self.cntrlrip = ''.join(self.cntrlrip)
       return run_openstack_cli(cmdList,self.cntrlrip,
                                username=self.uname,passwd=self.passwd)
 
@@ -62,9 +64,9 @@ class gbpCfgCli(object):
             return 0
 
     def gbp_action_config(self,cmd_val,name_uuid,tenant='',**kwargs):
-	"""
+        """
         -- cmd_val== 0:delete; 1:create; 2:update
-	-- name_uuid == UUID or name_string
+        -- name_uuid == UUID or name_string
         Create/Update/Delete Policy Action
         Returns assigned UUID on Create
         kwargs addresses the need for passing required/optional params
@@ -85,7 +87,7 @@ class gbpCfgCli(object):
         if cmd_val == 2:
            cmd = cmd_tnt+'policy-action-update '+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
-        for arg, value in kwargs.items():
+        for arg, value in list(kwargs.items()):
           cmd = cmd + " --" + "".join( '%s %s' %(arg, value ))
         # Execute the policy-action-config-cmd
         cmd_out = self.exe_command(cmd)
@@ -122,11 +124,11 @@ class gbpCfgCli(object):
         if cmd_val == 2:
            cmd = cmd_tnt+'policy-classifier-update '+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
-        for arg, value in kwargs.items():
+        for arg, value in list(kwargs.items()):
           cmd = cmd + " --" + "".join( '%s %s' %(arg, value ))
         # Execute the policy-classifier-config-cmd
         cmd_out = self.exe_command(cmd)
-	if cmd_out:
+        if cmd_out:
             if cmd_val==1:
                classifier_uuid = self.gbp_uuid_get(cmd_out)
                return classifier_uuid
@@ -137,7 +139,7 @@ class gbpCfgCli(object):
 
     def gbp_policy_cfg_all(self,cmd_val,cfgobj,name_uuid,tenant='',**kwargs):
         """
-	--cfgobj== policy-*(where *=action;classifer,rule,ruleset,targetgroup,target
+        --cfgobj== policy-*(where *=action;classifer,rule,ruleset,targetgroup,target
         --cmd_val== 0:delete; 1:create; 2:update
         --name_uuid == UUID or name_string
         Create/Update/Delete Policy Object
@@ -167,45 +169,44 @@ class gbpCfgCli(object):
         if cmd_val == 2:
            cmd = cmd_tnt+'%s-update ' % cfgobj_dict[cfgobj]+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
-        for arg, value in kwargs.items():
-          if '_' in arg:
-             arg=string.replace(arg,'_','-')
+        for arg, value in list(kwargs.items()):
+          arg = arg.replace('_', '-')
           cmd = cmd + " --" + "".join( '%s=%s' %(arg, value ))
         # Execute the cmd
-        print "GBP CLI command: %s" % cmd
+        print(("GBP CLI command: %s" % cmd))
         cmd_out = self.exe_command(cmd)
         if cmd_out:
             # If try clause succeeds for "create" cmd then parse the cmd_out to extract the UUID of the object
             try:
-	        if cmd_val==1 and cfgobj=="group":
-           	    obj_uuid = self.gbp_uuid_get(cmd_out)
-           	    match = re.search(
+                if cmd_val==1 and cfgobj=="group":
+                    obj_uuid = self.gbp_uuid_get(cmd_out)
+                    match = re.search(
                             "\\bl2_policy_id\\b\s+\| (.*) \|",cmd_out,re.I)
                     l2pid = match.group(1)
                     match = re.search(
                             "\\bsubnets\\b\s+\| (.*) \|",cmd_out,re.I)
                     subnetid = match.group(1)
                     return obj_uuid,l2pid.rstrip(),subnetid.rstrip()
-       		if cmd_val==1 and cfgobj=="target":
-           	    obj_uuid = self.gbp_uuid_get(cmd_out)
-            	    match = re.search(
+                if cmd_val==1 and cfgobj=="target":
+                    obj_uuid = self.gbp_uuid_get(cmd_out)
+                    match = re.search(
                             "\\bport_id\\b\s+\| (.*) \|",cmd_out,re.I)
-           	    neutr_port_id = match.group(1)
-           	    return obj_uuid.rstrip(),neutr_port_id.rstrip()
-         	if cmd_val==1 and cfgobj=="l2p":
-            	    obj_uuid = self.gbp_uuid_get(cmd_out)
-            	    match = re.search(
+                    neutr_port_id = match.group(1)
+                    return obj_uuid.rstrip(),neutr_port_id.rstrip()
+                if cmd_val==1 and cfgobj=="l2p":
+                    obj_uuid = self.gbp_uuid_get(cmd_out)
+                    match = re.search(
                             "\\bl3_policy_id\\b\s+\| (.*) \|",cmd_out,re.I)
-            	    l3p_uuid = match.group(1)
-            	    return obj_uuid.rstrip(),l3p_uuid.rstrip()
-         	if cmd_val==1 and cfgobj=="extseg":
-            	    obj_uuid = self.gbp_uuid_get(cmd_out)
-            	    match = re.search("\\bsubnet_id\\b\s+\| (.*) \|",cmd_out,re.I)
-            	    subnet_uuid = match.group(1)
-            	    return obj_uuid.rstrip(),subnet_uuid.rstrip()
-         	if cmd_val==1:
-           	    obj_uuid = self.gbp_uuid_get(cmd_out)
-           	    return obj_uuid.rstrip()
+                    l3p_uuid = match.group(1)
+                    return obj_uuid.rstrip(),l3p_uuid.rstrip()
+                if cmd_val==1 and cfgobj=="extseg":
+                    obj_uuid = self.gbp_uuid_get(cmd_out)
+                    match = re.search("\\bsubnet_id\\b\s+\| (.*) \|",cmd_out,re.I)
+                    subnet_uuid = match.group(1)
+                    return obj_uuid.rstrip(),subnet_uuid.rstrip()
+                if cmd_val==1:
+                    obj_uuid = self.gbp_uuid_get(cmd_out)
+                    return obj_uuid.rstrip()
             except Exception as e:
                exc_type, exc_value, exc_traceback = sys.exc_info()
                _log.info(
@@ -216,7 +217,7 @@ class gbpCfgCli(object):
         else:
             _log.info(
             "Cli cmd execution failed for %s" %(cfgobj_dict[cfgobj]))
-	    return 0
+            return 0
 
     def gbp_policy_cfg_upd_all(self,cfgobj,name_uuid,attr,tenant=''):
         """
@@ -242,13 +243,12 @@ class gbpCfgCli(object):
         cmd_tnt = 'gbp --os-project-name %s ' %(tenant)
         cmd = cmd_tnt+'%s-update ' % cfgobj_dict[cfgobj]+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
-        for arg, value in attr.iteritems():
-          if '_' in arg:
-             arg=string.replace(arg,'_','-')
+        for arg, value in list(attr.items()):
+          arg = arg.replace('_', '-')
           cmd = cmd + " --" + "".join( '%s %s' %(arg, value ))
         # Execute the update cmd
         cmd_out = self.exe_command(cmd)
-	if not cmd_out:
+        if not cmd_out:
             return 0
         else:
             return 1
@@ -281,13 +281,13 @@ class gbpCfgCli(object):
 
     def get_netns(self,vm_name):
         cmd = "nova list | grep ' %s ' | awk -F'|' '{print $7}' | awk -F'=' '{print $1}'" % vm_name
-        print cmd
+        print(cmd)
         net_name = self.exe_command(cmd)
-        print net_name
+        print(net_name)
         cmd = "openstack network show %s -c id -f value" % net_name
-        print cmd
+        print(cmd)
         network_id = self.exe_command(cmd)
-        print "network_id: " + network_id
+        print(("network_id: " + network_id))
         return 'qdhcp-' + network_id
 
     def _get_netns(self,net_node_ip,subnet):
