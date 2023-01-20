@@ -14,7 +14,7 @@ crud = GBPCrud(CNTRLIP)
 def alternate_az():
     "Alternately returns AvailZone for alternate VM placement"
     while True:
-	    yield AVZONE
+            yield AVZONE
             yield 'nova'
 az = alternate_az()
 

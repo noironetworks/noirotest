@@ -51,7 +51,7 @@ class test_same_ptg_same_l2p_same_l3p(object):
         self.apic_ip = super_hdr.apic_ip
         self.apic_passwd = super_hdr.apic_passwd
         self.pausetodebug = super_hdr.pausetodebug
-	self.plugin_mode = super_hdr.plugin
+        self.plugin_mode = super_hdr.plugin
         self.gbpaci = gbpApic(self.apic_ip, password=self.apic_passwd,
                                apicsystemID=super_hdr.apicsystemID)
         self.ptg = objs_uuid['demo_same_ptg_l2p_l3p_ptg_id']
@@ -88,22 +88,22 @@ class test_same_ptg_same_l2p_same_l3p(object):
             ptg_name = 'demo_same_ptg_l2p_l3p_ptg' #TBD: JISHNU For now hardcoded, we will improve this
             if flag == 'enforced':
                expectedRetVal = 0
-	       if self.plugin_mode:
+               if self.plugin_mode:
                   self.gbpcfg.gbp_policy_cfg_all(2, 'group', self.ptg, intra_ptg_allow="False")
-	       else:
+               else:
                    self.gbpaci.addEnforcedToPtg(
-                   		                ptg_name,
-                                		'admin',
-                                		) #Cant use self.ptg as its a UUID instead of namestring
+                                                ptg_name,
+                                                'admin',
+                                                ) #Cant use self.ptg as its a UUID instead of namestring
             else:
-	       if self.plugin_mode: #Incase of MergedPlugin
+               if self.plugin_mode: #Incase of MergedPlugin
                   self.gbpcfg.gbp_policy_cfg_all(2, 'group', self.ptg, intra_ptg_allow="True")
-	       else:
+               else:
                    self.gbpaci.addEnforcedToPtg(
-                   		                ptg_name,
-                                		'admin',
-                                		flag=flag,
-                                		)	
+                                                ptg_name,
+                                                'admin',
+                                                flag=flag,
+                                                )       
                expectedRetVal = 1
             for test in test_list:
                 repeat_test = 1
@@ -181,12 +181,12 @@ class test_same_ptg_same_l2p_same_l3p(object):
             failed = {}
             for ip in dest_ip:
                 ip_failed = {key: val for key, val in results[
-                    ip].iteritems() if val == 0}
+                    ip].items() if val == 0}
                 if ip_failed:
                     failed[ip] = ip_failed
         else:
             failed = {key: val for key, val in results[
-                dest_ip].iteritems() if val == 0}
+                dest_ip].items() if val == 0}
         if len(failed) > 0:
             self._log.error('Following traffic_types %s = Failed' % (failed))
             return 0

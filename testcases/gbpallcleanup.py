@@ -26,13 +26,13 @@ class GbpAllCleanup(object):
     def __init__(self,cntlrip,apicip):
         self.gbpcrud = GBPCrud(cntlrip)
         self.gbpnova = gbpNova(cntlrip)
-	self.gbpapic = gbpApic(apicip)
+        self.gbpapic = gbpApic(apicip)
 
     def cleanupAll(self):
            Log.info("\nStep: Blind CleanUp to be executed")
            Log.info("\nStep: Blind CleanUp: Delete PTs")
            pt_list = self.gbpcrud.get_gbp_policy_target_list()
-	   print 'Inside the cleanupAll'
+           print 'Inside the cleanupAll'
            if len(pt_list) > 0:
               for pt in pt_list:
                 self.gbpcrud.delete_gbp_policy_target(pt, property_type='uuid')
@@ -54,7 +54,7 @@ class GbpAllCleanup(object):
            Log.info("\nStep: Blind CleanUp: Delete NSPs")
            self.gbpcrud.delete_gbp_network_service_policy()
            Log.info("\nStep: Blind CleanUp: Delete NAT Pools")
-	   print 'Inside the cleanupAll'
+           print 'Inside the cleanupAll'
            natpool_list = self.gbpcrud.get_gbp_nat_pool_list()
            if len(natpool_list) > 0:
               for natpool in natpool_list:
@@ -69,13 +69,13 @@ class GbpAllCleanup(object):
            if len(extseg_list) > 0:
               for extseg in extseg_list:
                  self.gbpcrud.delete_gbp_external_segment(extseg)
-	   Log.info("\nStep: Blind CleanUp: Tenants from ACI")
-	   self.gbpapic.deletetenants()
+           Log.info("\nStep: Blind CleanUp: Tenants from ACI")
+           self.gbpapic.deletetenants()
 
 def main():
     cfgfile = sys.argv[1]
     with open(cfgfile, 'rt') as f:
-	conf = yaml.load(f)
+        conf = yaml.safe_load(f)
     controllerIp = conf['controller_ip']
     if isinstance(controllerIp, list):
         controllerIp = controllerIp[0]

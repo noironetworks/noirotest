@@ -18,7 +18,7 @@ import sys
 import logging
 import re
 import string
-from commands import *
+from subprocess import *
 from gbpclient.v2_0 import client as gbpclient
 from testcases.config import conf
 from keystoneauth1 import identity
@@ -72,7 +72,7 @@ class GBPCrud(object):
         """
         policy_action= {"name":name}
         try:
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                policy_action[arg]=val
            body = {"policy_action":policy_action}
            self.client.create_policy_action(body)
@@ -86,8 +86,8 @@ class GBPCrud(object):
         Verify the GBP Policy Action by passing its name
         """
         for action in self.client.list_policy_actions()['policy_actions']:
-            if action['name'].encode('ascii') == name:
-               return action['id'].encode('ascii')
+            if action['name'] == name:
+               return action['id']
         _log.error("Policy Action NOT Found")
         return 0
  
@@ -100,7 +100,7 @@ class GBPCrud(object):
            if getdict == True:
               name_uuid = {}
               for action in self.client.list_policy_actions()['policy_actions']:
-                  name_uuid[action['name'].encode('ascii')]= action['id'].encode('ascii')
+                  name_uuid[action['name']]= action['id']
            else: # Return list of ids
                pa_list = [item['id'] for item in self.client.list_policy_actions()['policy_actions']]
         except Exception as e:
@@ -154,7 +154,7 @@ class GBPCrud(object):
         """
         policy_classifier= {"name":name}
         try:
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                policy_classifier[arg]=val
            body = {"policy_classifier":policy_classifier}
            self.client.create_policy_classifier(body)
@@ -182,7 +182,7 @@ class GBPCrud(object):
             classifier_id=self.verify_gbp_policy_classifier(name_uuid)
          policy_classifier= {}
          try:
-            for arg,val in kwargs.items():
+            for arg,val in list(kwargs.items()):
                policy_classifier[arg]=val
             body = {"policy_classifier":policy_classifier}
             self.client.update_policy_classifier(classifier_id,body)
@@ -200,7 +200,7 @@ class GBPCrud(object):
            if getdict == True:
               name_uuid = {}
               for classifier in self.client.list_policy_classifiers()['policy_classifiers']:
-                  name_uuid[classifier['name'].encode('ascii')]= classifier['id'].encode('ascii')
+                  name_uuid[classifier['name']]= classifier['id']
            else:
                pc_list = [item['id'] for item in self.client.list_policy_classifiers()['policy_classifiers']]
         except Exception as e:
@@ -235,8 +235,8 @@ class GBPCrud(object):
         Verify the GBP Policy Classifier by passing its name and fetch its UUID
         """
         for classifier in self.client.list_policy_classifiers()['policy_classifiers']:
-            if classifier['name'].encode('ascii') == name:
-               return classifier['id'].encode('ascii')
+            if classifier['name'] == name:
+               return classifier['id']
         _log.error("Policy Classifier NOT Found")
         return 0
 
@@ -256,12 +256,12 @@ class GBPCrud(object):
         else:
            classifier_id = classifier
            action_id = action
-	policy_rule = { "policy_actions": [action_id],
-			"policy_classifier_id": classifier_id,
-			"name": name
-			}
+        policy_rule = { "policy_actions": [action_id],
+                        "policy_classifier_id": classifier_id,
+                        "name": name
+                        }
         try:
-            for arg,val in kwargs.items():
+            for arg,val in list(kwargs.items()):
                policy_rule[arg]=val
             body = {"policy_rule":policy_rule}
             self.client.create_policy_rule(body)
@@ -285,7 +285,7 @@ class GBPCrud(object):
             rule_id=self.verify_gbp_policy_rule(name_uuid)
          policy_rule = {}
          try:
-            for arg,val in kwargs.items():
+            for arg,val in list(kwargs.items()):
                policy_rule[arg]=val
             body = {"policy_rule":policy_rule}
             self.client.update_policy_rule(rule_id,body)
@@ -299,8 +299,8 @@ class GBPCrud(object):
         Verify the GBP Policy Rule by passing its name and fetch its UUID
         """
         for rule in self.client.list_policy_rules()['policy_rules']:
-            if rule['name'].encode('ascii') == name:
-               return rule['id'].encode('ascii')
+            if rule['name'] == name:
+               return rule['id']
         _log.error("Policy Rule NOT Found")
         return 0
 
@@ -313,7 +313,7 @@ class GBPCrud(object):
            if getdict == True:
               name_uuid = {}
               for rule in self.client.list_policy_rules()['policy_rules']:
-                  name_uuid[rule['name'].encode('ascii')]= rule['id'].encode('ascii')
+                  name_uuid[rule['name']]= rule['id']
            else:
                rules_list = [item['id'] for item in self.client.list_policy_rules()['policy_rules']]
         except Exception as e:
@@ -360,7 +360,7 @@ class GBPCrud(object):
                   rule_uuid=self.verify_gbp_policy_rule(rule)
                   rule_list.append(rule_uuid)
            policy_rule_set = {"name": name,"policy_rules":rule_list}
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                policy_rule_set[arg]=val
            body = {"policy_rule_set":policy_rule_set}
            self.client.create_policy_rule_set(body)
@@ -374,8 +374,8 @@ class GBPCrud(object):
         Verify the GBP Policy RuleSet by passing its name and fetch its UUID
         """
         for ruleset in self.client.list_policy_rule_sets()['policy_rule_sets']:
-            if ruleset['name'].encode('ascii') == name:
-               return ruleset['id'].encode('ascii')
+            if ruleset['name'] == name:
+               return ruleset['id']
         _log.error("Policy RuleSet NOT Found")
         return 0
 
@@ -396,7 +396,7 @@ class GBPCrud(object):
             ruleset_id=self.verify_gbp_policy_rule_set(name_uuid)
          policy_rule_set = {}
          try:
-            for arg,val in kwargs.items():
+            for arg,val in list(kwargs.items()):
                policy_rule_set[arg]=val
             body = {"policy_rule_set":policy_rule_set}
             self.client.update_policy_rule_set(ruleset_id,body)
@@ -432,7 +432,7 @@ class GBPCrud(object):
            if getdict == True:
               name_uuid = {}
               for ruleset in self.client.list_policy_rule_sets()['policy_rule_sets']:
-                  name_uuid[ruleset['name'].encode('ascii')]= ruleset['id'].encode('ascii')
+                  name_uuid[ruleset['name']]= ruleset['id']
            else:
                rulesets_list = [item['id'] for item in self.client.list_policy_rule_sets()['policy_rule_sets']]
         except Exception as e:
@@ -458,10 +458,10 @@ class GBPCrud(object):
         """
         try:
            policy_target_group = {"name": name}
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                policy_target_group[arg]=val
            body = {"policy_target_group":policy_target_group}
-           ptg_uuid = self.client.create_policy_target_group(body)['policy_target_group']['id'].encode('ascii')
+           ptg_uuid = self.client.create_policy_target_group(body)['policy_target_group']['id']
            
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
@@ -474,8 +474,8 @@ class GBPCrud(object):
         Verify the GBP Policy Target Group by passing its name and fetch its UUID
         """
         for ptg in self.client.list_policy_target_groups()['policy_target_groups']:
-            if ptg['name'].encode('ascii') == name:
-               return ptg['id'].encode('ascii')
+            if ptg['name'] == name:
+               return ptg['id']
         _log.error("Policy Target Group NOT Found")
         return 0
 
@@ -563,7 +563,7 @@ class GBPCrud(object):
                     if network_service_policy != '' and network_service_policy is not None:
                        body["policy_target_group"]["network_service_policy_id"]=network_service_policy
           else:
-                   print 'Do nothing'
+                   print('Do nothing')
                    return 1
           self.client.update_policy_target_group(group_id, body)
         except Exception as e:
@@ -598,7 +598,7 @@ class GBPCrud(object):
            if getdict == True:
               name_uuid = {}
               for ptg in self.client.list_policy_target_groups()['policy_target_groups']:
-                  name_uuid[ptg['name'].encode('ascii')]= ptg['id'].encode('ascii')
+                  name_uuid[ptg['name']]= ptg['id']
            else:
                ptgs_list = [item['id'] for item in self.client.list_policy_target_groups()['policy_target_groups']]
         except Exception as e:
@@ -614,13 +614,13 @@ class GBPCrud(object):
         """
         Create a Policy Target for a given PTG
         'pt_count':: number of PTs to be created for a given PTG
-	'ptg_property':: ptg passed can be 'name' or 'uuid'
+        'ptg_property':: ptg passed can be 'name' or 'uuid'
         """
         try:
-	   if ptg_property == 'name':
+           if ptg_property == 'name':
                ptg_id = self.verify_gbp_policy_target_group(ptg_name)
-	   else:
-	       ptg_id = ptg_name
+           else:
+               ptg_id = ptg_name
            for i in range(pt_count):
                body = {"policy_target" : {
                                        "policy_target_group_id" : ptg_id,
@@ -628,8 +628,8 @@ class GBPCrud(object):
                                          }
                       }
            post_result = self.client.create_policy_target(body)['policy_target']
-           pt_uuid = post_result['id'].encode('ascii')
-           neutron_port_id = post_result['port_id'].encode('ascii')
+           pt_uuid = post_result['id']
+           neutron_port_id = post_result['port_id']
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
            _log.error("Creating PT = %s, failed" %(name))
@@ -642,8 +642,8 @@ class GBPCrud(object):
         Returns PT and its corresponding Neutron Port UUIDs
         """
         for pt in self.client.list_policy_targets()['policy_targets']:
-            if pt['name'].encode('ascii') == name:
-               return pt['id'].encode('ascii'),pt['port_id'].encode('ascii')
+            if pt['name'] == name:
+               return pt['id'],pt['port_id']
         _log.error("Policy Target NOT Found")
         return 0
 
@@ -660,7 +660,7 @@ class GBPCrud(object):
                 try:
                     pt_nic_id[pt['id']] = pt['port_id']
                 except Exception as e:
-                    print Exception
+                    print(Exception)
                     _log.error("\nException Error: %s\n" %(e))
                     continue
         return pt_nic_id
@@ -695,12 +695,12 @@ class GBPCrud(object):
         """
         try:
            l3policy={"name":name}
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                if arg == 'external_segments':
                   val = {val:[]}
                l3policy[arg]=val
            body = {"l3_policy": l3policy}
-           l3p_uuid = self.client.create_l3_policy(body)['l3_policy']['id'].encode('ascii')
+           l3p_uuid = self.client.create_l3_policy(body)['l3_policy']['id']
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
            _log.error("Creating L3Policy = %s, failed" %(name))
@@ -712,8 +712,8 @@ class GBPCrud(object):
         Verify the GBP L3Policy by passing its name and fetch its UUID
         """
         for l3p in self.client.list_l3_policies()['l3_policies']:
-            if l3p['name'].encode('ascii') == name:
-               return l3p['id'].encode('ascii')
+            if l3p['name'] == name:
+               return l3p['id']
         _log.error("L3Policy NOT Found")
         return 0
 
@@ -750,7 +750,7 @@ class GBPCrud(object):
             l3p_id=self.verify_gbp_l3policy(name_uuid)
          l3p = {}
          try:
-            for arg,val in kwargs.items():
+            for arg,val in list(kwargs.items()):
                if arg == 'external_segments':
                   val = {val:[]}
                l3p[arg]=val
@@ -770,7 +770,7 @@ class GBPCrud(object):
            if getdict == True:
               name_uuid = {}
               for l3p  in self.client.list_l3_policies()['l3_policies']:
-                  name_uuid[l3p['name'].encode('ascii')]= l3p['id'].encode('ascii')
+                  name_uuid[l3p['name']]= l3p['id']
            else:
                l3p_list = [item['id'] for item in self.client.list_l3_policies()['l3_policies']]
         except Exception as e:
@@ -793,29 +793,29 @@ class GBPCrud(object):
         """
         try:
            l2policy={"name":name}
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                l2policy[arg]=val
            body = {"l2_policy": l2policy}
            output = self.client.create_l2_policy(body)
-           l2p_uuid = output['l2_policy']['id'].encode('ascii')
-	   if getl3p:
-		l3p_uuid = output['l2_policy']['l3_policy_id'].encode('ascii')
-	   if autoptg:
-	 	autoptg_uuid = output['l2_policy']['policy_target_groups'][0]	
-	   neutron_ntk = output['l2_policy']['network_id'].encode('ascii')
+           l2p_uuid = output['l2_policy']['id']
+           if getl3p:
+                l3p_uuid = output['l2_policy']['l3_policy_id']
+           if autoptg:
+                autoptg_uuid = output['l2_policy']['policy_target_groups'][0]
+           neutron_ntk = output['l2_policy']['network_id']
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
            _log.error("Creating L2Policy = %s, failed" %(name))
            return 0
-	if getl3p and autoptg:
-	    #Returning neutron network also	    
+        if getl3p and autoptg:
+            #Returning neutron network also         
             return l2p_uuid,l3p_uuid,autoptg_uuid,neutron_ntk
-	elif getl3p :
-	    return l2p_uuid,l3p_uuid
-	elif autoptg:
-	    return l2p_uuid,autoptg_uuid,neutron_ntk
-	else:
-	    return l2p_uuid
+        elif getl3p :
+            return l2p_uuid,l3p_uuid
+        elif autoptg:
+            return l2p_uuid,autoptg_uuid,neutron_ntk
+        else:
+            return l2p_uuid
 
     def verify_gbp_l2policy(self,name):
         """
@@ -823,8 +823,8 @@ class GBPCrud(object):
         """
         try:
           for l2p in self.client.list_l2_policies()['l2_policies']:
-            if l2p['name'].encode('ascii') == name:
-               return l2p['id'].encode('ascii')
+            if l2p['name'] == name:
+               return l2p['id']
           _log.error("L2Policy NOT Found")     
           return 0
         except Exception as e:
@@ -859,7 +859,7 @@ class GBPCrud(object):
            if getdict == True:
               name_uuid = {}
               for l2p  in self.client.list_l2_policies()['l2_policies']:
-                  name_uuid[l2p['name'].encode('ascii')]= l2p['id'].encode('ascii')
+                  name_uuid[l2p['name']]= l2p['id']
            else:
                l2p_list = [item['id'] for item in self.client.list_l2_policies()['l2_policies']]
         except Exception as e:
@@ -885,13 +885,13 @@ class GBPCrud(object):
         """
         try:
            external_segment={"name":name}
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                if arg == 'external_policies' or arg == 'external_routes':
                   if not isinstance(val,list):
                      raise TypeError
                external_segment[arg]=val
            body = {"external_segment": external_segment}
-           ext_seg_uuid = self.client.create_external_segment(body)['external_segment']['id'].encode('ascii')
+           ext_seg_uuid = self.client.create_external_segment(body)['external_segment']['id']
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
            _log.error("Creating External Segment = %s, failed" %(name))
@@ -922,7 +922,7 @@ class GBPCrud(object):
         """
         external_segment = {}
         try:
-            for arg,val in kwargs.items():
+            for arg,val in list(kwargs.items()):
                external_segment[arg]=val
             body = {"external_segment":external_segment}
             self.client.update_external_segment(uuid,body)
@@ -940,8 +940,8 @@ class GBPCrud(object):
            if getdict == True:
               name_uuid = {}
               for extseg in self.client.list_external_segments()['external_segments']:
-                  name_uuid[extseg['name'].encode('ascii')]= {}
-                  name_uuid[extseg['name']]['id']=extseg['id'].encode('ascii')
+                  name_uuid[extseg['name']]= {}
+                  name_uuid[extseg['name']]['id']=extseg['id']
                   name_uuid[extseg['name']]['shared']=extseg['shared']
                   name_uuid[extseg['name']]['l3_policies']=extseg['l3_policies']
                   name_uuid[extseg['name']]['external_policies']=extseg['external_policies']
@@ -965,10 +965,10 @@ class GBPCrud(object):
         """
         nat_pool = {'name':name}
         try:
-            for arg,val in kwargs.items():
+            for arg,val in list(kwargs.items()):
                 nat_pool[arg]=val
             body = {"nat_pool":nat_pool}
-            nat_pool_uuid = self.client.create_nat_pool(body)['nat_pool']['id'].encode('ascii')
+            nat_pool_uuid = self.client.create_nat_pool(body)['nat_pool']['id']
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
            return 0 
@@ -994,7 +994,7 @@ class GBPCrud(object):
            if getdict == True:
               name_uuid = {}
               for natpool in self.client.list_nat_pools()['nat_pools']:
-                  name_uuid[natpool['name'].encode('ascii')]= natpool['id'].encode('ascii')
+                  name_uuid[natpool['name']]= natpool['id']
            else: # Return list of ids
                natpool_list = [item['id'] for item in self.client.list_nat_pools()['nat_pools']]
         except Exception as e:
@@ -1015,7 +1015,7 @@ class GBPCrud(object):
         """
         nat_pool = {}
         try:
-            for arg,val in kwargs.items():
+            for arg,val in list(kwargs.items()):
                 nat_pool[arg]=val
             body = {"nat_pool":nat_pool}
             self.client.update_nat_pool(uuid,body)
@@ -1034,7 +1034,7 @@ class GBPCrud(object):
         nsp_nat = {'name' : name, 'network_service_params' : network_service_params}
         try:
            body = {'network_service_policy':nsp_nat}
-           nsp_nat_uuid = self.client.create_network_service_policy(body)['network_service_policy']['id'].encode('ascii')
+           nsp_nat_uuid = self.client.create_network_service_policy(body)['network_service_policy']['id']
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
            _log.error("Creating NAT NSP failed")
@@ -1067,10 +1067,10 @@ class GBPCrud(object):
 
         try:
            external_policy = {"name": name}
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                external_policy[arg]=val
            body = {"external_policy":external_policy}
-           extpol_uuid = self.client.create_external_policy(body)['external_policy']['id'].encode('ascii')
+           extpol_uuid = self.client.create_external_policy(body)['external_policy']['id']
         except Exception as e:
            _log.error("\nException Error: %s\n" %(e))
            _log.error("Creating External Policy = %s, failed" %(name))
@@ -1166,7 +1166,7 @@ class GBPCrud(object):
            if getdict == True:
               name_uuid = {}
               for extpol in self.client.list_external_policies()['external_policies']:
-                  name_uuid[extpol['name'].encode('ascii')]= extpol['id'].encode('ascii')
+                  name_uuid[extpol['name']]= extpol['id']
            else: # Return list of ids
                extpol_list = [item['id'] for item in self.client.list_external_policies()['external_policies']]
         except Exception as e:
@@ -1183,8 +1183,8 @@ class GBPCrud(object):
         Verify the GBP External Policy by passing its name and fetch its UUID
         """
         for extpol in self.client.list_external_policies()['external_policies']:
-            if extpol['name'].encode('ascii') == name:
-               return extpol['id'].encode('ascii')
+            if extpol['name'] == name:
+               return extpol['id']
         _log.error("External Policy Group NOT Found")
         return 0
 
@@ -1201,11 +1201,11 @@ class GBPCrud(object):
         """
         if obj == 'l3_policy':
            attributes = self.client.show_l3_policy(obj_uuid)[obj]
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                if arg == 'external_segments':
                   # TODO: will revist this to handle single L3P
                   # associated to multiple ExtSeg.
-                  if val not in attributes[arg].keys():
+                  if val not in list(attributes[arg].keys()):
                      return 0
                else:
                    if isinstance(val,list) and isinstance(attributes[arg],list):
@@ -1218,7 +1218,7 @@ class GBPCrud(object):
                          return 0
         if obj == 'l2_policy':
            attributes = self.client.show_l2_policy(obj_uuid)[obj]
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                if arg == 'policy_target_groups':
                   if val not in attributes[arg]:
                      _log.error("Attribute %s and its Value %s NOT found in Object %s %s" %(arg,val,obj,obj_uuid))
@@ -1229,7 +1229,7 @@ class GBPCrud(object):
                       return 0
         if obj == 'policy_target_group':
            attributes = self.client.show_policy_target_group(obj_uuid)[obj]
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                if isinstance(val,list) and isinstance(attributes[arg],list):
                   unmatched = [item for item in val if item not in attributes[arg]]
                   if len(unmatched) > 0:
@@ -1245,7 +1245,7 @@ class GBPCrud(object):
                       return 0
         if obj == 'external_segment':
            attributes = self.client.show_external_segment(obj_uuid)[obj]
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                if isinstance(val,list) and isinstance(attributes[arg],list):
                   unmatched = [item for item in val if item not in attributes[arg]]
                   if len(unmatched) > 0:
@@ -1261,7 +1261,7 @@ class GBPCrud(object):
                       return 0
         if obj == 'external_policy':
            attributes = self.client.show_external_policy(obj_uuid)[obj]
-           for arg,val in kwargs.items():
+           for arg,val in list(kwargs.items()):
                if attributes[arg] != val:
                   _log.error("Attribute %s and its Value %s NOT found in Object %s %s" %(arg,val,obj,obj_uuid))
                   return 0

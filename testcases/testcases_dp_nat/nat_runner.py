@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 import optparse
-from commands import *
+from subprocess import *
 getoutput("rm -rf /tmp/testsuite*") #Deletes pre-existing test logs
 from time import sleep
 from libs.gbp_heat_libs import gbpHeat
@@ -33,24 +33,24 @@ def main():
         sys.exit(1)
     def runinteg(node):
         if node == 'borderleaf':
-                print "////// Run DP-Test Post Reload of BorderLeaf //////"
+                print("////// Run DP-Test Post Reload of BorderLeaf //////")
                 reboot = 'POST_RELOAD_BORDERLEAF'
                 testbed_cfg.reloadAci()
         if node == 'leaf':
-                print "////// Run DP-Test Post Reload of Non-BorderLeaf //////"
+                print("////// Run DP-Test Post Reload of Non-BorderLeaf //////")
                 reboot = 'POST_RELOAD_NONBORDERLEAF'
                 testbed_cfg.reloadAci(nodetype='leaf')
         if node == 'spine':
-                print "////// Run DP-Test Post Reload of Spine //////"
+                print("////// Run DP-Test Post Reload of Spine //////")
                 reboot = 'POST_RELOAD_SPINE'
                 testbed_cfg.reloadAci(nodetype='leaf')
-                print " **** Sleeping for Spine toboot up ****"
+                print(" **** Sleeping for Spine toboot up ****")
                 sleep(430)  
         if node == 'agent':
-                print "////// Run DP-Test Post Reload of Agent //////"
+                print("////// Run DP-Test Post Reload of Agent //////")
                 reboot = 'AGENT_RESTART'
                 testbed_cfg.restartAgent()
-                print " **** Sleeping for 5s after Agent Restart ****"
+                print(" **** Sleeping for 5s after Agent Restart ****")
                 sleep(5)
        
     def preExistcfg(controller,nat_type='',revert=False,restart=True):
@@ -83,19 +83,19 @@ def main():
     if nat_type == 'dnat':
         # RUN ONLY DNAT DP TESTs
         # TestSetup Configuration
-        print 'Setting up global config for all DNAT DP Testing'
-	if options.pertenantnatepg:
-            print 'Test for PER_TENANT_NAT_EPG FOR DNAT'
+        print('Setting up global config for all DNAT DP Testing')
+        if options.pertenantnatepg:
+            print('Test for PER_TENANT_NAT_EPG FOR DNAT')
             targetVmFips = testbed_cfg.setup(
-					     nat_type,
+                                             nat_type,
                                              do_config=0,
-					     pertntnatEpg=True
-					     )
-	else:
-	    targetVmFips = testbed_cfg.setup(
-					     nat_type,
-					     do_config=0
-					     )
+                                             pertntnatEpg=True
+                                             )
+        else:
+            targetVmFips = testbed_cfg.setup(
+                                             nat_type,
+                                             do_config=0
+                                             )
         # Fetch gbp objects via heat output
         objs_uuid = gbpheat.get_uuid_from_stack(
                     dnat_heat_temp,
@@ -106,24 +106,24 @@ def main():
         objs_uuid['ipsofextgw'] = ips_of_extgw
         objs_uuid['network_node'] = network_node
         objs_uuid['pausetodebug'] = pausetodebug
-	objs_uuid['routefordest'] = routefordest
+        objs_uuid['routefordest'] = routefordest
         # Verify the config setup on the ACI
-	print 'Sleeping for the EP learning on ACI Fab'
-	sleep(30)   
+        print('Sleeping for the EP learning on ACI Fab')
+        sleep(30)   
         """ #JISHNU: commented out for now 07/25/17
-	if options.pertenantnatepg:
-	    if not testbed_cfg.verifySetup(nat_type,
+        if options.pertenantnatepg:
+            if not testbed_cfg.verifySetup(nat_type,
                                            pertntnatEpg=True):
-	        testbed_cfg.cleanup()
+                testbed_cfg.cleanup()
                 preExistcfg(cntlr_ip,revert=True)
-	        print \
+                print \
                     'DNAT-PerTntNatEpg TestSuite Execution Failed'
                 sys.exit(1)
-	else:
-	    if not testbed_cfg.verifySetup(nat_type):
-	        testbed_cfg.cleanup()
+        else:
+            if not testbed_cfg.verifySetup(nat_type):
+                testbed_cfg.cleanup()
                 preExistcfg(cntlr_ip,revert=True)
-	        print \
+                print \
                     'DNAT TestSuite Execution Failed'
                 sys.exit(1)
         """
@@ -135,7 +135,7 @@ def main():
         from testcases.testcases_dp_nat.testsuite_dnat_extgw_to_vm \
         import DNAT_ExtGw_to_VMs
         test_dnat_extgw_to_vm = DNAT_ExtGw_to_VMs(objs_uuid,
-						 targetVmFips)
+                                                 targetVmFips)
 
         test_dnat_extgw_to_vm.test_runner(preexist)
         # If integ=True, then ONLY repeat run of ExtRtr-VM Tests
@@ -146,12 +146,11 @@ def main():
               testbed_cfg.cleanup()
               #Revert Back the L3Out Config
               preExistcfg(cntlr_ip,revert=True)
-              print \
-                  'DNAT-Integ TestSuite Execution Failed after Reload %s'\
-                  %(options.integ)
+              print('DNAT-Integ TestSuite Execution Failed after Reload %s'\
+                  %(options.integ))
               sys.exit(1)
            test_dnat_extgw_to_vm.test_runner(preexist)
-           print "\nDNAT-Integ TestSuite executed Successfully\n"
+           print("\nDNAT-Integ TestSuite executed Successfully\n")
         # Execution of DNAT DP Test from VM to ExtGW and VM-to-VM    
         from testcases.testcases_dp_nat.testsuite_dnat_vm_to_vm \
         import DNAT_VMs_to_VMs
@@ -159,12 +158,12 @@ def main():
         test_dnat_vm_to_allvms.test_runner(preexist)
         # Cleanup
         testbed_cfg.cleanup()
-        print "\nDNAT TestSuite executed Successfully\n"
+        print("\nDNAT TestSuite executed Successfully\n")
         
     if nat_type == 'snat':
         # RUN ONLY SNAT DP TESTs
         # TestSetup Configuration
-        print 'Setting up global config for SNAT DP Testing'
+        print('Setting up global config for SNAT DP Testing')
         testbed_cfg.setup('snat', do_config=0)
         # Fetch gbp objects via heat output
         objs_uuid = gbpheat.get_uuid_from_stack(
@@ -177,12 +176,12 @@ def main():
         objs_uuid['network_node'] = testbed_cfg.network_node
         objs_uuid['pausetodebug'] = testbed_cfg.pausetodebug
         # Verify the config setup on the ACI
-	print 'Sleeping for the EP learning on ACI Fab'
-	sleep(30)   
-	if not testbed_cfg.verifySetup(nat_type):
-	    testbed_cfg.cleanup()
+        print('Sleeping for the EP learning on ACI Fab')
+        sleep(30)   
+        if not testbed_cfg.verifySetup(nat_type):
+            testbed_cfg.cleanup()
             preExistcfg(cntlr_ip,revert=True)
-	    print 'SNAT TestSuite Execution Failed due to Setup Issue'
+            print('SNAT TestSuite Execution Failed due to Setup Issue')
             sys.exit(1)
         # Execution of SNAT DP Tests
         from testcases.testcases_dp_nat.testsuite_snat_vm_to_extgw \
@@ -196,14 +195,13 @@ def main():
            if testbed_cfg.verifySetup(nat_type):
               testbed_cfg.cleanup()
               preExistcfg(cntlr_ip,revert=True)
-              print \
-                  'SNAT-Integ TestSuite Execution Failed after Reload %s'\
-                  %(options.integ)
+              print('SNAT-Integ TestSuite Execution Failed after Reload %s'\
+                  %(options.integ))
               sys.exit(1)
            test_dnat_extgw_to_vm.test_runner(preexist)
         # Cleanup after the SNAT Testsuite is run
         testbed_cfg.cleanup()
-        print "\nSNAT TestSuite executed Successfully\n"
+        print("\nSNAT TestSuite executed Successfully\n")
 
 if __name__ == "__main__":
     main()

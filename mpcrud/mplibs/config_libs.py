@@ -37,8 +37,8 @@ class Gbp_Config(object):
       self.passwd = cntrlr_passwd
       self.rcfile = rcfile
       self.err_strings=['Unable','Conflict','Bad Request','Error', 'Unknown',
-			'Exception','Invalid','read-only','not supported',
-			'prefix greater than subnet mask']
+                        'Exception','Invalid','read-only','not supported',
+                        'prefix greater than subnet mask']
       
     def exe_command(self,cmdList):
       """
@@ -60,16 +60,16 @@ class Gbp_Config(object):
             return 0
 
     def set_tenant(self,**kwargs):
-	if 'tenant' in kwargs.keys():
-	    tnt_cmd = '--os-tenant-name %s' %(kwargs['tenant'])
-	else:
-	    tnt_cmd = '--os-tenant-name admin' 
-	return tnt_cmd
+        if 'tenant' in list(kwargs.keys()):
+            tnt_cmd = '--os-tenant-name %s' %(kwargs['tenant'])
+        else:
+            tnt_cmd = '--os-tenant-name admin' 
+        return tnt_cmd
 
     def gbp_action_config(self,cmd_val,name_uuid,**kwargs):
-	"""
+        """
         -- cmd_val== 0:delete; 1:create; 2:update
-	-- name_uuid == UUID or name_string
+        -- name_uuid == UUID or name_string
         Create/Update/Delete Policy Action
         Returns assigned UUID on Create
         kwargs addresses the need for passing required/optional params
@@ -88,7 +88,7 @@ class Gbp_Config(object):
         if cmd_val == 2:
            cmd = cmd_tnt+'policy-action-update '+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
-        for arg, value in kwargs.items():
+        for arg, value in list(kwargs.items()):
           cmd = cmd + " --" + "".join( '%s %s' %(arg, value ))
         # Execute the policy-action-config-cmd
         cmd_out = self.exe_command(cmd)
@@ -123,11 +123,11 @@ class Gbp_Config(object):
         if cmd_val == 2:
            cmd = cmd_tnt+'policy-classifier-update '+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
-        for arg, value in kwargs.items():
+        for arg, value in list(kwargs.items()):
           cmd = cmd + " --" + "".join( '%s %s' %(arg, value ))
         # Execute the policy-classifier-config-cmd
         cmd_out = self.exe_command(cmd)
-	if cmd_out:
+        if cmd_out:
             if cmd_val==1:
                classifier_uuid = self.gbp_uuid_get(cmd_out)
                return classifier_uuid
@@ -138,7 +138,7 @@ class Gbp_Config(object):
 
     def gbp_policy_cfg_all(self,cmd_val,cfgobj,name_uuid,**kwargs):
         """
-	--cfgobj== policy-*(where *=action;classifer,rule,ruleset,targetgroup,target
+        --cfgobj== policy-*(where *=action;classifer,rule,ruleset,targetgroup,target
         --cmd_val== 0:delete; 1:create; 2:update
         --name_uuid == UUID or name_string
         Create/Update/Delete Policy Object
@@ -149,9 +149,9 @@ class Gbp_Config(object):
                       "ruleset":"policy-rule-set","group":"policy-target-group","target":"policy-target",
                       "l2p":"l2policy","l3p":"l3policy","nsp":"network-service-policy",
                       "extseg":"external-segment","extpol":"external-policy","natpool":"nat-pool",
-		      "net":"net","subnet":"subnet","add_scope":"address-scope","subpool":"subnetpool",
-		      "rtr":"router"}
-	neutron_cfgobjs = ["net","subnet","add_scope","subpool","rtr"]
+                      "net":"net","subnet":"subnet","add_scope":"address-scope","subpool":"subnetpool",
+                      "rtr":"router"}
+        neutron_cfgobjs = ["net","subnet","add_scope","subpool","rtr"]
         if cfgobj != '':
            if cfgobj not in cfgobj_dict:
               raise KeyError 
@@ -161,9 +161,9 @@ class Gbp_Config(object):
                       -- name_uuid == UUID or name_string\n''')
            return 0
         #Build the command with mandatory params
-	if cfgobj in neutron_cfgobjs:
+        if cfgobj in neutron_cfgobjs:
             cmd_tnt = 'neutron %s ' %(self.set_tenant(**kwargs))
-	else:    
+        else:    
             cmd_tnt = 'gbp %s ' %(self.set_tenant(**kwargs))
         if cmd_val == 0:
            cmd = cmd_tnt+'%s-delete ' % cfgobj_dict[cfgobj]+str(name_uuid)
@@ -172,69 +172,69 @@ class Gbp_Config(object):
         if cmd_val == 2:
            cmd = cmd_tnt+'%s-update ' % cfgobj_dict[cfgobj]+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
-        for arg, value in kwargs.items():
-	  if arg != 'tenant':
+        for arg, value in list(kwargs.items()):
+          if arg != 'tenant':
               if '_' in arg:
                  arg=string.replace(arg,'_','-')
-	      if arg == 'shared' and cfgobj in neutron_cfgobjs:
-		 augment_cmd = " --shared" #(in case of gbp --shared=<val>)
-	      else:
-		 augment_cmd = " --" + "".join( '%s=%s' %(arg, value ))
+              if arg == 'shared' and cfgobj in neutron_cfgobjs:
+                 augment_cmd = " --shared" #(in case of gbp --shared=<val>)
+              else:
+                 augment_cmd = " --" + "".join( '%s=%s' %(arg, value ))
               cmd = cmd + augment_cmd
         # Execute the cmd
         cmd_out = self.exe_command(cmd)
         if cmd_out:
             # If try clause succeeds for "create" cmd then parse the cmd_out to extract the UUID of the object
             try:
-	        if cmd_val==1 and cfgobj=="group":
-           	    obj_uuid = self.gbp_uuid_get(cmd_out)
-           	    match = re.search(
+                if cmd_val==1 and cfgobj=="group":
+                    obj_uuid = self.gbp_uuid_get(cmd_out)
+                    match = re.search(
                             "\\bl2_policy_id\\b\s+\| (.*) \|",cmd_out,re.I)
                     l2pid = match.group(1)
                     match = re.search(
                             "\\bsubnets\\b\s+\| (.*) \|",cmd_out,re.I)
                     subnetid = match.group(1)
                     return obj_uuid,l2pid.rstrip(),subnetid.rstrip()
-       		if cmd_val==1 and cfgobj=="target":
-           	    obj_uuid = self.gbp_uuid_get(cmd_out)
-            	    match = re.search(
+                if cmd_val==1 and cfgobj=="target":
+                    obj_uuid = self.gbp_uuid_get(cmd_out)
+                    match = re.search(
                             "\\bport_id\\b\s+\| (.*) \|",cmd_out,re.I)
-           	    neutr_port_id = match.group(1)
-           	    return obj_uuid.rstrip(),neutr_port_id.rstrip()
-         	if cmd_val==1 and cfgobj=="l2p":
-            	    obj_uuid = self.gbp_uuid_get(cmd_out)
-            	    match = re.search(
+                    neutr_port_id = match.group(1)
+                    return obj_uuid.rstrip(),neutr_port_id.rstrip()
+                if cmd_val==1 and cfgobj=="l2p":
+                    obj_uuid = self.gbp_uuid_get(cmd_out)
+                    match = re.search(
                             "\\bl3_policy_id\\b\s+\| (.*) \|",cmd_out,re.I)
-            	    l3p_uuid = match.group(1)
-            	    match = re.search(
+                    l3p_uuid = match.group(1)
+                    match = re.search(
                             "\\bpolicy_target_groups\\b\s+\| (.*) \|",cmd_out,re.I)
-		    auto_ptg = match.group(1)
-            	    match = re.search(
+                    auto_ptg = match.group(1)
+                    match = re.search(
                             "\\bnetwork_id\\b\s+\| (.*) \|",cmd_out,re.I)
-		    ntk_uuid = match.group(1)
-            	    return obj_uuid.rstrip(),l3p_uuid.rstrip(),\
-			   ntk_uuid.rstrip(),auto_ptg.rstrip()
-         	if cmd_val==1 and cfgobj=="extseg":
-            	    obj_uuid = self.gbp_uuid_get(cmd_out)
-            	    match = re.search("\\bsubnet_id\\b\s+\| (.*) \|",cmd_out,re.I)
-            	    subnet_uuid = match.group(1)
-            	    return obj_uuid.rstrip(),subnet_uuid.rstrip()
-		if cmd_val==1 and cfgobj=="l3p":
-            	    obj_uuid = self.gbp_uuid_get(cmd_out)
-            	    match = re.search(
+                    ntk_uuid = match.group(1)
+                    return obj_uuid.rstrip(),l3p_uuid.rstrip(),\
+                           ntk_uuid.rstrip(),auto_ptg.rstrip()
+                if cmd_val==1 and cfgobj=="extseg":
+                    obj_uuid = self.gbp_uuid_get(cmd_out)
+                    match = re.search("\\bsubnet_id\\b\s+\| (.*) \|",cmd_out,re.I)
+                    subnet_uuid = match.group(1)
+                    return obj_uuid.rstrip(),subnet_uuid.rstrip()
+                if cmd_val==1 and cfgobj=="l3p":
+                    obj_uuid = self.gbp_uuid_get(cmd_out)
+                    match = re.search(
                             "\\baddress_scope_v4_id\\b\s+\| (.*) \|",cmd_out,re.I)
-            	    asc4_uuid = match.group(1)
-            	    match = re.search(
+                    asc4_uuid = match.group(1)
+                    match = re.search(
                             "\\bsubnetpools_v4\\b\s+\| (.*) \|",cmd_out,re.I)
-		    subpool4_uuid = match.group(1)
-            	    match = re.search(
+                    subpool4_uuid = match.group(1)
+                    match = re.search(
                             "\\brouters\\b\s+\| (.*) \|",cmd_out,re.I)
-		    rtr_uuid = match.group(1)
-            	    return obj_uuid.rstrip(),asc4_uuid.rstrip(),\
-			    subpool4_uuid.rstrip(),rtr_uuid.rstrip()
-         	if cmd_val==1:
-           	    obj_uuid = self.gbp_uuid_get(cmd_out)
-           	    return obj_uuid.rstrip()
+                    rtr_uuid = match.group(1)
+                    return obj_uuid.rstrip(),asc4_uuid.rstrip(),\
+                            subpool4_uuid.rstrip(),rtr_uuid.rstrip()
+                if cmd_val==1:
+                    obj_uuid = self.gbp_uuid_get(cmd_out)
+                    return obj_uuid.rstrip()
             except Exception as e:
                exc_type, exc_value, exc_traceback = sys.exc_info()
                _log.info(
@@ -245,7 +245,7 @@ class Gbp_Config(object):
         else:
             _log.error(
             "Cli cmd execution failed for %s" %(cfgobj_dict[cfgobj]))
-	    return 0
+            return 0
 
     def gbp_policy_cfg_upd_all(self,cfgobj,name_uuid,attr,**kwargs):
         """
@@ -269,13 +269,13 @@ class Gbp_Config(object):
         cmd_tnt = 'gbp %s ' %(self.set_tenant(**kwargs))
         cmd = cmd_tnt+'%s-update ' % cfgobj_dict[cfgobj]+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
-        for arg, value in attr.iteritems():
+        for arg, value in attr.items():
           if '_' in arg:
              arg=string.replace(arg,'_','-')
           cmd = cmd + " --" + "".join( '%s %s' %(arg, value ))
         # Execute the update cmd
         cmd_out = self.exe_command(cmd)
-	if not cmd_out:
+        if not cmd_out:
             return 0
         else:
             return 1
@@ -294,17 +294,17 @@ class Gbp_Config(object):
         #Build the command with mandatory params
         cmd = 'gbp %s-list -c id ' % cfgobj_dict[cfgobj]
         cmd_out = self.exe_command(cmd)
-	if not isinstance(cmd_out,int):
+        if not isinstance(cmd_out,int):
             _out=cmd_out.split('\n')
             final_out = _out[3:len(_out)-1]
             _log.info("\nThe Policy Object %s to be deleted = \n%s" %(cfgobj_dict[cfgobj],final_out))
             for item in final_out:
-	        if '---' in item:
-   		    final_out.remove(item)
-	    for obj in final_out:
-	        strip_obj = obj.strip('|\r')
+                if '---' in item:
+                    final_out.remove(item)
+            for obj in final_out:
+                strip_obj = obj.strip('|\r')
                 cmd = 'gbp %s-delete ' % cfgobj_dict[cfgobj]+str(strip_obj.strip('|'))
                 cmd_out = self.exe_command(cmd)
             return 1 
 
-	
+        

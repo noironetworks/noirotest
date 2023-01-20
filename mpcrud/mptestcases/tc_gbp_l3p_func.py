@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import commands
+import subprocess
 import logging
 import platform
 import sys
@@ -49,7 +49,7 @@ class test_gbp_l3p_func(object):
         level=logging.WARNING)
     _log = logging.getLogger(__name__)
     cmd = 'rm /tmp/test_gbp_l3p_func.log'
-    commands.getoutput(cmd)
+    subprocess.getoutput(cmd)
     hdlr = logging.FileHandler('/tmp/test_gbp_l3p_func.log')
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     hdlr.setFormatter(formatter)
@@ -62,7 +62,7 @@ class test_gbp_l3p_func(object):
         Init def
         """
         self._log.info("\n## START OF GBP L3_POLICY FUNCTIONALITY TESTSUITE\n")
-	self.controller_ip = controller_ip
+        self.controller_ip = controller_ip
         self.gbpcfg = config_libs.Gbp_Config(self.controller_ip)
         self.gbpverify = verify_libs.Gbp_Verify(self.controller_ip)
         self.l3p_name = 'demo_l3p'
@@ -75,7 +75,7 @@ class test_gbp_l3p_func(object):
             self.gbpcfg.gbp_del_all_anyobj(obj)
         self.gbpcfg.gbp_policy_cfg_all(0, 'subpool', 'sps')
         self.gbpcfg.gbp_policy_cfg_all(0,'add_scope','ascs')
-	
+        
 
     def test_gbp_l3p_func_1(
             self,
@@ -105,7 +105,7 @@ class test_gbp_l3p_func(object):
             self._log.info(
                 '\n## Step 1: Create L3Policy with default attrib vals##\n')
             l3p_uuid,addr_scope_uuid,subpool_uuid,rtr_uuid = \
-		self.gbpcfg.gbp_policy_cfg_all(1, 'l3p', name_uuid)
+                self.gbpcfg.gbp_policy_cfg_all(1, 'l3p', name_uuid)
             if not l3p_uuid:
                 self._log.info("\n## Step 1: Create L3Policy == Failed")
                 return 0
@@ -129,24 +129,24 @@ class test_gbp_l3p_func(object):
                         "\n## Step 2C: Verify L3Policy using -show "
                         "option == Failed")
                     return 0
-	    self._log.info('# Step 2C: Verify implicit Neutron objects rtr,addscope,subpool')
+            self._log.info('# Step 2C: Verify implicit Neutron objects rtr,addscope,subpool')
             if rtr_uuid or addr_scope_uuid or subpool_uuid:
                 for item,val in {'router': rtr_uuid,
                                    'address-scope': addr_scope_uuid,
-                                   'subnetpool': subpool_uuid}.iteritems():
+                                   'subnetpool': subpool_uuid}.items():
                     if not self.gbpverify.neut_ver_all(item,val):
                         self._log.info(
                         "\n## Step 2C: Verify implicit neutron %s "
                         "object == Failed" %(item))
                         return 0
-	    else:
-		self._log.info('# Step 2C:Creation of implicit Neutron object failed')
-		return 0
+            else:
+                self._log.info('# Step 2C:Creation of implicit Neutron object failed')
+                return 0
         #######
         if rep_del == 0 or rep_del == 1:
-	    if rep_cr > 1:
+            if rep_cr > 1:
                 self._log.info('\n## Delete L3Policy called by another TC ##\n')
-	    else:
+            else:
                 self._log.info('\n## Step 3: Delete L3Policy using name  ##\n')
             if not self.gbpcfg.gbp_policy_cfg_all(0, 'l3p', name_uuid):
                 self._log.info("\n## Step 3: Delete L3Policy == Failed")
@@ -186,7 +186,7 @@ class test_gbp_l3p_func(object):
         self._log.info(
             "\n## Step 1: Create Policy L3Policy with non-default "
             "attrs and values ##")
-	l3p_uuid,addr_scope_uuid,subpool_uuid,rtr_uuid = \
+        l3p_uuid,addr_scope_uuid,subpool_uuid,rtr_uuid = \
             self.gbpcfg.gbp_policy_cfg_all(
             1, 'l3p', self.l3p_name, ip_pool='20.20.0.0/24',
             subnet_prefix_length='28')
@@ -206,19 +206,19 @@ class test_gbp_l3p_func(object):
                 self._log.info(
                     "\n## Step 2B: Verify L3Policy using -show option"
                     " == Failed")
-	self._log.info('# Step 2C:Verify the creation of implicit Neutron objs')
+        self._log.info('# Step 2C:Verify the creation of implicit Neutron objs')
         if rtr_uuid or addr_scope_uuid or subpool_uuid:
                 for item,val in {'router': rtr_uuid,
                                    'address-scope': addr_scope_uuid,
-                                   'subnetpool': subpool_uuid}.iteritems():
+                                   'subnetpool': subpool_uuid}.items():
                     if not self.gbpverify.neut_ver_all(item,val):
                         self._log.info(
                         "\n## Step 2C: Verify implicit neutron %s "
                         "object == Failed" %(item))
                         return 0
-	else:
-		self._log.info('# Step 2C:Creation of implicit Neutron object failed')
-		return 0
+        else:
+                self._log.info('# Step 2C:Creation of implicit Neutron object failed')
+                return 0
 
         if not self.gbpcfg.gbp_policy_cfg_all(
                 2, 'l3p', self.l3p_name, subnet_prefix_length='26'):
@@ -327,7 +327,7 @@ class test_gbp_l3p_func(object):
                 "\n## Step 5B: Verify Auto-Delete of default "
                 "L3Policy == Failed")
             return 0
-	self.test_gbp_l3p_func_1(name_uuid=l3p_uuid, rep_cr=2)
+        self.test_gbp_l3p_func_1(name_uuid=l3p_uuid, rep_cr=2)
         self._log.info("\n## TESTCASE_GBP_L3P_FUNC_3: PASSED")
         return 1
 
@@ -454,21 +454,21 @@ class test_gbp_l3p_func(object):
         # Create and Verify non-default L3 Policy
         self._log.info("\n## Step 1A: Create Shared address-scope")
         asc_uuid = self.gbpcfg.gbp_policy_cfg_all(
-		    1,'add_scope','ascs 4',shared='')
-	if not asc_uuid:
-	    self._log.info("\n## Step 1A: Shared neutron addr-scope =Failed")
-	    return 0
+                    1,'add_scope','ascs 4',shared='')
+        if not asc_uuid:
+            self._log.info("\n## Step 1A: Shared neutron addr-scope =Failed")
+            return 0
         self._log.info(
             "\n## Step 1C: Create L3Policy with non-default "
             "attrs and shared address-scope ")
         l3p_create = self.gbpcfg.gbp_policy_cfg_all(
             1, 'l3p', self.l3p_name,
-    	    address_scope_v4_id=asc_uuid)
+            address_scope_v4_id=asc_uuid)
         if not l3p_create:
             self._log.info("\n## Step 1C: Create L3Policy == Failed")
             return 0
-	else:
-	    l3p_uuid, l3p_implicit_subpool = l3p_create[0],l3p_create[2]
+        else:
+            l3p_uuid, l3p_implicit_subpool = l3p_create[0],l3p_create[2]
         if not self.gbpverify.gbp_l2l3ntk_pol_ver_all(
                 1,
                 'l3p',
@@ -477,17 +477,17 @@ class test_gbp_l3p_func(object):
                 name=self.l3p_name,
                 ip_pool='10.0.0.0/8',
                 subnet_prefix_length='24',
-		address_scope_v4_id=asc_uuid,
-		subnetpools_v4=l3p_implicit_subpool,
-		shared ='True',
+                address_scope_v4_id=asc_uuid,
+                subnetpools_v4=l3p_implicit_subpool,
+                shared ='True',
                 ip_version='4'):
             self._log.info("\n## Step 1C: Verify non-default == Failed")
             return 0
-	if not self.gbpverify.neut_ver_all('subnetpool',
-					l3p_implicit_subpool,
-					address_scope_id=asc_uuid):
-	    self._log.info("\n## Step 1D: Implicit Subnetpool create=Failed")
-	    return 0
+        if not self.gbpverify.neut_ver_all('subnetpool',
+                                        l3p_implicit_subpool,
+                                        address_scope_id=asc_uuid):
+            self._log.info("\n## Step 1D: Implicit Subnetpool create=Failed")
+            return 0
         # Create and verify multiple L2 policy with above non-default L3P
         self._log.info(
             "\n## Step 2: Create and Verify multiple(n=2) L2Policy "
@@ -547,7 +547,7 @@ class test_gbp_l3p_func(object):
                 "L2P mapped == Failed \n")
             return 0
         self.test_gbp_l3p_func_1(name_uuid=l3p_uuid, rep_cr=2)
-	self.gbpcfg.gbp_policy_cfg_all(0,'add_scope','ascs') #delete add-scope
+        self.gbpcfg.gbp_policy_cfg_all(0,'add_scope','ascs') #delete add-scope
         self._log.info("\n## TESTCASE_GBP_L3P_FUNC_5: PASSED")
         return 1
 
@@ -559,7 +559,7 @@ class test_gbp_l3p_func(object):
             "L3POLICY ASSOCIATED TO SHARED SUBNETPOOL\n"
             "TEST_STEPS::\n"
             "Create a shared address-scope\n"
-	    "Create a shared subnetpool assocaited to the addscope\n"
+            "Create a shared subnetpool assocaited to the addscope\n"
             "Create non-default L3Policy associated to above shared subpool\n"
             "##############################################################\n")
 
@@ -567,25 +567,25 @@ class test_gbp_l3p_func(object):
         # Create and Verify non-default L3 Policy
         self._log.info("\n## Step 1A: Create Shared address-scope")
         asc_uuid = self.gbpcfg.gbp_policy_cfg_all(
-		    1,'add_scope','ascs 4',shared='')
-	if not asc_uuid:
-	    self._log.info("\n## Step 1A: Shared neutron addr-scope =Failed")
-	    return 0
+                    1,'add_scope','ascs 4',shared='')
+        if not asc_uuid:
+            self._log.info("\n## Step 1A: Shared neutron addr-scope =Failed")
+            return 0
         self._log.info("\n## Step 1B: Create Shared Subnetpool")
         sp_uuid = self.gbpcfg.gbp_policy_cfg_all(
-		    1, 'subpool', 'sps', address_scope=asc_uuid,
-		    default_prefixlen='28', pool_prefix='40.50.0.0/24',
-		    shared='')
-	if not sp_uuid:
-	    self._log.info("\n## Step 1A: Shared neutron subnetpool =Failed")
-	    return 0
+                    1, 'subpool', 'sps', address_scope=asc_uuid,
+                    default_prefixlen='28', pool_prefix='40.50.0.0/24',
+                    shared='')
+        if not sp_uuid:
+            self._log.info("\n## Step 1A: Shared neutron subnetpool =Failed")
+            return 0
         self._log.info(
             "\n## Step 1C: Create L3Policy with non-default "
             "attrs and values ")
         l3p_uuid = self.gbpcfg.gbp_policy_cfg_all(
             1, 'l3p', self.l3p_name,
-    	    subnetpools_v4=sp_uuid,
-	    tenant='coke')[0]
+            subnetpools_v4=sp_uuid,
+            tenant='coke')[0]
         if not l3p_uuid:
             self._log.info("\n## Step 1C: Create L3Policy == Failed")
             return 0
@@ -597,17 +597,17 @@ class test_gbp_l3p_func(object):
                 name=self.l3p_name,
                 ip_pool='40.50.0.0/24',
                 subnet_prefix_length='28',
-		address_scope_v4_id=asc_uuid,
-		subnetpools_v4=sp_uuid,
-		shared ='True',
+                address_scope_v4_id=asc_uuid,
+                subnetpools_v4=sp_uuid,
+                shared ='True',
                 ip_version='4'):
             self._log.info("\n## Step 1C: Verify non-default == Failed")
             return 0
-	if self.gbpverify.neut_ver_all('subnetpool',
-					'l3p_%s' %(self.l3p_name)):
-	    self._log.info(
-	    "\n## Step 1D:Implcit subnetpool should not get created == Failed")
-	    return 0
+        if self.gbpverify.neut_ver_all('subnetpool',
+                                        'l3p_%s' %(self.l3p_name)):
+            self._log.info(
+            "\n## Step 1D:Implcit subnetpool should not get created == Failed")
+            return 0
         self._log.info("\n## TESTCASE_GBP_L3P_FUNC_6: PASSED")
         return 1
 

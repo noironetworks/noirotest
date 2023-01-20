@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import commands
+import subprocess
 import logging
 import sys
 from mpcrud.mplibs import config_libs
@@ -39,7 +39,7 @@ class test_gbp_l2p_func(object):
         level=logging.WARNING)
     _log = logging.getLogger(__name__)
     cmd = 'rm /tmp/test_gbp_l2p_func.log'
-    commands.getoutput(cmd)
+    subprocess.getoutput(cmd)
     hdlr = logging.FileHandler('/tmp/test_gbp_l2p_func.log')
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     hdlr.setFormatter(formatter)
@@ -73,7 +73,7 @@ class test_gbp_l2p_func(object):
             "Create L2 Policy Object with default attributes\n"
             "Verify the attributes & value, show & list cmds\n"
             "Verify the implicit neutron network, router, address-scope\n"
-	    "subnet-pool, L3Policy\n"
+            "subnet-pool, L3Policy\n"
             "Delete L2 Policy\n"
             "Verify that L2P,L3P and implicit neutron objects has got "
             "deleted, show & list cmds\n"
@@ -109,7 +109,7 @@ class test_gbp_l2p_func(object):
             l2p_uuid,
             id=l2p_uuid,
             name=self.l2p_name,
-	    ret='default',
+            ret='default',
             l3_policy_id=def_l3p_uuid):
             self._log.info(
                 "\n## Step 2B: Verify L2Policy using -show option == Failed")
@@ -127,26 +127,26 @@ class test_gbp_l2p_func(object):
                     "object == Failed")
                 return 0
         neutron_rtr, neutron_add_scope, neutron_subnetpool=\
-		self.gbpverify.gbp_l2l3ntk_pol_ver_all(
+                self.gbpverify.gbp_l2l3ntk_pol_ver_all(
                 1,
                 'l3p',
                 def_l3p_uuid,
                 name='default',
                 id=def_l3p_uuid,
-		ret='default',
+                ret='default',
                 l2_policies=l2p_uuid)
-	if neutron_rtr or neutron_add_scope or neutron_subnetpool:
-	    for item,val in {'router':neutron_rtr,
-				   'address-scope':neutron_add_scope,
-				   'subnetpool':neutron_subnetpool}.iteritems():
-	    	if not self.gbpverify.neut_ver_all(item,val):
+        if neutron_rtr or neutron_add_scope or neutron_subnetpool:
+            for item,val in {'router':neutron_rtr,
+                                   'address-scope':neutron_add_scope,
+                                   'subnetpool':neutron_subnetpool}.items():
+                if not self.gbpverify.neut_ver_all(item,val):
                     self._log.info(
                     "\n## Step 2D: Verify creation of implicit neutron %s "
                     "object == Failed" %(item))
                     return 0
-	else:
+        else:
             self._log.info(
-	    "\n## Step 2D: Verify Implcit L3Policy and its Implicit neutron objects == Failed")
+            "\n## Step 2D: Verify Implcit L3Policy and its Implicit neutron objects == Failed")
             return 0
 
         # Delete the L2Policy and verify L2P,def l3P and Neutron obj are
@@ -171,10 +171,10 @@ class test_gbp_l2p_func(object):
                 "\n## Step 3C: Verify Implicit Neutron Network Obj is "
                 "Deleted == Failed")
             return 0
-	for item,val in {'router':neutron_rtr,
-	   		 'address-scope':neutron_add_scope,
-			 'subnetpool':neutron_subnetpool}.iteritems():
-	    	if self.gbpverify.neut_ver_all(item,val):
+        for item,val in {'router':neutron_rtr,
+                         'address-scope':neutron_add_scope,
+                         'subnetpool':neutron_subnetpool}.items():
+                if self.gbpverify.neut_ver_all(item,val):
                     self._log.info(
                     "\n## Step 3D: Verify implicit neutron %s "
                     "object deleted == Failed" %(item))
@@ -261,7 +261,7 @@ class test_gbp_l2p_func(object):
             ptg_name = 'demo_ptg_%s' % (i)
             uuids = self.gbpcfg.gbp_policy_cfg_all(
                 1, 'group', ptg_name, l2_policy=l2p_uuid,
-		tenant='coke')
+                tenant='coke')
             if uuids:
                 ptg_list.append(uuids[0])
                 subnet_list.append(uuids[2])

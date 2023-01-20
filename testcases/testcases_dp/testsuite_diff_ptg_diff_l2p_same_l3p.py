@@ -159,12 +159,12 @@ class test_diff_ptg_diff_l2p_same_l3p(object):
                 failed = {}
                 for ip in dest_ip:
                     ip_failed = {key: val for key, val in results[
-                        ip].iteritems() if val == 1}
+                        ip].items() if val == 1}
                     if ip_failed:
                         failed[ip] = ip_failed
             else:
                 failed = {key: val for key, val in results[
-                    dest_ip].iteritems() if val == 1}
+                    dest_ip].items() if val == 1}
             if len(failed) > 0:
                 self._log.error('For All Protcol Following traffic_types %s = Failed' %(failed))
                 return 0
@@ -177,16 +177,16 @@ class test_diff_ptg_diff_l2p_same_l3p(object):
                 failed = {}
                 for ip in dest_ip:
                     ip_failed = {key: val for key, val in results[
-                        ip].iteritems() if val == 0 and key in allow_list}
+                        ip].items() if val == 0 and key in allow_list}
                     ip_failed.update({key: val for key, val in results[
-                                  ip].iteritems() if val == 1 and key not in allow_list})
+                                  ip].items() if val == 1 and key not in allow_list})
                     if ip_failed:
                         failed[ip] = ip_failed
             else:
                 failed = {key: val for key, val in results[
-                    dest_ip].iteritems() if val == 0 and key in allow_list}
+                    dest_ip].items() if val == 0 and key in allow_list}
                 failed.update({key: val for key, val in results[
-                              dest_ip].iteritems() if val == 1 and key not in allow_list})
+                              dest_ip].items() if val == 1 and key not in allow_list})
             if len(failed) > 0:
                 self._log.error('Following traffic_types %s = Failed' %(failed))
                 return 0

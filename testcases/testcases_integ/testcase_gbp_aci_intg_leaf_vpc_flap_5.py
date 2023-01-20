@@ -92,7 +92,7 @@ class testcase_gbp_aci_intg_leaf_vpc_flap_5(object):
            self._log.info("\n ABORTING THE TESTSUITE RUN, HEAT STACK CREATE of %s Failed" %(self.heat_stack_name))
            self.test_CleanUp()
            sys.exit(1)
-        print 'Enable SSH .. sleeping for 20 secs'
+        print('Enable SSH .. sleeping for 20 secs')
         create_add_filter(self.apic_ip,'demo_bd') # 'demo_bd' is the name of L2Policy in the Heat Temp
         sleep(20)
         return 1

@@ -19,7 +19,7 @@ print 'L3Policy == ', l3p_id
 """
 for j in range(1, 101):
 
-    tenantName = 'scale_tenant_%s' %(j)	
+    tenantName = 'scale_tenant_%s' %(j) 
     key_stone = Keystone(ostack_controller=sys.argv[1])
     key_stone.create_tenant(tenant_name=tenantName)
 

@@ -2,11 +2,11 @@
 
 import sys
 import re
-from commands import *
+from subprocess import *
 try:
    import fabric
 except Exception as e:
-   print 'Exception on Import = ', e
+   print('Exception on Import = ', e)
    getoutput('yum -y install fabric \r')
 from fabric.api import cd,run,env, hide, get, settings
 from fabric.contrib import files
@@ -30,7 +30,7 @@ class Bonding(object):
         env.user = self.user
         env.pwd = self.pwd
         if nic_name == []:
-           print 'ERROR: List of NICs is empty'
+           print('ERROR: List of NICs is empty')
            sys.exit(1)
         for nic in nic_name:
             path='/etc/sysconfig/network-scripts/ifcfg-%s' %(nic)
@@ -54,7 +54,7 @@ class Bonding(object):
         env.user = self.user
         env.pwd = self.pwd
         if nic_name == []:
-           print 'ERROR: List of NICs is empty'
+           print('ERROR: List of NICs is empty')
            sys.exit(1)
         for nic in nic_name:
             if nic_state == 'down':
@@ -106,22 +106,22 @@ class Bonding(object):
         env.user = self.user
         env.pwd = self.pwd
         if not isinstance(member_list, list):
-           print 'ERROR: List of member interface is empty'
+           print('ERROR: List of member interface is empty')
            sys.exit(1)
         with settings(warn_only=True):
              result = run("ip link show bond0")
              if result.find('BROADCAST,MULTICAST,MASTER,UP') < 0:
-                print "ERROR: State of Bond interface bond0 is NOT UP"
+                print("ERROR: State of Bond interface bond0 is NOT UP")
                 #sys.exit(1)
              bond_mac = re.search('link/ether (.*) brd',result,re.I).group(1).upper()
              for mem in member_list:
                  result_mem = run("ip link show %s" %(mem))
                  if result_mem.find('BROADCAST,MULTICAST,SLAVE,UP') < 0:
-                    print "ERROR: State of Member interface %s is NOT UP" %(mem)
+                    print("ERROR: State of Member interface %s is NOT UP" %(mem))
                     #sys.exit(1)
                  mem_mac = re.search('link/ether (.*) brd',result_mem,re.I).group(1).upper()
                  if mem_mac != bond_mac:
-                    print "ERROR: Bond Interface MAC is not logically applied on its member interface %s" %(mem)
+                    print("ERROR: Bond Interface MAC is not logically applied on its member interface %s" %(mem))
                     #sys.exit(1)
 
     def add_virtual_intf_script(self,hostname,infra_vlan='4093',parent_intf='bond0'):
@@ -210,15 +210,15 @@ class Bonding(object):
                    if result2.succeeded:
                       restart = run("systemctl restart agent-ovs.service")
                    else:
-                      print "ERROR: Adding bond0 to br-int for VLAN mode == FAILed"
+                      print("ERROR: Adding bond0 to br-int for VLAN mode == FAILed")
                       sys.exit(1)
                 else: #incase vxlan
-        	   vif_name = 'bond0.4093' #JISHNU:TBD, for vxlan now harcoding
+                   vif_name = 'bond0.4093' #JISHNU:TBD, for vxlan now harcoding
                    run("sed -i 's/\"uplink-iface\":.*/\"uplink-iface\": \"%s\",/' %s" %(vif_name,path))
                 restart = run("systemctl restart agent-ovs.service")
                 if restart.succeeded:
                    if run("systemctl status agent-ovs.service").find("active (running)") < 0:
-                      print 'ERROR: OpflexAgent is NOT ACTIVE on Restart after OpflexAgent Conf change == FAILs'
+                      print('ERROR: OpflexAgent is NOT ACTIVE on Restart after OpflexAgent Conf change == FAILs')
                       sys.exit(1)
 
 def main():
@@ -231,29 +231,29 @@ def main():
     mem_intf_2 = sys.argv[4]
     opflex_mode = sys.argv[5]
     member_intf_list = [mem_intf_1,mem_intf_2]
-    print "User passed == %s, %s" %(host_ip,member_intf_list)
+    print("User passed == %s, %s" %(host_ip,member_intf_list))
 
     ##Initialize the BaseClass
     bndg = Bonding(host_ip)
     ## Bringing down Member Interface
-    print "Bringing down Member Interface"
+    print("Bringing down Member Interface")
     bndg.if_down_up(nic_state='down', nic_name= member_intf_list)
     ## Edit Interface Config Scripts for Member interfaces
-    print "Edit Interface Config Scripts for Member interfaces"
+    print("Edit Interface Config Scripts for Member interfaces")
     bndg.add_bond_cfg_to_nic(nic_name= member_intf_list)
     ## Add the Bonding Intf Config
-    print "Add the Bonding Intf Config"
+    print("Add the Bonding Intf Config")
     bndg.create_bond_intf()
     ## Bring up the interfaces
-    print "Bring all three interfaces in order of mem1,mem2, bond0"
+    print("Bring all three interfaces in order of mem1,mem2, bond0")
     intf_list = [mem_intf_1,mem_intf_2,'bond0']
-    print "Interface List for IFUP == %s" %(intf_list)
+    print("Interface List for IFUP == %s" %(intf_list))
     bndg.if_down_up(nic_state='up', nic_name=intf_list)
     ## Verify the Bonding
-    print " Verify the LACP Bonding"
+    print(" Verify the LACP Bonding")
     bndg.verify_bond(member_intf_list)
     ## Bring up Virtual Interface on the parent interface bond0
-    print "Bring up Virtual Interface on the parent interface bond0"
+    print("Bring up Virtual Interface on the parent interface bond0")
     bndg.add_virtual_intf_script(hostname)
     bndg.if_down_up(nic_state='up', nic_name=['bond0.4093'])
     ## Modify the OPflex Conf

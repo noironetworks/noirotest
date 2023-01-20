@@ -2,7 +2,7 @@
 import os
 import sys
 import optparse
-from commands import *
+from subprocess import *
 getoutput("rm -rf /tmp/testsuite*") #Deletes pre-existing test logs
 from time import sleep
 from libs.gbp_heat_libs import gbpHeat
@@ -29,7 +29,7 @@ def main():
     from testcases.testcases_dp.testsuite_diff_ptg_diff_l2p_diff_l3p import \
              test_diff_ptg_diff_l2p_diff_l3p
     # Build the Test Config to be used for all DataPath Testcases
-    print "Setting up global config for all DP Testing"
+    print("Setting up global config for all DP Testing")
     testbed_cfg = gbp_main_config()
     testbed_cfg.setup()
     # Fetch gbp objects via heat output
@@ -46,14 +46,14 @@ def main():
     _iter = 0
     while True:
         verify = testbed_cfg.verifySetup()
-	if verify:
+        if verify:
             break
-	if _iter > 2:
+        if _iter > 2:
            testbed_cfg.cleanup()
            sys.exit(1)
-	print "Sleeping for 20s more for next iteration of Verify"
-	sleep(20)
-	_iter += 1
+        print "Sleeping for 20s more for next iteration of Verify"
+        sleep(20)
+        _iter += 1
     '''
     sleep(20) #JISHNU: Rremove it after the above verify is Uncommented
     header_to_suite_map = {'header1': [header1, test_same_ptg_same_l2p_same_l3p],
@@ -61,7 +61,7 @@ def main():
                             'header3': [header3, test_diff_ptg_diff_l2p_same_l3p],
                            'header4': [header4, test_diff_ptg_diff_l2p_diff_l3p]}
     def run(reboot=''):
-        for val in header_to_suite_map.itervalues():
+        for val in header_to_suite_map.values():
             # Initialize Testsuite specific config setup/cleanup class
             header = val[0]()
             # Build the Testsuite specific setup/config
@@ -94,28 +94,28 @@ def main():
         #we should sleep 7 mins before we send traffic
         #TODO: Add online status check for the leafs/spines post reload
         if options.integ == 'borderleaf':
-                print "////// Run DP-Test Post Reload of BorderLeaf //////"
+                print("////// Run DP-Test Post Reload of BorderLeaf //////")
                 reboot = 'POST_RELOAD_BORDERLEAF'
                 testbed_cfg.reloadAci()
         if options.integ == 'leaf':
-                print "////// Run DP-Test Post Reload of Non-BorderLeaf //////"
+                print("////// Run DP-Test Post Reload of Non-BorderLeaf //////")
                 reboot = 'POST_RELOAD_NONBORDERLEAF'
                 testbed_cfg.reloadAci(nodetype='leaf')
         if options.integ == 'spine':
-                print "////// Run DP-Test Post Reload of Spine //////"
+                print("////// Run DP-Test Post Reload of Spine //////")
                 reboot = 'POST_RELOAD_SPINE'
                 testbed_cfg.reloadAci(nodetype='spine')
-                print " **** Sleeping for Spine toboot up ****"
+                print(" **** Sleeping for Spine toboot up ****")
                 sleep(430)  
         # After Reboot of ACI node, verifyCfg and send traffic
         sleep(60)
         if not testbed_cfg.verifySetup():
-                print "Verification of Test Config Failed, %s" %(reboot)
+                print("Verification of Test Config Failed, %s" %(reboot))
                 testbed_cfg.cleanup()
                 sys.exit(1)
-	run(reboot=reboot)
+        run(reboot=reboot)
     testbed_cfg.cleanup() 
-    print "\nDataPath TestSuite executed Successfully\n"
+    print("\nDataPath TestSuite executed Successfully\n")
     
 if __name__ == "__main__":
     main()

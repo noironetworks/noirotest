@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import time
 import re
 import os
@@ -9,9 +9,9 @@ import pexpect
 import xml.etree.ElementTree as ET
 
 def isurlreachable(url):
-    request = urllib2.Request(url)
+    request = urllib.request.Request(url)
     try:
-        urllib2.urlopen(request)
+        urllib.request.urlopen(request)
     except:
         return False
     else:
@@ -24,7 +24,7 @@ def generateToken(challenge, url):
         numTries = numTries - 1
         try:
             #print "Trying to get debug token for challenge %s (retries remaining %s)" % (challenge, numTries)
-            fd = urllib2.urlopen("%s?key=%s" % (url, challenge) )
+            fd = urllib.request.urlopen("%s?key=%s" % (url, challenge) )
             time.sleep(0.5)
             responses = fd.readlines()
             response = ''.join(responses)
@@ -32,9 +32,9 @@ def generateToken(challenge, url):
             m = exp.search(response)
             if m:
                 return m.group(1)
-            print numTries
-        except Exception, e:
-            print "Exception %s seen while trying to fetch root debug token" % e
+            print(numTries)
+        except Exception as e:
+            print("Exception %s seen while trying to fetch root debug token" % e)
             pass
         time.sleep(delay)
 

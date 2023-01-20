@@ -43,8 +43,8 @@ class NatGbpTestSuite(object):
         self.extrtr = EXTRTR
         self.extrtr_ip1 = EXTRTR_IP1
         self.extrtr_ip2 = EXTRTR_IP2
-	self.gwip1_extrtr = GWIP1_EXTRTR
-	self.gwip2_extrtr = GWIP2_EXTRTR
+        self.gwip1_extrtr = GWIP1_EXTRTR
+        self.gwip2_extrtr = GWIP2_EXTRTR
         self.ntknode = NTKNODE
         self.apicip = APICIP
         self.avail_zone = AVAIL_ZONE
@@ -57,7 +57,7 @@ class NatGbpTestSuite(object):
         self.steps = NatFuncTestMethods()
         self.forextrtr = gbpFabTraff()
         self.flag=flag
-	self.plugin = PLUGIN_TYPE
+        self.plugin = PLUGIN_TYPE
         
     def test_runner(self):
         """
@@ -68,9 +68,9 @@ class NatGbpTestSuite(object):
         self.steps.DeleteOrCleanup('cleanup') 
         self.globalcfg.cleanup()
         # Initiate Global Configuration 
-	if self.plugin:
-	    if not self.steps.create_external_networks():
-	  	sys.exit(1)
+        if self.plugin:
+            if not self.steps.create_external_networks():
+                sys.exit(1)
         self.globalcfg.CfgGlobalObjs() 
         test_results = {}
         test_list = [self.test_nat_func_1,
@@ -98,7 +98,7 @@ class NatGbpTestSuite(object):
                 #so that on subsequent SNAT TCs you need not add host_pool
                     matchsnat += 1
                     if matchsnat == 1:
-			if not self.plugin:
+                        if not self.plugin:
                             self.steps.addhostpoolcidr()
                 if test() == 0: #Explicit check since test_func does not return 1/True
                     test_results[string.upper(test.__name__.lstrip('self.'))] = 'FAIL'
@@ -113,7 +113,7 @@ class NatGbpTestSuite(object):
                         self.__class__.__name__.upper(), string.upper(test.__name__.lstrip('self.'))))
         pprint.pprint(test_results)
         self.steps.DeleteOrCleanup('cleanup')
-	if not self.plugin:
+        if not self.plugin:
             self.steps.addhostpoolcidr(delete=True)
         # Fix external routes
         self.forextrtr.add_route_in_extrtr(
@@ -324,7 +324,7 @@ class NatGbpTestSuite(object):
         if not self.steps.testCreateNatPoolAssociateExtSeg():
            return 0
         if self.steps.testAssociateFipToVMs(): #Negative Check
-	    LOG.error(
+            LOG.error(
             "\n Expected FIP Association To Fail,"
             " since L3P is NOT yet associated to ExtSeg")
             return 0
@@ -397,7 +397,7 @@ class NatGbpTestSuite(object):
         DcExtsegid = self.steps.testCreateExtSegWithDefault(EXTSEG_SEC)
         if not DcExtsegid:
            return 0
-        print 'DcExtSegID ==',DcExtsegid
+        print('DcExtSegID ==',DcExtsegid)
         if not self.steps.testAssociateExtSegToBothL3ps(extsegid=DcExtsegid):
            return 0
         if not self.steps.testUpdateNatPoolAssociateExtSeg(DcExtsegid):
@@ -722,7 +722,7 @@ class NatGbpTestSuite(object):
                                           )
         if not self.steps.testTrafficFromExtRtrToVmFip(self.extrtr):
            return 0
-	#Verifying Traffic to be SNATed on DisAsso FIPs
+        #Verifying Traffic to be SNATed on DisAsso FIPs
         LOG.info(
         "\n SNATed Traffic from VMs to ExtRTR post FIPs disassociated")
         if not self.steps.testDisassociateFipFromVMs():
@@ -745,7 +745,7 @@ class NatGbpTestSuite(object):
         #NOTE: For this TC, want to add host_pool_cidr to the L3out
         #while remove it from L3out1(this was already added by
         #test_runner func).Ensure to list this TC as the last TC to run
-	if not self.plugin:
+        if not self.plugin:
             self.steps.addhostpoolcidr(delete=True,flag=self.flag)
             self.steps.addhostpoolcidr(l3out=EXTSEG_SEC)
         if not self.steps.testCreateExtSegWithDefault(EXTSEG_PRI):
@@ -792,7 +792,7 @@ class NatGbpTestSuite(object):
         DcExtsegid = self.steps.testCreateExtSegWithDefault(EXTSEG_SEC)
         if not DcExtsegid:
            return 0
-        print 'DcExtSegID ==',DcExtsegid
+        print('DcExtSegID ==',DcExtsegid)
         if not self.steps.testCreateUpdateExternalPolicy(extseg=DcExtsegid,
                                                          extpol='nondefault'):
            return 0

@@ -65,7 +65,7 @@ class gbpHeat(object):
            tenant = self.tenant
         cmd_ver = "openstack --os-tenant-name %s stack show %s" %(tenant,name)
         if val ==1: ## Create & Verify Stack
-	    if upload:
+            if upload:
                 upload_files(self.cntrlrip,
                              self.username,
                              self.password,
@@ -88,9 +88,9 @@ class gbpHeat(object):
                 if cmd_out.find('CREATE_COMPLETE') != -1:
                    return 1
                 elif cmd_out.find('CREATE_FAILED') != -1:
-		      _log.info("Heat Stack Create Failed, bailing out")
-		      return 0
-		else:
+                      _log.info("Heat Stack Create Failed, bailing out")
+                      return 0
+                else:
                     _log.info("Keep Retrying every 5s to check if heat stack-create completed")
                     sleep(5)
                     cmd_out = self.run_heat_cli(cmd_ver)
@@ -134,10 +134,10 @@ class gbpHeat(object):
         """
         in_file = template_file
         f = open(in_file,'rt')
-        heat_conf = yaml.load(f)
+        heat_conf = yaml.safe_load(f)
         _outputs = heat_conf["outputs"]
         objs_uuid = {}
-        for key in _outputs.iterkeys():
+        for key in _outputs.keys():
             cmd = 'heat output-show %s %s' %(stack_id_name,key)
             cmd_out = self.run_heat_cli(cmd)
             #print cmd_out
@@ -153,9 +153,9 @@ class gbpHeat(object):
         path = path='../'
         for root,dirs,files in os.walk(path):
             if heat_templ_file in files:
-	        yaml_file = os.path.join(root, heat_templ_file)
+                yaml_file = os.path.join(root, heat_templ_file)
         with open(yaml_file,'rt') as f:
-           heat_conf = yaml.load(f)
+           heat_conf = yaml.safe_load(f)
         obj_uuid = {}
         outputs_dict = heat_conf["outputs"]
         # This comprise dictionary with keys as in [outputs] block
@@ -167,7 +167,7 @@ class gbpHeat(object):
         output_dict = {}
         for output in heat_dict['outputs']:
             output_dict[output['output_key']] = output['output_value']
-        for key in outputs_dict.iterkeys():
+        for key in outputs_dict.keys():
             if output_dict.get(key):
                 obj_uuid[key] = output_dict[key]
         return obj_uuid

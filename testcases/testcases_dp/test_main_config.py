@@ -53,11 +53,11 @@ if plugin: #Incase of MergedPlugin
         gbpaci = gbpApic(apic_ip, mode='aim')
 else:
     gbpaci = gbpApic(apic_ip, password=apic_passwd,
-		       apicsystemID=APICSYSTEM_ID) 
+                       apicsystemID=APICSYSTEM_ID) 
 vmlist = ['VM1','VM2','VM3','VM4',
           'VM5','VM6','VM7','VM8',
-	  'VM9','VM10','VM11','VM12'	
-	 ]
+          'VM9','VM10','VM11','VM12'    
+         ]
         #Below L2Ps needed for APIC Verification
 L2plist = [
            'demo_same_ptg_l2p_l3p_bd',
@@ -88,7 +88,7 @@ class gbp_main_config(object):
         """
         Iniatizing the test-cfg variables & classes
         """
-	self.apicsystemID = conf['apic_system_id']
+        self.apicsystemID = conf['apic_system_id']
         self.nova_agg = conf['nova_agg_name']
         self.nova_az = conf['nova_az_name']
         self.comp_node = conf['az_comp_node']
@@ -107,25 +107,25 @@ class gbp_main_config(object):
         self.heat_temp_test = conf['main_setup_heat_temp']
         self.num_hosts = conf['num_comp_nodes']
         self.heat_stack_name = conf['heat_dp_stack_name']
-	self.pausetodebug = conf['pausetodebug']
+        self.pausetodebug = conf['pausetodebug']
         self.test_parameters = conf['test_parameters']
-	self.plugin = conf['plugin-type']
+        self.plugin = conf['plugin-type']
         self.gbpnova = gbpNova(get_cntlr_ip(self.cntlr_ip),cntrlr_uname=self.cntlr_user,cntrlr_passwd=self.cntlr_passwd,
                   keystone_user=self.key_user,keystone_password=self.key_passwd)
         self.gbpheat = gbpHeat(get_cntlr_ip(self.cntlr_ip),cntrlr_uname=self.cntlr_user, cntrlr_passwd=self.cntlr_passwd)
-	if self.plugin: #Incase of MergedPlugin
+        if self.plugin: #Incase of MergedPlugin
             if self.apic_passwd:
                 self.gbpaci = gbpApic(self.apic_ip, mode='aim',
                                       password=self.apic_passwd)
             else:
                 self.gbpaci = gbpApic(self.apic_ip, mode='aim')
-	else:
+        else:
             self.gbpaci = gbpApic(self.apic_ip, password=self.apic_passwd,
-			       apicsystemID=self.apicsystemID) 
-	self.vmlist = ['VM1','VM2','VM3','VM4',
-		       'VM5','VM6','VM7','VM8',
-		       'VM9','VM10','VM11','VM12'	
-		      ]
+                               apicsystemID=self.apicsystemID) 
+        self.vmlist = ['VM1','VM2','VM3','VM4',
+                       'VM5','VM6','VM7','VM8',
+                       'VM9','VM10','VM11','VM12'       
+                      ]
         #Below L2Ps needed for APIC Verification
         self.L2plist = [
                         'demo_same_ptg_l2p_l3p_bd',
@@ -144,13 +144,13 @@ class gbp_main_config(object):
         parameter_args = []
         if self.heat_temp_test:
             import socket
-            print("hostname is %s" % socket.gethostname())
+            print(("hostname is %s" % socket.gethostname()))
             import os
-            print "current directory is %s" % os.getcwd()
+            print("current directory is %s" % os.getcwd())
             fd = open(self.heat_temp_test, 'r')
             if not fd:
                 return
-            template_data = yaml.load(fd)
+            template_data = yaml.safe_load(fd)
             for parameter in template_data['parameters']:
                 if conf.get(parameter):
                     parameter_args.append(' -P ' + parameter + '=' + conf[parameter])
@@ -185,116 +185,116 @@ class gbp_main_config(object):
         #Fetch the Tenant's DN for Openstack project 'admin'
         if self.plugin:
             cmd = ('source ~/%s && openstack project show admin -c id -f value' % RCFILE)
-	    tnt = run_remote_cli(cmd, get_cntlr_ip(self.cntlr_ip), self.cntlr_user, self.cntlr_passwd)
+            tnt = run_remote_cli(cmd, get_cntlr_ip(self.cntlr_ip), self.cntlr_user, self.cntlr_passwd)
         else:
             tnt='admin'
         #Adding SSH-filter to Svc_Contract provided by Svc_Epgs
         self._log.info(
             "\n Adding SSH-Filter to Svc_epg created for every dhcp_agent")
         try:
-	    if not self.plugin: #i.e. if 'classical plugin'
-	        if not self.gbpaci.create_add_filter('admin'):
-			raise Exception("Adding filter to SvcEpg failed")
-	    else: #i.e. if MergedPlugin
+            if not self.plugin: #i.e. if 'classical plugin'
+                if not self.gbpaci.create_add_filter('admin'):
+                        raise Exception("Adding filter to SvcEpg failed")
+            else: #i.e. if MergedPlugin
                if not CONTAINERIZED_SERVICES:
                    cmd = "%s add_ssh_filter.py create" % PYCMD
                else:
                    cmd = "%s /home/add_ssh_filter.py create" % PYCMD
                cntlr_ips = self.cntlr_ip if isinstance(self.cntlr_ip, list) else [self.cntlr_ip]
                for cntlr_ip in cntlr_ips:
-	           if isinstance (run_remote_cli(cmd,
+                   if isinstance (run_remote_cli(cmd,
                                    cntlr_ip, self.cntlr_user, self.cntlr_passwd,
                                    service='aim'), tuple):
-		        raise Exception("adding filter to SvcEpg failed in AIM")
-	except Exception as e:
+                        raise Exception("adding filter to SvcEpg failed in AIM")
+        except Exception as e:
                  self._log.error(
                  "\nABORTING THE TESTSUITE RUN: " + repr(e))
-	         self.cleanup() 
-	         sys.exit(1)
+                 self.cleanup() 
+                 sys.exit(1)
 
     def verifySetup(self):
-   	"""
-	Verfies the Setup after being brought up
-	"""
-	self._log.info(
-	    "\nVerify the Orchestrated Configuration in ACI")
-	try:
-	    self._log.info(
-		"\n Verify the Operatonal State of EPGs")
-	    operEpgs = self.gbpaci.getEpgOper('admin')
-	    if operEpgs:
-		vmstate = 'learned,vmm'
-		for vm in self.vmlist:
-		    notfound = 0
-		    for epg,value in operEpgs.iteritems():
-			#since each value is a dict itself,
+        """
+        Verfies the Setup after being brought up
+        """
+        self._log.info(
+            "\nVerify the Orchestrated Configuration in ACI")
+        try:
+            self._log.info(
+                "\n Verify the Operatonal State of EPGs")
+            operEpgs = self.gbpaci.getEpgOper('admin')
+            if operEpgs:
+                vmstate = 'learned,vmm'
+                for vm in self.vmlist:
+                    notfound = 0
+                    for epg,value in operEpgs.items():
+                        #since each value is a dict itself,
                         #with key = vmname
-			if vm in value.keys():
-		           if not vmstate in value[vm]['status']:
-			       raise Exception(
+                        if vm in list(value.keys()):
+                           if not vmstate in value[vm]['status']:
+                               raise Exception(
                                  'vm %s NOT Learned in Epg %s' %(vm,epg)
-				 )
-		        else:
-			    notfound += 1
-		    if notfound == len(operEpgs.keys()):    
-			raise Exception(
-			     'vm %s NOT found in APIC' %(vm))
+                                 )
+                        else:
+                            notfound += 1
+                    if notfound == len(list(operEpgs.keys())):    
+                        raise Exception(
+                             'vm %s NOT found in APIC' %(vm))
             #Verify the BDs in OperState of Service EPGs
             #pop them out of the operEpgs
-	    if not self.plugin: #Classical
+            if not self.plugin: #Classical
                 for bd in self.L2plist:
-		    svcEpg = 'Shd-%s' %(bd)
-		    if svcEpg in operEpgs.keys():
-		        svcVal = operEpgs.pop(svcEpg)
-		        if svcVal['bdname'] != bd \
-			    or svcVal['bdstate'] != 'formed':
-			        raise Exception(
-			        'epg %s has Unresolved BD' %(svcEpg))
-		    else:
-		        raise Exception(
-		        'SvcEpg %s NOT found in APIC' %(svcEpg))
-	    else: #Merged-Plugin, verify sync-status of all BDs
-		def aimcheck(obj,objtype):
-		    tntname = self.gbpaci.getTenant(getName='admin')
-		    if objtype == 'epg':
-			cmd = "aimctl manager endpoint-group-get " +\
-			 	"%s OpenStack %s | grep sync_status" \
-				%(tntname, obj)
-		    if objtype == 'bd':
-		        cmd = "aimctl manager bridge-domain-get %s %s"\
-			       %(tntname, obj) + " | grep sync_status" 
+                    svcEpg = 'Shd-%s' %(bd)
+                    if svcEpg in list(operEpgs.keys()):
+                        svcVal = operEpgs.pop(svcEpg)
+                        if svcVal['bdname'] != bd \
+                            or svcVal['bdstate'] != 'formed':
+                                raise Exception(
+                                'epg %s has Unresolved BD' %(svcEpg))
+                    else:
+                        raise Exception(
+                        'SvcEpg %s NOT found in APIC' %(svcEpg))
+            else: #Merged-Plugin, verify sync-status of all BDs
+                def aimcheck(obj,objtype):
+                    tntname = self.gbpaci.getTenant(getName='admin')
+                    if objtype == 'epg':
+                        cmd = "aimctl manager endpoint-group-get " +\
+                                "%s OpenStack %s | grep sync_status" \
+                                %(tntname, obj)
+                    if objtype == 'bd':
+                        cmd = "aimctl manager bridge-domain-get %s %s"\
+                               %(tntname, obj) + " | grep sync_status" 
                     cntlr_ips = self.cntlr_ip if isinstance(self.cntlr_ip, list) else [self.cntlr_ip]
                     for cntlr_ip in cntlr_ips:
-		        if not "synced" in run_remote_cli(cmd,
-						          cntlr_ip,
+                        if not "synced" in run_remote_cli(cmd,
+                                                          cntlr_ip,
                                                           self.cntlr_user,
                                                           self.cntlr_passwd,
                                                           service='aim'):
-			    return 0
-		    return 1
-		for epg in operEpgs.keys():
-		    if not aimcheck(epg,'epg'):
-			raise Exception("AIM Univ: EPG %s NOT synced"
-					%(epg))
-	  	bdlist = [obj for obj in operEpgs.keys() if 'net_' in obj]
-		apic_bd_state = self.gbpaci.getBdOper('admin')
-	 	for bd in bdlist:
-		    if not aimcheck(bd,'bd'):
-			raise Exception("AIM Univ: BD %s NOT synced"
-					%(bd))
-		    if apic_bd_state[bd]['vrfstate'] != 'formed':
-			raise Exception("APIC Univ: Vrf of BD %s NOT resolved"
-					%(bd))
-		
-	except Exception as e:
-	    self._log.error(
+                            return 0
+                    return 1
+                for epg in list(operEpgs.keys()):
+                    if not aimcheck(epg,'epg'):
+                        raise Exception("AIM Univ: EPG %s NOT synced"
+                                        %(epg))
+                bdlist = [obj for obj in list(operEpgs.keys()) if 'net_' in obj]
+                apic_bd_state = self.gbpaci.getBdOper('admin')
+                for bd in bdlist:
+                    if not aimcheck(bd,'bd'):
+                        raise Exception("AIM Univ: BD %s NOT synced"
+                                        %(bd))
+                    if apic_bd_state[bd]['vrfstate'] != 'formed':
+                        raise Exception("APIC Univ: Vrf of BD %s NOT resolved"
+                                        %(bd))
+                
+        except Exception as e:
+            self._log.error(
             '\nSetup Verification Failed Because of this Issue: '+repr(e))
             self._log.error(
             "\nABORTING THE TESTSUITE RUN, on Setup Verification Failure")
-	    if self.pausetodebug:
-	       PauseToDebug()
-  	    return 0
-	return 1
+            if self.pausetodebug:
+               PauseToDebug()
+            return 0
+        return 1
 
     def reloadAci(self,nodetype='borderleaf'):
         """
@@ -323,15 +323,15 @@ class gbp_main_config(object):
         self._log.info("Cleaning Up The Test Config")
         if stack == 0:
            self.gbpheat.cfg_all_cli(0, self.heat_stack_name)
-	   if self.plugin:
-	       # Remove the noiro-ssh filter from AIM
+           if self.plugin:
+               # Remove the noiro-ssh filter from AIM
                if not CONTAINERIZED_SERVICES:
                    cmd = "%s add_ssh_filter.py delete" % PYCMD
                else:
                    cmd = "%s /home/add_ssh_filter.py delete" % PYCMD
                cntlr_ips = self.cntlr_ip if isinstance(self.cntlr_ip, list) else [self.cntlr_ip]
                for cntlr_ip in cntlr_ips:
-	           run_remote_cli(cmd,
+                   run_remote_cli(cmd,
                                   cntlr_ip, self.cntlr_user,
                                   self.cntlr_passwd, service='aim')
            # Ntk namespace cleanup in Network-Node.. VM names are static

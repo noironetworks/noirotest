@@ -42,8 +42,8 @@ def run_openstack_cli(cmdList,cntrlrip,
             for cmd in cmdList:
                 results = run(cmd,quiet=True)
                 if not results.succeeded:
-		    print "Unsuccessfull cmd-run output, bailing out ==\n",results 
-   		    return 0
+                    print("Unsuccessfull cmd-run output, bailing out ==\n",results) 
+                    return 0
     return results
 
 def sshconnect(hostname, user, passwd):
@@ -86,7 +86,7 @@ def report_table(suite_name):
     table = prettytable.PrettyTable(["TESTCASE_ID", "RESULTS",
                                      "TESTCASE_HEADER"])
     table.padding_width = 1
-    for key, val in tc_dict.iteritems():
+    for key, val in tc_dict.items():
         table.add_row(["%s" % (key), "%s" % (val[0]), "%s" % (val[1])])
     return table
 

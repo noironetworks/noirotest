@@ -59,13 +59,13 @@ class NatTraffic(object):
         Verifies the expected traffic result per testcase
         :: proto - 'all'/'icmp'/'tcp', all = both icmp & tcp
         """
-        print 'Results from the Traffic Run == ', results
+        print('Results from the Traffic Run == ', results)
         if results == 2: #Target VMs are unreachable(not pingable)
             return 0
 
-        print 'TARGET VM IPs == ', target_vm_ip
+        print('TARGET VM IPs == ', target_vm_ip)
         failed = {}
-        for key, val in results.iteritems():
+        for key, val in results.items():
             failed[key] = {}
             if proto == 'icmp':
                 if val['icmp'] != 1:
@@ -82,17 +82,17 @@ class NatTraffic(object):
                     failed[key]['icmp'] = 'FAIL'
                 if val['tcp'] != 1:
                     failed[key]['tcp'] = 'FAIL'
-        for key in results.keys():
+        for key in list(results.keys()):
             #Now remove the keys with empty dict
             #so that Failed dict ONLY has the Keys/Target IPs
             #with FAIL protos
             if not len(failed[key]):
                failed.pop(key)
         if len(failed):
-           print "Verify Failed Traffic == ", failed
+           print("Verify Failed Traffic == ", failed)
            if isinstance(target_vm_ip,dict):
-              for key in failed.keys():
-                  for k, v in target_vm_ip.iteritems():  # target_vm_ip is expected to be a dict
+              for key in list(failed.keys()):
+                  for k, v in target_vm_ip.items():  # target_vm_ip is expected to be a dict
                       if key in v:
                          # Replacing the FIP by its VM Name
                          failed[k] = failed.pop(key)
@@ -115,11 +115,11 @@ class NatTraffic(object):
             #src_vm_dhcp_ns = self.gbpcfg.get_netns(
             #    self.ntk_node, src_vm_pvt_ip_subnet)
             self.vm_to_ip_ns[vm] = [vm_to_ip_list, src_vm_dhcp_ns]
-        print 'VM-to-IP-NS == %s' % (self.vm_to_ip_ns)
+        print('VM-to-IP-NS == %s' % (self.vm_to_ip_ns))
 
         dhcp_ns_vm = self.vm_to_ip_ns[vm_name][1]
         vm_pvt_ip = self.vm_to_ip_ns[vm_name][0][0]
-        print 'EXTERNAL GW IPs from TESTUITE == ', extgw
+        print('EXTERNAL GW IPs from TESTUITE == ', extgw)
         gbppexptraff = gbpExpTraff(
             self.ntk_node, dhcp_ns_vm, vm_pvt_ip, extgw)
         # Run for all protocols irrespective of the contract type

@@ -19,10 +19,10 @@ def traff_from_extgwrtr(extgwrtr_ip, fipsOftargetVMs, proto='all', jumbo=0):
     Traffic from ExternalGW Router to Tenant VMs
     """
     traff = gbpFabTraff()
-    print 'FIPs of Target VMs == %s' % (fipsOftargetVMs)
+    print('FIPs of Target VMs == %s' % (fipsOftargetVMs))
     # List of FIPs ExtGWRtr will ping, ping_fips should be type List
     if isinstance(fipsOftargetVMs,dict):
-        ping_fips = fipsOftargetVMs.values() 
+        ping_fips = list(fipsOftargetVMs.values()) 
     if isinstance(fipsOftargetVMs,list):
         ping_fips = fipsOftargetVMs
     if not isinstance(fipsOftargetVMs,list):
@@ -37,15 +37,15 @@ def traff_from_extgwrtr(extgwrtr_ip, fipsOftargetVMs, proto='all', jumbo=0):
                 results_icmp = traff.test_regular_icmp(extgwrtr_ip, ping_fips)
             results_tcp = traff.test_regular_tcp(extgwrtr_ip, ping_fips)
             if results_icmp != 1 and results_tcp != 1:
-                retval = {'ICMP': results_icmp.keys(), 'TCP': results_tcp.keys()}
+                retval = {'ICMP': list(results_icmp.keys()), 'TCP': list(results_tcp.keys())}
             elif results_icmp != 1:
-                retval = {'ICMP': results_icmp.keys()}
+                retval = {'ICMP': list(results_icmp.keys())}
             elif results_tcp != 1:
-                retval = {'TCP': results_tcp.keys()}
+                retval = {'TCP': list(results_tcp.keys())}
             else:
                 return 1
             if isinstance(retval,dict):
-               print "Wait for 10 secs before the next ICMP & TCP retry\n"
+               print("Wait for 10 secs before the next ICMP & TCP retry\n")
                sleep(10)
                attemptall += 1
         return retval
@@ -58,24 +58,24 @@ def traff_from_extgwrtr(extgwrtr_ip, fipsOftargetVMs, proto='all', jumbo=0):
         attempt = 1
         while attempt < max_traff_attempts:
             if isinstance(results_icmp, dict):
-               print "Wait for 10 secs before the next ICMP retry\n"
+               print("Wait for 10 secs before the next ICMP retry\n")
                sleep(10)
                results_icmp = traff.test_regular_icmp(extgwrtr_ip, ping_fips)
                attempt += 1
             else:
                break
         if attempt == max_traff_attempts:
-               return {'ICMP': results_icmp.keys()}
+               return {'ICMP': list(results_icmp.keys())}
     if proto == 'tcp':
         results_tcp = traff.test_regular_tcp(extgwrtr_ip, ping_fips)
         retry = 1
         while retry < max_traff_attempts:
             if isinstance(results_tcp, dict):
-               print "Wait for 10 secs before the next TCP retry\n"
+               print("Wait for 10 secs before the next TCP retry\n")
                sleep(10)
                results_tcp = traff.test_regular_tcp(extgwrtr_ip, ping_fips)
                retry += 1
             else:
                break
         if retry == max_traff_attempts:
-            return {'TCP': results_tcp.keys()}
+            return {'TCP': list(results_tcp.keys())}
