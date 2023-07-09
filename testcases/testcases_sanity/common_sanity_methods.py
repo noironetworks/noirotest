@@ -1194,8 +1194,8 @@ class sendTraffic(object):
             while True:
                if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1,no_ipv6=no_ipv6):
                    iter+=1
-                   #Sleep for 1s and re-run traffic again
-                   sleep(1)
+                   #Sleep for 5s and re-run traffic again
+                   sleep(5)
                    if iter > max_traff_attempts:
                         failed_traff = 1
                         break
@@ -1304,8 +1304,8 @@ class sendTraffic(object):
             while True:
                if not vm_traff.run_and_verify_traffic(proto,tcp_syn_only=1):
                    iter+=1
-                   #Sleep for 1s and re-run traffic again
-                   sleep(1)
+                   #Sleep for 5s and re-run traffic again
+                   sleep(5)
                    if iter > max_traff_attempts:
                         failed_traff = 1
                         break
