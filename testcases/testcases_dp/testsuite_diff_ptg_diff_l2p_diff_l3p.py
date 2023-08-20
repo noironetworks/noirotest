@@ -86,13 +86,13 @@ class test_diff_ptg_diff_l2p_diff_l3p(object):
                     ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
                 else:
                     if 'test_1' in test.__name__ or 'test_2' in test.__name__:
-                        test_results[string.upper(test.__name__.lstrip('self.'))] = 'PASS'
-                        self._log.info("\n%s_%s_%s 10 subtestcases == PASS" % (self.__class__.__name__.upper(
-                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        test_results[test.__name__.lstrip('self.').upper()] = 'PASS'
+                        self._log.info("\n%s_%s_%s 10 subtestcases == PASS" % (self.__class__.__name__.upper(),
+                                    log_string.upper(), test.__name__.lstrip('self.').upper())) 
                     else:
-                        test_results[string.upper(test.__name__.lstrip('self.'))] = 'PASS'
-                        self._log.info("\n%s_%s_%s == PASS" % (self.__class__.__name__.upper(
-                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        test_results[test.__name__.lstrip('self.').upper()] = 'PASS'
+                        self._log.info("\n%s_%s_%s == PASS" % (self.__class__.__name__.upper(),
+                                    log_string.upper(), test.__name__.lstrip('self.').upper()))   
             except TestFailed as err:
                 print(err)
 

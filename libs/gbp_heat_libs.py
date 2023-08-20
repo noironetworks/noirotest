@@ -20,7 +20,7 @@ import logging
 import re
 import yaml
 from time import sleep
-from gbp_utils import *
+from libs.gbp_utils import *
 from fabric.contrib import files
 
 # Initialize logging

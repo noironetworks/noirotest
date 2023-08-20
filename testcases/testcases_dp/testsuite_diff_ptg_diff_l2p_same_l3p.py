@@ -106,26 +106,22 @@ class test_diff_ptg_diff_l2p_same_l3p(object):
                         ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
                 elif abort == 1:
                     if 'test_1' in test.__name__ or 'test_2' in test.__name__:
-                        test_results[string.upper(
-                            test.__name__.lstrip('self.'))] = 'ABORT'
-                        self._log.info("\n%s_%s_%s 10 subtestcases == ABORT" % (self.__class__.__name__.upper(
-                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        test_results[test.__name__.lstrip('self.').upper()] = 'ABORT'
+                        self._log.info("\n%s_%s_%s 10 subtestcases == ABORT" % (self.__class__.__name__.upper(),
+                                    log_string.upper(), test.__name__.lstrip('self.').upper()))    
                     else:
-                        test_results[string.upper(
-                            test.__name__.lstrip('self.'))] = 'ABORT'
-                        self._log.info("\n%s_%s_%s == ABORT" % (self.__class__.__name__.upper(
-                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        test_results[test.__name__.lstrip('self.').upper()] = 'ABORT'
+                        self._log.info("\n%s_%s_%s == ABORT" % (self.__class__.__name__.upper(),
+                                    log_string.upper(), test.__name__.lstrip('self.').upper()))
                 else:
                     if 'test_1' in test.__name__ or 'test_2' in test.__name__:
-                        test_results[string.upper(
-                            test.__name__.lstrip('self.'))] = 'PASS'
-                        self._log.info("\n%s_%s_%s 10 subtestcases == PASS" % (self.__class__.__name__.upper(
-                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        test_results[test.__name__.lstrip('self.').upper()] = 'PASS'
+                        self._log.info("\n%s_%s_%s 10 subtestcases == PASS" % (self.__class__.__name__.upper(),
+                                    log_string.upper(), test.__name__.lstrip('self.').upper()))
                     else:
-                        test_results[string.upper(
-                            test.__name__.lstrip('self.'))] = 'PASS'
-                        self._log.info("\n%s_%s_%s == PASS" % (self.__class__.__name__.upper(
-                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        test_results[test.__name__.lstrip('self.').upper()] = 'PASS'
+                        self._log.info("\n%s_%s_%s == PASS" % (self.__class__.__name__.upper(),
+                                    log_string.upper(), test.__name__.lstrip('self.').upper()))
         pprint.pprint(test_results)
  
     def verify_traff(self, proto=['all']):

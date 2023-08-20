@@ -8,7 +8,7 @@ LOG.setLevel(logging.INFO)
 
 def tenant_create(net_create_func):
     def tenant_net_create():
-        tenant_name = ''.join(random.choice(string.lowercase) for i in range(10))
+        tenant_name = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
         neutron.addDelkeystoneTnt(tenant_name, 'create')
         return net_create_func(tenant_name)
     return tenant_net_create

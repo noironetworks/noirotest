@@ -76,6 +76,8 @@ class gbpExpTraffHping3(object):
 
     def vm_reachable(self, pexpect_session, ip_list=None, no_ipv6=False):
         for ip in ip_list:
+            if isinstance(ip, bytes):
+                ip = ip.decode('utf-8')
             ip_type = netaddr.IPAddress(ip)
             if ip_type.version == 6:
                 if no_ipv6:
@@ -117,6 +119,8 @@ class gbpExpTraffHping3(object):
         # only use the IPv4 address if dual-stack
         src_ip = None
         for ip in ip_list:
+            if isinstance(ip, bytes):
+                ip = ip.decode('utf-8')
             ip_type = netaddr.IPAddress(ip)
             if ip_type.version == 4:
                 src_ip = ip
@@ -155,6 +159,8 @@ class gbpExpTraffHping3(object):
         # only use the IPv4 address if dual-stack
         src_ip = None
         for ip in ip_list:
+            if isinstance(ip, bytes):
+                ip = ip.decode('utf-8')
             ip_type = netaddr.IPAddress(ip)
             if ip_type.version == 4:
                 src_ip = ip
@@ -338,14 +344,15 @@ class gbpExpTraffHping3(object):
         if results == 2:
             return 0
         for dest_ip in self.dest_ep:
+            if isinstance(dest_ip, bytes):
+                dest_ip = dest_ip.decode('utf-8')
             ip_type = netaddr.IPAddress(dest_ip)
             if no_ipv6 and ip_type.version == 6:
                 continue
             allow_list = proto
-            failed = {key: val for key, val in results[
-                dest_ip].items() if val == 0 and key in allow_list}
-            failed.update({key: val for key, val in results[
-                          dest_ip].items() if val == 1 and key not in allow_list})
+            result_for_ip = results.get(dest_ip, {})
+            failed = {key: val for key, val in result_for_ip.items() if val == 0 and key in allow_list}
+            failed.update({key: val for key, val in result_for_ip.items() if val == 1 and key not in allow_list}) 
         if len(failed) > 0:
                 print('Following traffic_types %s = Failed' %(failed))
                 return 0
@@ -444,6 +451,8 @@ class gbpExpTraffNetcat(gbpExpTraffHping3):
     def test_setup(self, protocols=['icmp','tcp','udp'], no_ipv6=False):
         print("Entered test_setup, dest_ep is %s" % self.dest_ep)
         for dest_ep in self.dest_ep:
+            if isinstance(dest_ep, bytes):
+                dest_ep = dest_ep.decode('utf-8')
             ip_type = netaddr.IPAddress(dest_ep)
             # skip any IPv6 or external GW IPs
             if ip_type.version == 6 or dest_ep in self.ips_to_skip:
@@ -468,6 +477,8 @@ class gbpExpTraffNetcat(gbpExpTraffHping3):
 
     def vm_test_traffic(self, pexpect_session, protocols, results, tcp_syn_only=0, port=80, no_ipv6=False):
         for dest_ep in self.dest_ep:
+            if isinstance(dest_ep, bytes):
+                dest_ep = dest_ep.decode('utf-8')
             ip_type = netaddr.IPAddress(dest_ep)
             if no_ipv6 and ip_type.version == 6:
                 continue

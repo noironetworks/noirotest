@@ -101,16 +101,16 @@ class NatGbpTestSuite(object):
                         if not self.plugin:
                             self.steps.addhostpoolcidr()
                 if test() == 0: #Explicit check since test_func does not return 1/True
-                    test_results[string.upper(test.__name__.lstrip('self.'))] = 'FAIL'
+                    test_results[test.__name__.lstrip('self.').upper()] = 'FAIL'
                     LOG.error("\n///// %s_%s == FAIL ////" % (
-                        self.__class__.__name__.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        self.__class__.__name__.upper(), test.__name__.lstrip('self.').upper()))
                     if self.pausetodbg:
                         PauseToDebug()
                     self.steps.DeleteOrCleanup('cleanup')
                 else:
-                    test_results[string.upper(test.__name__.lstrip('self.'))] = 'PASS'
+                    test_results[test.__name__.lstrip('self.').upper()] = 'PASS'
                     LOG.info("\n**** %s_%s == PASS ****" % (
-                        self.__class__.__name__.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        self.__class__.__name__.upper(), test.__name__.lstrip('self.').upper()))
         pprint.pprint(test_results)
         self.steps.DeleteOrCleanup('cleanup')
         if not self.plugin:

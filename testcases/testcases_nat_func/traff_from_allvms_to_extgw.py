@@ -110,7 +110,7 @@ class NatTraffic(object):
             vm_to_ip_list = self.gbpnova.get_any_vm_property(vm)[0]
             vm_to_ip_list = [ip.encode('ascii') for ip in vm_to_ip_list]
             src_vm_pvt_ip_subnet = re.search(
-                '(\d+.\d+.\d+).\d+', vm_to_ip_list[0].encode('ascii'), re.I).group(1)
+                r'(\d+\.\d+\.\d+)\.\d+', vm_to_ip_list[0].decode('utf-8'), re.I).group(1)
             src_vm_dhcp_ns = self.gbpcfg.get_netns(vm)
             #src_vm_dhcp_ns = self.gbpcfg.get_netns(
             #    self.ntk_node, src_vm_pvt_ip_subnet)

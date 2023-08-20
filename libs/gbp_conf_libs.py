@@ -21,7 +21,7 @@ import logging
 import string
 import re
 from fabric.api import cd,run,env, hide, get, settings
-from gbp_utils import *
+from libs.gbp_utils import *
 
 # Initialize logging
 #logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s - %(message)s', level=logging.WARNING)
@@ -46,6 +46,8 @@ class gbpCfgCli(object):
       """
       Execute system calls
       """
+      if isinstance(self.cntrlrip, list):
+          self.cntrlrip = ''.join(self.cntrlrip)
       return run_openstack_cli(cmdList,self.cntrlrip,
                                username=self.uname,passwd=self.passwd)
 
@@ -168,8 +170,7 @@ class gbpCfgCli(object):
            cmd = cmd_tnt+'%s-update ' % cfgobj_dict[cfgobj]+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
         for arg, value in list(kwargs.items()):
-          if '_' in arg:
-             arg=string.replace(arg,'_','-')
+          arg = arg.replace('_', '-')
           cmd = cmd + " --" + "".join( '%s=%s' %(arg, value ))
         # Execute the cmd
         print(("GBP CLI command: %s" % cmd))
@@ -243,8 +244,7 @@ class gbpCfgCli(object):
         cmd = cmd_tnt+'%s-update ' % cfgobj_dict[cfgobj]+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
         for arg, value in list(attr.items()):
-          if '_' in arg:
-             arg=string.replace(arg,'_','-')
+          arg = arg.replace('_', '-')
           cmd = cmd + " --" + "".join( '%s %s' %(arg, value ))
         # Execute the update cmd
         cmd_out = self.exe_command(cmd)

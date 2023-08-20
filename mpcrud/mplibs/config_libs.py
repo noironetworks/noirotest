@@ -174,8 +174,7 @@ class Gbp_Config(object):
         # Build the cmd string for optional/non-default args/values
         for arg, value in list(kwargs.items()):
           if arg != 'tenant':
-              if '_' in arg:
-                 arg=string.replace(arg,'_','-')
+              arg = arg.replace('_', '-')
               if arg == 'shared' and cfgobj in neutron_cfgobjs:
                  augment_cmd = " --shared" #(in case of gbp --shared=<val>)
               else:
@@ -270,8 +269,7 @@ class Gbp_Config(object):
         cmd = cmd_tnt+'%s-update ' % cfgobj_dict[cfgobj]+str(name_uuid)
         # Build the cmd string for optional/non-default args/values
         for arg, value in attr.items():
-          if '_' in arg:
-             arg=string.replace(arg,'_','-')
+          arg = arg.replace('_', '-')
           cmd = cmd + " --" + "".join( '%s %s' %(arg, value ))
         # Execute the update cmd
         cmd_out = self.exe_command(cmd)
