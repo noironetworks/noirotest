@@ -70,7 +70,7 @@ class gbpExpTraffHping3(object):
             pexpect_session.expect(self.host_prompt) #Expecting passwordless access
         pexpect_session.sendline('hostname')
         pexpect_session.expect(self.host_prompt)
-        print(pexpect_session.before)
+        print(pexpect_session.before.decode('utf-8'))
         self.host_sudo(pexpect_session)
         return pexpect_session
 
@@ -94,7 +94,7 @@ class gbpExpTraffHping3(object):
             print(cmd)
             pexpect_session.sendline(cmd) ## Check whether ping works first
             pexpect_session.expect(self.host_prompt)
-            print(pexpect_session.before)
+            print(pexpect_session.before.decode('utf-8'))
             print('Out ==NOIRO')
             if len(re.findall('100% packet loss',pexpect_session.before.decode('utf-8'))): #Count of ping pkts
                print("Cannot run any traffic test since Source VM is Unreachable")
@@ -210,9 +210,9 @@ class gbpExpTraffHping3(object):
                                 %(dest_ep,self.pkt_cnt,self.pkt_size))
                    pexpect_session.expect(self.vm_prompt)
                    print("Sent ICMP packets")
-                   result=pexpect_session.before
+                   result=pexpect_session.before.decode('utf-8')
                    print(result)
-                   if self.parse_ping_output(result.decode('utf-8'),self.pkt_cnt) !=0:
+                   if self.parse_ping_output(result,self.pkt_cnt) !=0:
                       results[dest_ep]['icmp']=1
                    else:
                       results[dest_ep]['icmp']=0
@@ -229,9 +229,9 @@ class gbpExpTraffHping3(object):
                          pexpect_session.expect(self.vm_prompt)
                          print("Sent TCP SYN,SYN ACK,SYN-ACK-FIN to %s" \
                                 %(dest_ep))
-                         result=pexpect_session.before
+                         result=pexpect_session.before.decode('utf-8')
                          print(result)
-                         if self.parse_ping_output(result.decode('utf-8'),self.pkt_cnt) !=0:
+                         if self.parse_ping_output(result,self.pkt_cnt) !=0:
                             results[dest_ep]['tcp']=1
                          else:
                             # Disregard if we passed SYN, but fail any with ACK
@@ -245,9 +245,9 @@ class gbpExpTraffHping3(object):
                         cmd_s = "nc -w 1 -v %s -z 22" %(dest_ep)
                         pexpect_session.sendline(cmd_s)
                         pexpect_session.expect(self.vm_prompt)
-                        result=pexpect_session.before
+                        result=pexpect_session.before.decode('utf-8')
                         print(result)
-                        if 'succeeded' in result.decode('utf-8'):
+                        if 'succeeded' in result:
                             results[dest_ep]['tcp']=1
                         else:
                             results[dest_ep]['tcp']=0
@@ -256,9 +256,9 @@ class gbpExpTraffHping3(object):
                     pexpect_session.sendline(cmd)
                     pexpect_session.expect(self.vm_prompt)
                     print('Sent UDP packets')
-                    result=pexpect_session.before
+                    result=pexpect_session.before.decode('utf-8')
                     print(result)
-                    if self.parse_ping_output(result.decode('utf-8'),self.pkt_cnt) !=0:
+                    if self.parse_ping_output(result,self.pkt_cnt) !=0:
                         results[dest_ep]['udp']=1
                     else:
                         results[dest_ep]['udp']=0
@@ -278,8 +278,8 @@ class gbpExpTraffHping3(object):
         nc_cmd = """ps -ef | grep [S]imple | awk -F" " '{print $1}'"""
         pexpect_session.sendline(nc_cmd)
         pexpect_session.expect(self.vm_prompt)
-        nc_pid=pexpect_session.before
-        kill_cmd = 'kill -9 %s' % nc_pid.decode('utf-8')
+        nc_pid=pexpect_session.before.decode('utf-8')
+        kill_cmd = 'kill -9 %s' % nc_pid
         pexpect_session.sendline(kill_cmd)
         pexpect_session.expect(self.vm_prompt)
 
@@ -287,9 +287,9 @@ class gbpExpTraffHping3(object):
         while False: #TODO: Unless the inherent metadata issue is resolved, no point in executing this part of the code
             pexpect_session.sendline('curl http://169.254.169.254/latest/meta-data')
             pexpect_session.expect(self.vm_prompt)
-            meta_result = pexpect_session.before
+            meta_result = pexpect_session.before.decode('utf-8')
             print(meta_result)
-            if 'hostname' in pexpect_session.before.decode('utf-8'):
+            if 'hostname' in pexpect_session.before:
                 results['metadata']=1
             else:
                 results['metadata']=0
@@ -314,6 +314,10 @@ class gbpExpTraffHping3(object):
             self.vm_start_http_server(pexpect_session, udp=True)
         pexpect_session.sendline('ip addr show eth0')
         pexpect_session.expect(self.vm_prompt)
+        # We don't use decode('utf-8') here because the response
+        # contains single quotes, which don't decode and causes
+        # errors when printing.
+        # TODO: try to figure out how to handle this
         print(pexpect_session.before)
 
         results = {}
