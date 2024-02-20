@@ -127,13 +127,13 @@ class NatFuncTestMethods(object):
                             shared=True, aim = aimntkcfg_sec)
                 self.EXTSUB4 = neutron.subnetcrud('extsub4','create',EXTSEG_SEC,
                                cidr=SNATPOOL,extsub=True,aim=aimsnat)
-	    except Exception as e:
-		LOG.ERROR("External Network Create Failed for MergedPlugin")
-		for l3out in [EXTSEG_PRI, EXTSEG_SEC]:
-	            neutron.runcmd('neutron net-delete %s' %(l3out))
-	    	return 0
-	    return 1
-	    
+            except Exception as e:
+                LOG.ERROR("External Network Create Failed for MergedPlugin")
+                for l3out in [EXTSEG_PRI, EXTSEG_SEC]:
+                    neutron.runcmd('neutron net-delete %s' %(l3out))
+                return 0
+            return 1
+            
 
     def addhostpoolcidr(self,fileloc='/etc/neutron/neutron.conf',
                         l3out=EXTSEG_PRI,delete=False,
@@ -204,10 +204,10 @@ class NatFuncTestMethods(object):
         LOG.info(
         "\nStep: Create External Segment %s\n" %(extsegname))
         if PLUGIN_TYPE:
-	    if extsegname == EXTSEG_PRI:
-		extsub = self.EXTSUB1
-	    else:
-		extsub = self.EXTSUB4
+            if extsegname == EXTSEG_PRI:
+                extsub = self.EXTSUB1
+            else:
+                extsub = self.EXTSUB4
             self.extsegid = gbpcrud.create_gbp_external_segment(
                                         extsegname,
                                         subnet_id = extsub,
@@ -216,13 +216,13 @@ class NatFuncTestMethods(object):
                                            'nexthop': None}],
                                         shared=True
                                        )
-	else:
+        else:
             self.extsegid = gbpcrud.create_gbp_external_segment(
                                        extsegname,
                                        external_routes = [{
                                            'destination':'0.0.0.0/0',
                                            'nexthop': None}],
-					shared=True
+                                        shared=True
                                        )
         if self.extsegid == 0:
             LOG.error(
@@ -253,7 +253,7 @@ class NatFuncTestMethods(object):
                 "\n///// Create the NAT pool with reference to"
                   " the existing External Segment failed /////")
             return 0
-	return 1
+        return 1
 
     def testUpdateNatPoolAssociateExtSeg(self,extsegid):
         """
@@ -271,7 +271,7 @@ class NatFuncTestMethods(object):
                 "\n///// Update External Segment in" 
                 " existing NAT pool failed /////")
            return 0
-	return 1
+        return 1
 
     def testCreatePtgDefaultL3p(self):
         """
@@ -291,7 +291,7 @@ class NatFuncTestMethods(object):
         if self.defaultl3pid == 0:
            LOG.error("\n///// Failed to fetch UUID of Default L3P /////")
            return 0
-	return 1
+        return 1
 
     def testCreateNonDefaultL3pAndL2p(self):
         """
@@ -314,7 +314,7 @@ class NatFuncTestMethods(object):
             LOG.error(
             "\n///// Creation of non-default L2Policy failed /////")
             return 0
-	return 1
+        return 1
 
     def testCreatePtgWithNonDefaultL3p(self):
         """
@@ -329,7 +329,7 @@ class NatFuncTestMethods(object):
             "\n////// Create Policy Target group "
             "with non-default L3Policy failed /////")
             return 0
-	return 1
+        return 1
 
     def testAssociateExtSegToBothL3ps(self,extsegid='',both=True,l3ptype=''):
         """
@@ -365,7 +365,7 @@ class NatFuncTestMethods(object):
                LOG.error(
                "\n///// Associate External Segment to Single L3P failed /////")
                return 0 
-	return 1
+        return 1
         
     def testCreatePolicyTargetForEachPtg(self):
         """
@@ -386,7 +386,7 @@ class NatFuncTestMethods(object):
             "\n///// Creation of Policy Targe failed for PTG=%s /////"
             %(PTG2NAME))
             return 0
-	return 1
+        return 1
 
     def testCreateUpdateExternalPolicy(self,update=0,delete=0,
                                        extseg='',extpol='default'):
@@ -432,7 +432,7 @@ class NatFuncTestMethods(object):
               "\n ///// Creation of External Policy failed /////")
               return 0
            return self.extpolid
-	return 1
+        return 1
    
     def testVerifyCfgdObjects(self,nat_type='dnat'):
         """
@@ -475,7 +475,7 @@ class NatFuncTestMethods(object):
                
                 LOG.error("\n///// Verify for SNAT ExtSeg Failed /////")
                 return 0
-	return 1
+        return 1
 
     def testLaunchVmsForEachPt(self,az2='',same=False):
         """
@@ -512,7 +512,7 @@ class NatFuncTestMethods(object):
            LOG.error(
            "\n///// VM Create using PTG %s failed /////" %(PTG2NAME))
            return 0
-	return 1
+        return 1
 
     def testAssociateFipToVMs(self,ExtSegName=EXTSEG_PRI,ic=False):
         """
@@ -554,12 +554,12 @@ class NatFuncTestMethods(object):
                                             VMs[1],
                                             vmfip=self.vm_to_fip[VMs[0]]
                                             ):
-               print "Success in Static Assignment of FIP to VMs"
+               print("Success in Static Assignment of FIP to VMs")
             else:
                LOG.error(
                "\n///// Static Association of FIP to VM %s failed /////")
                return 0
-	return 1
+        return 1
 
     def testDisassociateFipFromVMs(self,release_fip=True,vmname=False):
         """
@@ -579,7 +579,7 @@ class NatFuncTestMethods(object):
                return 0
         else:
             LOG.info("\nStep: Disassociate FIPs from all VMs\n")
-            for vm,fip in self.vm_to_fip.iteritems():
+            for vm,fip in self.vm_to_fip.items():
                 if not self.action_fip_to_vm(
                                           'disassociate',
                                           vm,
@@ -590,7 +590,7 @@ class NatFuncTestMethods(object):
                     return 0
         if release_fip:
            self._delete_release_fips()
-	return 1
+        return 1
 
     def testApplyUpdatePrsToPtg(self,ptgtype,prs):
         """
@@ -620,7 +620,7 @@ class NatFuncTestMethods(object):
                   LOG.error(
                   "\n///// Updating PTG %s failed /////" %(ptg))
                   return 0
-	return 1
+        return 1
 
     def testCreateNsp(self):
         """
@@ -631,7 +631,7 @@ class NatFuncTestMethods(object):
         self.nspuuid = gbpcrud.create_gbp_network_service_policy_for_nat('TestNsp')
         if self.nspuuid == 0:
            return 0
-	return 1
+        return 1
 
     def testApplyRemoveNSpFromPtg(self,nspuuid=''):
         """
@@ -653,7 +653,7 @@ class NatFuncTestMethods(object):
                   LOG.error(
                   "\n///// Updating PTG with NSP %s failed /////" %(ptg))
                   return 0
-	return 1
+        return 1
 
     def testDeleteNatPool(self):
         """
@@ -663,7 +663,7 @@ class NatFuncTestMethods(object):
         if len(natpool_list) :
               for natpool in natpool_list:
                  gbpcrud.delete_gbp_nat_pool(natpool)
-	return 1
+        return 1
 
     def testTrafficFromExtRtrToVmFip(self,extgwrtr,fip=False):
         """
@@ -674,10 +674,10 @@ class NatFuncTestMethods(object):
            vmfips = self.vm_to_fip[VM1_NAME]
         else:
            vmfips = self._get_floating_ips(ret=1)
-	if not vmfips:
-		LOG.error(
-		"\n///// There are no FIPs to test Traffic /////")
-		return 0
+        if not vmfips:
+                LOG.error(
+                "\n///// There are no FIPs to test Traffic /////")
+                return 0
         run_traffic = traff_from_extgwrtr(
                                           extgwrtr,
                                           vmfips
@@ -687,7 +687,7 @@ class NatFuncTestMethods(object):
             "\n///// Following Traffic Test from External"
             " GW Router Failed == %s /////" % (run_traffic))
             return 0
-	return 1
+        return 1
         
     def testTrafficFromVMsToExtRtr(self,extgwips,vmname=True):
         """
@@ -722,35 +722,35 @@ class NatFuncTestMethods(object):
                retry += 1
             else:
                break
-	return 1
+        return 1
 
     def AddSShContract(self,apicip):
         """
         Adds SSH contract between NS and EPG
         Needed for SNAT Tests
         """
-       	LOG.info(
+        LOG.info(
                 "\n ADDING SSH-Filter to Svc_epg created for every dhcp_agent")
-	if not PLUGIN_TYPE:
+        if not PLUGIN_TYPE:
                 if conf.get('apic_passwd'):
                     aci=gbpApic(apicip, password=conf['apic_passwd'])
                 else:
                     aci=gbpApic(apicip)
                 aci.create_add_filter('admin')
-	else:
+        else:
                 if not CONTAINERIZED_SERVICES:
                     cmd = "%s add_ssh_filter.py create" % PYCMD
                 else:
                     cmd = "%s /home/add_ssh_filter.py create" % PYCMD
                 cntrlrips = CNTRLRIP if isinstance(CNTRLRIP, list) else [CNTRLRIP]
                 for cntrlrip in cntrlrips:
-		    if isinstance (run_remote_cli(cmd,
+                    if isinstance (run_remote_cli(cmd,
                                    cntrlrip, CTRLR_USER, CTRLR_PSWD,
                                    service='aim'), tuple):
                             LOG.warning("adding filter to SvcEpg failed in AIM")
-			    return 0
+                            return 0
         sleep(15) # TODO: SSH/Ping fails possible its taking time PolicyDownload
-	return 1
+        return 1
 
     def DeleteOrCleanup(self,action,obj=None,uuid=''):
         """
@@ -857,7 +857,7 @@ class NatFuncTestMethods(object):
            else:
                for fip in disassociatedFips:
                    neutron.fipcrud('delete', floatingip_id=fip['id'])
-               print "Any Stale FIPs:: ", self._get_floating_ips(ret=1)
+               print("Any Stale FIPs:: ", self._get_floating_ips(ret=1))
         except Exception:
            exc_type, exc_value, exc_traceback = sys.exc_info()
            LOG.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
@@ -902,11 +902,11 @@ class NatFuncTestMethods(object):
             if not vmfip:
                 fip_pools = self._floating_ip_pools_list()
                 if len(fip_pools):
-                   print 'FIP POOLS', fip_pools
+                   print('FIP POOLS', fip_pools)
                    for pool in fip_pools:
-                       print pool
+                       print(pool)
                        if extsegname in pool:
-                          print 'MATCH'
+                          print('MATCH')
                           try:
                               fip = self._action_fip_to_vm(action, vmname,
                                     external_network=pool)

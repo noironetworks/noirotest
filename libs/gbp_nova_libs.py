@@ -21,7 +21,7 @@ import re
 import datetime
 from time import sleep
 from novaclient.client import Client
-from gbp_utils import *
+from libs.gbp_utils import *
 from keystoneauth1 import identity
 from keystoneauth1 import session
 
@@ -167,68 +167,68 @@ class gbpNova(object):
         self.nova.aggregates.add_host(agg_id,hostname)
         
     def get_vm_status(self,max_count):
-	"""
-	Fetches and evaluates the status of VMs
-	"""
-	status_try=1
+        """
+        Fetches and evaluates the status of VMs
+        """
+        status_try=1
         while True:
-	    if len(self.nova.servers.list(
-			search_opts={'status': 'Active'}))== \
-			len(self.nova.servers.list()):
-		break	
-	    elif len(self.nova.servers.list(
-				search_opts={'status': 'ERROR'})):
-		_log.error("\nFollowing VMs are in ERROR state")
-		return 0
-	    else:
-	        status_try +=1
-	        sleep(1*max_count)
-	        if status_try > 60:
-	   	    _log.error("\nVMs has NO defined state, taking too "\
-					"long to spwan")
-		    return 0
-	return 1
-	
+            if len(self.nova.servers.list(
+                        search_opts={'status': 'Active'}))== \
+                        len(self.nova.servers.list()):
+                break   
+            elif len(self.nova.servers.list(
+                                search_opts={'status': 'ERROR'})):
+                _log.error("\nFollowing VMs are in ERROR state")
+                return 0
+            else:
+                status_try +=1
+                sleep(1*max_count)
+                if status_try > 60:
+                    _log.error("\nVMs has NO defined state, taking too "\
+                                        "long to spwan")
+                    return 0
+        return 1
+        
     def vm_create_api(self,vmname,vm_image,nics,
-		      flavor_name='m1.medium',avail_zone='',
-		      ret_ip = False, max_count=1,
-		      multihomed=False):
+                      flavor_name='m1.medium',avail_zone='',
+                      ret_ip = False, max_count=1,
+                      multihomed=False):
         """
         Call Nova API to create VM and check for ACTIVE status
-	nics:: For network, user should pass [{'net-id': ntkid}]
-		For port, user should pass [{'port-id': portid}]
-		In case of multi-home, pass list of values for
+        nics:: For network, user should pass [{'net-id': ntkid}]
+                For port, user should pass [{'port-id': portid}]
+                In case of multi-home, pass list of values for
         """
-	try:
+        try:
             vm_image = self.nova.glance.find_image(vm_image)
             vm_flavor = self.nova.flavors.find(name=flavor_name)
             if avail_zone:
-           	self.nova.servers.create(name=vmname,
- 				    image=vm_image,
+                self.nova.servers.create(name=vmname,
+                                    image=vm_image,
                                     flavor=vm_flavor,
-				    nics=nics,
+                                    nics=nics,
                                     availability_zone=avail_zone,
-				    max_count=max_count)
+                                    max_count=max_count)
             else:
-           	self.nova.servers.create(name=vmname,
-		  		    image=vm_image,
-				    flavor=vm_flavor,
-				    nics=nics,
-				    max_count=max_count)
-	    if not self.get_vm_status(max_count):
-		return 0
-	    if ret_ip:
-		vmobject = self.nova.servers.list()
-		if max_count > 1: #Incase of scale
-		    vm_name_ip = {} #Using it for only scale
-		    for instance in vmobject:
-		        if multihomed: 
-			    ips = [ip.encode('ascii') for _list in \
-				instance.networks.values() for ip in _list]
-			else:
-			    ips = instance.networks.values()[0][0].encode('ascii')
-			vm_name_ip[instance.name] = ips    
-		else:
+                self.nova.servers.create(name=vmname,
+                                    image=vm_image,
+                                    flavor=vm_flavor,
+                                    nics=nics,
+                                    max_count=max_count)
+            if not self.get_vm_status(max_count):
+                return 0
+            if ret_ip:
+                vmobject = self.nova.servers.list()
+                if max_count > 1: #Incase of scale
+                    vm_name_ip = {} #Using it for only scale
+                    for instance in vmobject:
+                        if multihomed: 
+                            ips = [ip.encode('ascii') for _list in \
+                                list(instance.networks.values()) for ip in _list]
+                        else:
+                            ips = list(instance.networks.values())[0][0].encode('ascii')
+                        vm_name_ip[instance.name] = ips    
+                else:
                     # Ensure an IPv4 address is first in the list
                     def cmp_func(a,b):
                         ipA = netaddr.IPAddress(a)
@@ -239,18 +239,18 @@ class gbpNova(object):
                             return 1
                         else:
                             return 0
-		    for instance in vmobject:
+                    for instance in vmobject:
                         if vmname == instance.name:
-                            sorted_ips = sorted(instance.networks.values()[0])
+                            sorted_ips = sorted(list(instance.networks.values())[0])
                             return [ip.encode('ascii') for ip in sorted_ips]
                     #        return instance.networks.values()[0][0].encode('ascii')
-	except Exception as e:
+        except Exception as e:
                 _log.error(
-		'VM Creation Failed on Exception = %s\n' %(e))
-		import traceback; traceback.print_exc(file=sys.stdout)
-		return 0
-	return 1
-		
+                'VM Creation Failed on Exception = %s\n' %(e))
+                import traceback; traceback.print_exc(file=sys.stdout)
+                return 0
+        return 1
+                
     def vm_create_cli(self,vmname,vm_image,ports,
                       avail_zone='',tenant=''):
         """
@@ -269,7 +269,7 @@ class gbpNova(object):
            cmd = cmd + ' --availability-zone '+avail_zone+' %s' %(vmname)
         else:
            cmd = cmd + ' %s' %(vmname)
-        print '\nvmcreate cmd ==', cmd
+        print('\nvmcreate cmd ==', cmd)
         if not run_openstack_cli([cmd],self.cntrlrip,
                               username=self.username,
                               passwd=self.password):
@@ -292,7 +292,7 @@ class gbpNova(object):
                                   block_migration=True
                                               )
            except Exception as e:
-               print 'Error on Live Migration: '+repr(e)
+               print('Error on Live Migration: '+repr(e))
                return 0
         else:
            if not tenant:
@@ -386,11 +386,11 @@ class gbpNova(object):
             if not vmfip:
                 fip_pools = self.nova.floating_ip_pools.list()
                 if len(fip_pools):
-                   print 'FIP POOLS', fip_pools
+                   print('FIP POOLS', fip_pools)
                    for pool in fip_pools:
-                       print pool.name
+                       print(pool.name)
                        if extsegname in pool.name:
-                          print 'MATCH'
+                          print('MATCH')
                           try:
                               fip = self.nova.floating_ips\
                                     .create(pool=pool.name)
@@ -449,7 +449,7 @@ class gbpNova(object):
            else:
                for fip in disassociatedFips:
                    self.nova.floating_ips.delete(fip)
-               print "Any Stale FIPs:: ", self.nova.floating_ips.list()
+               print("Any Stale FIPs:: ", self.nova.floating_ips.list())
         except Exception:
            exc_type, exc_value, exc_traceback = sys.exc_info()
            _log.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
@@ -463,21 +463,21 @@ class gbpNova(object):
         """
         try:
            vm = self.nova.servers.find(name=vmname)
-	   if prop == 'id':
+           if prop == 'id':
                 vm_prop = vm.id.encode('ascii')
-	   if prop == 'networks':
-                vm_prop = vm.networks.values()
+           if prop == 'networks':
+                vm_prop = list(vm.networks.values())
                 # built-in networks method returns a dict in a list.
                 # dict's values is again a list of ip addresses
-	   if prop == 'hostid':
+           if prop == 'hostid':
                 vm_prop = vm.hostId.encode('ascii')
-	   if prop == 'port':
-	        vm_prop = {}
-	        for key in vm.addresses.iterkeys():
-	            #key=networkName to which VM port is attached
-		    vm_prop[key.encode()]=[]
-		    vm_prop[key.encode()].append(vm.addresses[key][0]['addr'.encode()].encode())
-		    vm_prop[key.encode()].append(vm.addresses[key][0]['OS-EXT-IPS-MAC:mac_addr'])
+           if prop == 'port':
+                vm_prop = {}
+                for key in vm.addresses.keys():
+                    #key=networkName to which VM port is attached
+                    vm_prop[key.encode()]=[]
+                    vm_prop[key.encode()].append(vm.addresses[key][0]['addr'.encode()].encode())
+                    vm_prop[key.encode()].append(vm.addresses[key][0]['OS-EXT-IPS-MAC:mac_addr'])
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             _log.error('Exception Type = %s, Exception Object = %s' %(exc_type,exc_traceback))

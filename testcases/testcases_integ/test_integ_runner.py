@@ -3,13 +3,13 @@ import os,sys,optparse,platform
 import glob
 import importlib
 import yaml
-from commands import *
+from subprocess import *
 getoutput("rm -rf /tmp/test*") #Deletes pre-existing test logs
 
 
 def main():
     f = open(sys.argv[1],'rt')
-    test_conf = yaml.load(f)
+    test_conf = yaml.safe_load(f)
     test_runner = wrapper(test_conf)
     test_runner.run()
 
@@ -50,7 +50,7 @@ class wrapper(object):
        #Reason: Any new testcase added to the directory will be automatically run
        #provided it's name string starts with testcase_gbp_aci_intg
        for class_name in [filename.strip('.py') for filename in glob.glob('testcase_gbp_aci_intg*.py')]:
-           print class_name
+           print(class_name)
            imp_class = importlib.import_module(class_name)
            class_obj = getattr(imp_class,class_name)
            if callable(class_obj):

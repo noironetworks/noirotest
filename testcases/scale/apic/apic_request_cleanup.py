@@ -31,27 +31,27 @@ class Apic(object):
 
 def delete_policy():
 
-	#apic = Apic('172.23.137.40:8000', 'admin', 'ins3965!', False)
-	apic = Apic('172.28.184.80', 'admin', 'noir0123')    
+        #apic = Apic('172.23.137.40:8000', 'admin', 'ins3965!', False)
+        apic = Apic('172.28.184.80', 'admin', 'noir0123')    
 
-	# 100 tenants
+        # 100 tenants
 
-	for i in range(1, 101):
+        for i in range(1, 101):
 
-		print '-----------------------------------delete tenant' + str(i) + '------------------------------------------------------'
+                print '-----------------------------------delete tenant' + str(i) + '------------------------------------------------------'
 
-		if i % 20 == 0:
-			print '-------------------log in again to avoid time-out---------------------'
-			apic.login()
+                if i % 20 == 0:
+                        print '-------------------log in again to avoid time-out---------------------'
+                        apic.login()
 
-		# add tenant
+                # add tenant
 
-		path = '/api/node/mo/uni/tn-yeah' + str(i) + '.json'
-		data = '{"fvTenant":{"attributes":{"dn":"uni/tn-yeah' + str(i) + '","name":"yeah' + str(i) + '","rn":"tn-yeah' + str(i) + '","status":"deleted"}}}'
-		req = apic.post(path, data)
-		print req.text
+                path = '/api/node/mo/uni/tn-yeah' + str(i) + '.json'
+                data = '{"fvTenant":{"attributes":{"dn":"uni/tn-yeah' + str(i) + '","name":"yeah' + str(i) + '","rn":"tn-yeah' + str(i) + '","status":"deleted"}}}'
+                req = apic.post(path, data)
+                print req.text
 
                 time.sleep(5) 
-		
+                
 if __name__ == '__main__':
-	delete_policy()
+        delete_policy()

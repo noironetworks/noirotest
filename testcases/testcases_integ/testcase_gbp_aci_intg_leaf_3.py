@@ -59,7 +59,7 @@ class  testcase_gbp_aci_intg_leaf_3(object):
                           self.test_step_StartOpflexAgent,
                           self.test_step_VerifyTraffic
                          ]
-	status = ''
+        status = ''
         for step in testcase_steps:
             if step()!=1:
                   self._log.info("Test Failed at Step == %s" %(step.__name__.lstrip('self')))
@@ -89,7 +89,7 @@ class  testcase_gbp_aci_intg_leaf_3(object):
            self._log.info("\n ABORTING THE TESTSUITE RUN, HEAT STACK CREATE of %s Failed" %(self.heat_stack_name))
            self.test_CleanUp()
            sys.exit(1)
-        print 'Enable SSH .. sleeping for 20 secs'
+        print('Enable SSH .. sleeping for 20 secs')
         create_add_filter(self.apic_ip,'demo_bd') # 'demo_bd' is the name of L2Policy in the Heat Temp
         sleep(20)
         return 1

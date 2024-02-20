@@ -37,12 +37,12 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
 
     #Step-1: Copy the Heat Templates to the Controller
     for heat_templt in ['~/noirotest/testcases/heat_temps/heat_dnat_only.yaml',
-			'~/noirotest/testcases/heat_temps/heat_snat_only.yaml',
-			'~/noirotest/testcases/heat_temps/preexist_dnat_only.yaml',
-			'~/noirotest/testcases/heat_temps/preexist_snat_only.yaml',
-			'~/noirotest/testcases/heat_temps/heat_tmpl_regular_dp_tests.yaml',
-			'~/noirotest/add_ssh_filter.py'
-			]:
+                        '~/noirotest/testcases/heat_temps/heat_snat_only.yaml',
+                        '~/noirotest/testcases/heat_temps/preexist_dnat_only.yaml',
+                        '~/noirotest/testcases/heat_temps/preexist_snat_only.yaml',
+                        '~/noirotest/testcases/heat_temps/heat_tmpl_regular_dp_tests.yaml',
+                        '~/noirotest/add_ssh_filter.py'
+                        ]:
          put(heat_templt,'~/')
     if CONTAINERIZED_SERVICES and 'aim' in CONTAINERIZED_SERVICES:
          cmd = "sudo %s ps | grep aim$" % CONTAINERIZED_CLI
@@ -55,9 +55,9 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
          run(cmd)
     #Step-2: Restart the below services
     for cmd in ['sudo systemctl restart openstack-nova-api.service',
-		'sudo systemctl restart openstack-nova-scheduler.service',
-		'sudo systemctl restart openstack-heat-engine.service',
-		'sudo systemctl restart openstack-heat-api.service'
+                'sudo systemctl restart openstack-nova-scheduler.service',
+                'sudo systemctl restart openstack-heat-engine.service',
+                'sudo systemctl restart openstack-heat-api.service'
                ]:
        if not CONTAINERIZED_SERVICES:
            run(cmd)
@@ -69,7 +69,7 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
            print(output)
            container_id = output.split()[0]
            cmd = "sudo %s restart %s" % (CONTAINERIZED_CLI, container_id)
-           print cmd
+           print(cmd)
            run(cmd)
 
 
@@ -78,17 +78,17 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
         os_flvr = run('cat /etc/os-release')
         if 'Red Hat' in os_flvr:
             cmd_src = 'source ~/overcloudrc'
-	if 'Ubuntu' in os_flvr:
+        if 'Ubuntu' in os_flvr:
             cmd_src = 'source ~/overcloudrc'
         rr_cmd = 'apic route-reflector-create --ssl --no-secure '+\
                  '--apic-ip %s --apic-username %s --apic-password %s' %(apic_ip,apic_user,apic_pwd)
-	with prefix(cmd_src):
+        with prefix(cmd_src):
             for cmd in ['nova quota-class-update --instances -1 default',
-			'nova quota-class-update --ram -1 default',
-			'nova quota-class-update --cores -1 default',
-			'nova quota-show',
+                        'nova quota-class-update --ram -1 default',
+                        'nova quota-class-update --cores -1 default',
+                        'nova quota-show',
                         rr_cmd]:
-		run(cmd)
+                run(cmd)
  
     #Step-4: Add availability zone 
     NOVA_AGG = conf['nova_agg_name']
@@ -98,11 +98,11 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
     gbpnova = gbpNova(controller_ip,cntrlr_uname=cntlr_user,cntrlr_passwd=cntlr_pwd,
                       keystone_user=KEY_USER,keystone_password=KEY_PASSWORD)
     try:
-    	# Check if Agg already exists then delete
+        # Check if Agg already exists then delete
         controller_ip = get_controller_ip()
         cmdagg = run_openstack_cli("nova aggregate-list", controller_ip, username=cntlr_user,passwd=cntlr_pwd)
         if NOVA_AGG in cmdagg:
-        	print("Residual Nova Agg exits, hence deleting it")
+                print("Residual Nova Agg exits, hence deleting it")
                 gbpnova.avail_zone('cli', 'removehost',
                                            NOVA_AGG,
                                            hostname=AZ_COMP_NODE)
@@ -114,7 +114,7 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
                 print(
                     "\n ABORTING THE TESTSUITE RUN,nova host aggregate creation Failed")
                 sys.exit(1)
-    print(" Agg %s" % (agg_id))
+    print((" Agg %s" % (agg_id)))
     try:
         print("\nAdding Nova host to availaibility-zone")
         gbpnova.avail_zone('cli', 'addhost', agg_id, hostname=AZ_COMP_NODE)

@@ -24,7 +24,7 @@ import sys
 from fabric.api import cd,run,env, hide, get, settings,sudo,local
 from fabric.contrib import files
 from fabric.context_managers import *
-from raise_exceptions import *
+from libs.raise_exceptions import *
 from time import sleep
 from testcases.config import conf
 
@@ -62,8 +62,8 @@ def run_openstack_cli(cmdList,cntrlrip,
                 else:
                     results = run(cmd,quiet=True)
                 if not results.succeeded:
-		    print "Unsuccessfull cmd-run output, bailing out ==\n",results
-   		    return 0
+                    print("Unsuccessfull cmd-run output, bailing out ==\n",results)
+                    return 0
     return results
 
 def run_remote_cli(cmdList,hostip,username,
@@ -94,10 +94,10 @@ def run_remote_cli(cmdList,hostip,username,
                 results = run(cmd)
             if not results.succeeded:
                 if not passOnFailure:
-                    print "Cmd Execution Failed, continue"
-   	            pass
+                    print("Cmd Execution Failed, continue")
+                    pass
                 else:
-                    print "Cmd execution Failed, bailing out"
+                    print("Cmd execution Failed, bailing out")
                     return 0,results
     return results
  
@@ -141,7 +141,7 @@ def report_table(suitename):
     #print tc_dict
     table = PrettyTable(["TESTCASE_ID", "RESULTS", "TESTCASE_HEADER"])
     table.padding_width = 1
-    for key,val in tc_dict.iteritems():
+    for key,val in tc_dict.items():
         table.add_row(["%s" %(key),"%s" %(val[0]),"%s" %(val[1])])
     return table
 
@@ -150,7 +150,7 @@ def report_results(suitename,txt_file):
     f = open('%s' %(txt_file),'a')
     sys.stdout = f
     report=report_table(suitename)
-    print report
+    print(report)
     sys.stdout = orig_stdout
     f.close()
 
@@ -178,7 +178,7 @@ def gen_tc_header():
     table.padding_width = 1
     for i in range(len(final_headers)):
         table.add_row(["TESTCASE_DP_%s" %(i+1),"TBA","%s" %(final_headers[i])])
-    print table
+    print(table)
 
 '''
 def gen_test_report(test_results,suite,w_or_a):
@@ -244,7 +244,7 @@ def action_service(hostIp,service='agent-ovs',
                 sleep(5)
                 if restart.succeeded:
                    if run("systemctl status agent-ovs.service" ).find("active (running)") < 0:
-                      print 'ERROR: OpflexAgent is NOT ACTIVE or Running on Restart'
+                      print('ERROR: OpflexAgent is NOT ACTIVE or Running on Restart')
                       return 0
         return 1   
 
@@ -271,7 +271,7 @@ def add_route_in_extrtr(rtrip,route,nexthop,action='add',user='noiro',pwd='noir0
     if action == 'add':
        with settings(sudo_user='noiro'):
             sudo("ip route")
-            print env
+            print(env)
             sudo("ip route add %s via %s" %(route,nexthop),shell=False)
             #run("sudo ip route add %s via %s" %(route,nexthop),pty=False)
             #run('noir0123')
@@ -282,10 +282,10 @@ def add_route_in_extrtr(rtrip,route,nexthop,action='add',user='noiro',pwd='noir0
 def editneutronconf(controllerIp,
                         destfile,
                         pattern,
-			add=True,
-			section='ml2_cisco_apic',
-		   	user='heat-admin',
-			pwd='noir0123',
+                        add=True,
+                        section='ml2_cisco_apic',
+                        user='heat-admin',
+                        pwd='noir0123',
                         restart=True):
     """
     Add host_pool_cidr config flag and restarts neutron-server
@@ -303,7 +303,7 @@ def editneutronconf(controllerIp,
     env.user = user
     env.password = pwd
     with settings(warn_only=True):
-	if add:
+        if add:
              chk_string = sudo('grep -r %s %s' %(pattern,destfile))
              if chk_string.succeeded: #pattern exists, then delete it
                 cmd = 'sed -i '+"'/%s/d' " %(pattern)+destfile #delete
@@ -318,10 +318,10 @@ def editneutronconf(controllerIp,
                 pattern = [pattern]
                 for pat in pattern:
                     cmd = 'sed -i '+"'/%s/d' " %(pat)+destfile
-	            print cmd
+                    print(cmd)
                     sudo(cmd)
-	if 'neutron' in destfile:
-            print "Neutron Conf edited, hence restarting neutron-server"
+        if 'neutron' in destfile:
+            print("Neutron Conf edited, hence restarting neutron-server")
             if restart:
                sudo('service neutron-server restart')
 
@@ -351,7 +351,7 @@ def preExistingL3Out(controllerIp,
     def runcmd(cmd):
         results = run(cmd)
         if not results.succeeded:
-           print "Cmd Execution Failed, bailing out"
+           print("Cmd Execution Failed, bailing out")
            sys.exit(1)
     with settings(warn_only=True):
         if not isinstance(l3out,list):
@@ -360,13 +360,13 @@ def preExistingL3Out(controllerIp,
             # Commenting Out existing(comes with install)
             # config params for L3Out 
             for extnet in l3out:
-                print "Commenting-Out the existing config-flags in %s" %(extnet)
+                print("Commenting-Out the existing config-flags in %s" %(extnet))
                 cmd = "sed -i "+\
                 "'/%(L)s/,+6 {/%(L)s/n; /%(L)s/ ! {s/^/#/}}'" %{'L': extnet}+\
                 " %s" %(destfile)
                 runcmd(cmd)
                 # Convert L3Out into pre-existing by adding necessary config options
-                print "Adding preexisting config options into the L3Out"
+                print("Adding preexisting config options into the L3Out")
                 if extnet == L3OUT1:
                     extEpg = L3OUT1_NET
                 if extnet == L3OUT2:
@@ -387,7 +387,7 @@ def preExistingL3Out(controllerIp,
             if restart:
                 run('service neutron-server restart') #Restart Neutron-Server
         if revert:
-            print "Reverting to Initial Config of L3Out Section"
+            print("Reverting to Initial Config of L3Out Section")
             # Removing pre-exixting config options
             for config in ["preexisting",
                            "external_epg",
@@ -408,10 +408,10 @@ def preExistingL3Out(controllerIp,
 def PauseToDebug():
     while True:
           try:
-               print '\nDo you want to live debug, then hit CNTRL C, decide in next 20 secs'
+               print('\nDo you want to live debug, then hit CNTRL C, decide in next 20 secs')
                sleep(20)
           except KeyboardInterrupt:
-               print '\nPausing...  (Hit ENTER to continue, type quit to exit live debug.)'
-               response = raw_input()
+               print('\nPausing...  (Hit ENTER to continue, type quit to exit live debug.)')
+               response = input()
                if response.lower() == 'quit':
                      break

@@ -10,7 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import commands
+import subprocess
 import logging
 import sys
 
@@ -44,7 +44,7 @@ class test_gbp_pr_pc_pa_shared_func(object):
         level=logging.WARNING)
     _log = logging.getLogger(__name__)
     cmd = 'rm /tmp/test_gbp_pr_pc_pa_shared_func.log'
-    commands.getoutput(cmd)
+    subprocess.getoutput(cmd)
     hdlr = logging.FileHandler('/tmp/test_gbp_pr_pc_pa_shared_func.log')
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     hdlr.setFormatter(formatter)
@@ -123,7 +123,7 @@ class test_gbp_pr_pc_pa_shared_func(object):
         self._log.info(
             '## Step 2: Verify Policy Rule, Policy Classifier, Policy '
             'Action with shared=True')
-        for obj, uuid in obj_uuid.iteritems():
+        for obj, uuid in obj_uuid.items():
             if self.gbpverify.gbp_policy_verify_all(
                     1, obj, uuid, shared=True) == 0:
                 self._log.info(

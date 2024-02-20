@@ -38,14 +38,14 @@ class gbpFabTraff(object):
              else:
                return 0
           else:
-              print result
+              print(result)
               return 0
 
     def test_tcp(self,src_vm_ip,target_ip,port,user='noiro',pwd='noir0123',pkt_cnt=3):
         env.host_string = src_vm_ip
         env.user = user
         env.password = pwd
-        print "Sending TCP SYN,SYN ACK,SYN-ACK-FIN to %s" %(target_ip)
+        print("Sending TCP SYN,SYN ACK,SYN-ACK-FIN to %s" %(target_ip))
         cmd_s = "sudo hping3 %s -S -V -p %s -c %s --fast -q" %(target_ip,port,pkt_cnt)
         cmd_sa = "sudo hping3 %s -S -A -V -p %s -c %s --fast -q" %(target_ip,port,pkt_cnt)
         cmd_saf = "sudo hping3 %s -S -A -F -V -p %s -c %s --fast -q" %(target_ip,port,pkt_cnt)
@@ -53,7 +53,7 @@ class gbpFabTraff(object):
            for cmd in [cmd_s,cmd_sa,cmd_saf]:
               result = run(cmd)
               if result.return_code != 0:
-                 print result
+                 print(result)
                  return 0
               else:
                  if self.parse_hping(result,pkt_cnt) == 0:
@@ -64,7 +64,7 @@ class gbpFabTraff(object):
         env.host_string = src_vm_ip
         env.user = user
         env.password = pwd
-        print "Sending UDP to %s" %(target_ip)
+        print("Sending UDP to %s" %(target_ip))
         with settings(warn_only=True):
           result = run("sudo hping3 %s --udp -p %s -c %s --fast -q" %(target_ip,port,pkt_cnt))
           if result.return_code == 0:
@@ -73,7 +73,7 @@ class gbpFabTraff(object):
              else:
                return 0
           else:
-              print result
+              print(result)
               return 0
 
     def test_arp(self,src_vm_ip,target_ip,user='noiro',pwd='noir0123'):
@@ -183,13 +183,13 @@ class gbpFabTraff(object):
                             user='noiro',
                             pwd='noir0123',
                             action='add'):
-	env.host_string = extrtrip
-	env.user = user
-	env.password = pwd
-	if action == 'add':
-	    sudo('ip route add %s via %s' %(route,nexthop))
+        env.host_string = extrtrip
+        env.user = user
+        env.password = pwd
+        if action == 'add':
+            sudo('ip route add %s via %s' %(route,nexthop))
         if action == 'update':
             sudo("ip route del %s " %(route))
             sudo("ip route add %s via %s" %(route,nexthop))
-	run('ip route')
+        run('ip route')
 

@@ -57,7 +57,7 @@ class SNAT_VMs_to_ExtGw(object):
         self.gbp_crud = GBPCrud(self.ostack_controller)
         self.extgwips = objs_uuid['ipsofextgw']
         self.pausetodebug = objs_uuid['pausetodebug']
-	self.routefordest = objs_uuid['routefordest']
+        self.routefordest = objs_uuid['routefordest']
         self.nat_traffic = NatTraffic(
             self.ostack_controller, self.vm_list, self.network_node)
 
@@ -69,7 +69,7 @@ class SNAT_VMs_to_ExtGw(object):
         self.gbp_crud.AddRouteInShadowL3Out(self.ext_seg_2,
                                                       L3OUT2,
                                                       'snat',
-						      self.routefordest
+                                                      self.routefordest
                                                        )
 
         # Note: Cleanup per testcases is not required,since every testcase
