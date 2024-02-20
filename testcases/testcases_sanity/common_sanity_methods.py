@@ -327,7 +327,7 @@ class crudML2(object):
                                                tenant=tnt,
                                                shared=shared,
                                                otherargs=vrfargs)
-                regex = r'"VRF": "(.*)"'.encode('utf-8')
+                regex = r'"VRF": "(.*)"'
                 found = re.search(regex, v4scope)
                 if not found:
                     # It looks like different client versions use different

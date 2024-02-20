@@ -496,9 +496,9 @@ class gbpExpTraffNetcat(gbpExpTraffHping3):
                     pexpect_session.sendline(ping_command)
                     pexpect_session.expect(self.vm_prompt)
                     print("Sent ICMP packets")
-                    result=pexpect_session.before
+                    result=pexpect_session.before.decode('utf-8')
                     print("ICMP result: " + result)
-                    if self.parse_ping_output(result.decode('utf-8'),self.pkt_cnt) !=0:
+                    if self.parse_ping_output(result,self.pkt_cnt) !=0:
                         results[dest_ep]['icmp']=1
                     else:
                         results[dest_ep]['icmp']=0
@@ -511,11 +511,11 @@ class gbpExpTraffNetcat(gbpExpTraffHping3):
                         pexpect_session.sendline(cmd)
                         pexpect_session.expect(self.vm_prompt, timeout=2)
                         print("Sent TCP packets")
-                        result=pexpect_session.before
+                        result=pexpect_session.before.decode('utf-8')
                         print("TCP result: " + result)
                         try:
                             pexpect_session.expect(SERVER_STRING, timeout=2)
-                            result=pexpect_session.after
+                            result=pexpect_session.after.decode('utf-8')
                         except:
                             pass
                         if SERVER_STRING in result:
@@ -527,7 +527,7 @@ class gbpExpTraffNetcat(gbpExpTraffHping3):
                         cmd_s = "nc -w 1 -v %s -z 22 &" %(dest_ep)
                         pexpect_session.sendline(cmd_s)
                         pexpect_session.expect(['SSH', 'timed out'])
-                        result=pexpect_session.before
+                        result=pexpect_session.before.decode('utf-8')
                         print("TCP result: " + result)
                         if 'open' in result:
                             results[dest_ep]['tcp']=1
@@ -544,11 +544,11 @@ class gbpExpTraffNetcat(gbpExpTraffHping3):
                     pexpect_session.expect(udp_cmd, timeout=2)
                     cmd = "\r\n"
                     pexpect_session.sendline(cmd)
-                    result=pexpect_session.after
+                    result=pexpect_session.after.decode('utf-8')
                     print("UDP result: " + result)
                     try:
                         pexpect_session.expect(SERVER_STRING, timeout=2)
-                        result=pexpect_session.after
+                        result=pexpect_session.after.decode('utf-8')
                     except:
                         pass
                     print(result)
