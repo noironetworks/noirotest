@@ -104,21 +104,18 @@ class test_diff_ptg_same_l2p_l3p(object):
                     for name in ['test_8','test_9','test_9A']:
                         if name in test.__name__:
                            self.test_revert_policy_ruleset(name.upper())      
-                    test_results[string.upper(
-                        test.__name__.lstrip('self.'))] = 'FAIL'
+                    test_results[(test.__name__.lstrip('self.')).upper()] = 'FAIL'
                     self._log.info("\n%s_%s_%s == FAIL" % (self.__class__.__name__.upper(
-                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        ), log_string.upper(), (test.__name__.lstrip('self.')).upper()))
                 elif abort == 1:
                     if 'test_1' in test.__name__ or 'test_2' in test.__name__:
-                        test_results[string.upper(
-                            test.__name__.lstrip('self.'))] = 'ABORT'
+                        test_results[(test.__name__.lstrip('self.')).upper()] = 'ABORT'
                         self._log.info("\n%s_%s_%s 10 subtestcases == ABORT" % (self.__class__.__name__.upper(
-                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        ), log_string.upper(), (test.__name__.lstrip('self.')).upper()))
                     else:
-                        test_results[string.upper(
-                            test.__name__.lstrip('self.'))] = 'ABORT'
+                        test_results[(test.__name__.lstrip('self.')).upper()] = 'ABORT'
                         self._log.info("\n%s_%s_%s == ABORT" % (self.__class__.__name__.upper(
-                        ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                        ), log_string.upper(), (test.__name__.lstrip('self.')).upper()))
                 else:
                     if 'test_1' in test.__name__ or 'test_2' in test.__name__:
                         test_results[test.__name__.lstrip('self.').upper()] = 'PASS'

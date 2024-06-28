@@ -128,10 +128,9 @@ class test_same_ptg_same_l2p_same_l3p(object):
                          PauseToDebug()
                       repeat_test += 1
                 if repeat_test == 4:
-                    test_results[string.upper(
-                        test.__name__.lstrip('self.'))+'_'+flag.upper()] = 'FAIL'
+                    test_results[(test.__name__.lstrip('self.')).upper()+'_'+flag.upper()] = 'FAIL'
                     self._log.info("\n%s_%s_%s_%s == FAIL" % (self.__class__.__name__.upper(
-                    ), log_string.upper(), string.upper(test.__name__.lstrip('self.')),flag.upper()))
+                    ), log_string.upper(), (test.__name__.lstrip('self.')).upper(),flag.upper()))
                 elif abort == 1:
                     if 'test_1' in test.__name__ or 'test_2' in test.__name__:
                         test_results[test.__name__.lstrip('self.') + '_' + flag.upper()] = 'ABORT'

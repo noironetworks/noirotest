@@ -81,9 +81,9 @@ class test_diff_ptg_diff_l2p_diff_l3p(object):
         for test in test_list:
             try:
                 if test() != 1:
-                    test_results[string.upper(test.__name__.lstrip('self.'))] = 'FAIL'
+                    test_results[(test.__name__.lstrip('self.')).upper()] = 'FAIL'
                     self._log.info("\n%s_%s_%s == FAIL" % (self.__class__.__name__.upper(
-                    ), log_string.upper(), string.upper(test.__name__.lstrip('self.'))))
+                    ), log_string.upper(), (test.__name__.lstrip('self.')).upper()))
                 else:
                     if 'test_1' in test.__name__ or 'test_2' in test.__name__:
                         test_results[test.__name__.lstrip('self.').upper()] = 'PASS'
