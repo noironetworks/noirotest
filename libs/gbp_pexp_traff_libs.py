@@ -63,10 +63,10 @@ class gbpExpTraffHping3(object):
     def ssh_to_compute_host(self):
         self.host_prompt = '\$'
         if conf.get('director_deploy') and conf['director_deploy'] == 'True':
-            pexpect_session = pexpect.spawn('ssh heat-admin@%s' %(self.net_node))
+            pexpect_session = pexpect.spawn('ssh -o StrictHostKeyChecking=no heat-admin@%s' %(self.net_node))
             pexpect_session.expect(self.host_prompt) #Expecting passwordless access
         else:
-            pexpect_session = pexpect.spawn('ssh root@%s' %(self.net_node))
+            pexpect_session = pexpect.spawn('ssh -o StrictHostKeyChecking=no root@%s' %(self.net_node))
             pexpect_session.expect(self.host_prompt) #Expecting passwordless access
         pexpect_session.sendline('hostname')
         pexpect_session.expect(self.host_prompt)

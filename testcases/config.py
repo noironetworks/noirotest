@@ -3,4 +3,10 @@ import yaml
 import os
 config = os.path.join(os.path.dirname(__file__), "testconfig.yaml")
 with open(config,'rt') as f:
-        conf = yaml.safe_load(f)
+      conf = yaml.safe_load(f)
+
+#TODO add home directry logic
+with open('/home/noiro/localconf.py', 'r') as file:
+      data = file.read().rstrip()
+exec(data)
+
