@@ -80,14 +80,11 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
             cmd_src = 'source ~/overcloudrc'
         if 'Ubuntu' in os_flvr:
             cmd_src = 'source ~/overcloudrc'
-        rr_cmd = 'apic route-reflector-create --ssl --no-secure '+\
-                 '--apic-ip %s --apic-username %s --apic-password %s' %(apic_ip,apic_user,apic_pwd)
         with prefix(cmd_src):
             for cmd in ['nova quota-class-update --instances -1 default',
                         'nova quota-class-update --ram -1 default',
                         'nova quota-class-update --cores -1 default',
-                        'nova quota-show',
-                        rr_cmd]:
+                        'nova quota-show']:
                 run(cmd)
  
     #Step-4: Add availability zone 
