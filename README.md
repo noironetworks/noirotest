@@ -1,10 +1,35 @@
 # Noirotest Router Scripts
 
+Make sure to run the exttrt playbooks in the playbooks directory before running the tests.
+
+## How to run the playbook
+
+1. Run the playbooks
+
+````
+cd playbooks
+ansible-playbook -i ../hosts main.yaml 
+````
+
+2. Delete the existing external networks
+
+````
+neutron net-delete sauto_l3out-1
+neutron net-delete sauto_l3out-2
+````
+
 ## How to run noirotests
 
-1. Run pre setup
+1. Get the code
 
-Command parameters
+````
+https_proxy=http://proxy.esl.cisco.com:80 git clone https://github.com/noironetworks/noirotest -b new_extrtr_scripts
+````
+
+2. Run pre setup
+
+Command parameters:
+
 ./nt_pre_setup.sh release uc_type uc_ip fab_num
 
 ````
@@ -13,31 +38,31 @@ cd noirotests
 ./nt_pre_setup.sh train director 10.30.120.194 202
 ````
 
-2. Run test setup
+3. Run test setup
 
 ````
 python setup.py
 ````
 
-3. Run ml2 sanity tests 
+4. Run ml2 sanity tests 
 
 ````
 source ~/overcloudrc && export PYTHONPATH=/home/noiro/noirotest && cd ~/noirotest/testcases/testcases_sanity && time python run_ml2_sanity.py 2>&1 | tee ~/ml2.log
 ````
 
-4. Run gbp sanity tests
+5. Run gbp sanity tests
 
 ````
 source ~/overcloudrc && export PYTHONPATH=/home/noiro/noirotest && cd ~/noirotest/testcases/testcases_sanity && time python run_gbp_sanity.py 2>&1 | tee ~/gbp.log
 ````
 
-5. Run east west
+6. Run east west
 
 ````
 source ~/overcloudrc && export PYTHONPATH=/home/noiro/noirotest && cd ~/noirotest/testcases/testcases_nat_func && time python test_gbp_nat_suite.py 2>&1 | tee ~/nat.log
 ````
 
-6. Run north south
+7. Run north south
 
 ````
 source ~/overcloudrc && export PYTHONPATH=/home/noiro/noirotest && cd ~/noirotest/testcases/testcases_dp && time python test_dp_runner.py 2>&1 | tee ~/dp.log
