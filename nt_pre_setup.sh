@@ -132,13 +132,15 @@ else
 fi
 
 # Set no-proxy
-#NO_PROXY_STRING="no_proxy=127.0.0.1,localhost,${EXT_RTR_IP},${CLOUD_GATEWAY},${EXT_RTR_NET}/24,${CLOUD_NET}/24,${NOIRO_CTRLR_IP}"
-#export ${NO_PROXY_STRING}
-#export PYTHONPATH=/home/noiro/noirotest
+NO_PROXY_STRING="no_proxy=127.0.0.1,localhost,${EXT_RTR_IP},${CLOUD_GATEWAY},${EXT_RTR_NET}/24,${CLOUD_NET}/24,${NOIRO_CTRLR_IP}"
+export ${NO_PROXY_STRING}
+export PYTHONPATH=/home/noiro/noirotest
 #echo "export ${HTTP_PROXY_STRING}" >> .bashrc
 #echo "export ${HTTPS_PROXY_STRING}" >> .bashrc
 #echo "export ${NO_PROXY_STRING}" >> .bashrc
 #echo "export PYTHONPATH=/home/noiro/noirotest" >> .bashrc
+
+sed -i "s/no_proxy=,/$NO_PROXY_STRING/g" ~/${RCFILE}
 
 # Routes we'll need for noirotest tests
 # Temporarily removing them to fix in playbooks
