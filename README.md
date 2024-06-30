@@ -1,8 +1,14 @@
 # Noirotest Router Scripts
 
-Make sure to run the exttrt playbooks in the playbooks directory before running the tests.
+Make sure to create the router and run the exttrt playbooks in the playbooks directory before running the tests.
 
-## How to run the playbook
+## Create the router
+
+It can be done tghrough jenkins job:
+
+https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-api-router-deploy/
+
+## How to run the playbooks
 
 1. Run the playbooks
 
@@ -10,6 +16,10 @@ Make sure to run the exttrt playbooks in the playbooks directory before running 
 cd playbooks
 ansible-playbook -i ../hosts main.yaml 
 ````
+
+This can also be dome through jenkins job:
+
+https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-api-router-setup/
 
 2. Delete the existing external networks
 
