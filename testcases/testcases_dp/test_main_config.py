@@ -41,6 +41,10 @@ test_parameters = conf['test_parameters']
 plugin = conf['plugin-type']
 CONTAINERIZED_SERVICES=conf.get('containerized_services', [])
 PYCMD = conf.get("python_interpreter") or "python"
+
+# Add APIC IP to no_proxy TODO: Fix it at the origin
+os.environ['no_proxy']=os.environ['no_proxy'] + ',' + apic_ip
+
 gbpnova = gbpNova(get_cntlr_ip(cntlr_ip),cntrlr_uname=cntlr_user,cntrlr_passwd=cntlr_passwd,
                   keystone_user=key_user,keystone_password=key_passwd)
 gbpheat = gbpHeat(get_cntlr_ip(cntlr_ip),cntrlr_uname=cntlr_user, cntrlr_passwd=cntlr_passwd)
