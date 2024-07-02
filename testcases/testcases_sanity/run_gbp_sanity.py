@@ -6,6 +6,8 @@ LOG.info("#### Start of GBP SANITY #####")
 test_conf = crudGBP()
 #Initialize Traffic Class
 test_traff = sendTraffic()
+LOG.info("#### Delte existing external nets ####")
+test_conf.delete_external_networks()
 LOG.info("Create Openstack Tenants for GBP ")
 test_conf.create_gbp_tenants()
 

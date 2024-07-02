@@ -219,8 +219,8 @@ class crudML2(object):
     CidrsV6[ml2tnt1] = ['2001:db8:1::/64', '2001:db8:2::/64']
 
     def delete_external_networks(self):
-        neutron.runcmd('neutron net-delete sauto_l3out-1')
-        neutron.runcmd('neutron net-delete sauto_l3out-2')
+        neutron.runcmd('neutron net-delete %s' % SAUTO_L3OUT1)
+        neutron.runcmd('neutron net-delete %s' % SAUTO_L3OUT2)
 
     def create_ml2_tenants(self):
         self.ml2tntIDs = neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create',getid=True)
@@ -572,6 +572,10 @@ class crudGBP(object):
     vms = {}
     vms[tnt1] = GBPvms[tnt1]
     vms[tnt2] = GBPvms[tnt2]
+
+    def delete_external_networks(self):
+        neutron.runcmd('neutron net-delete %s' % SAUTO_L3OUT1)
+        neutron.runcmd('neutron net-delete %s' % SAUTO_L3OUT2)
 
     def create_gbp_tenants(self):
         self.gbptntIDs = neutron.addDelkeystoneTnt(TNT_LIST_GBP, 'create',getid=True)
