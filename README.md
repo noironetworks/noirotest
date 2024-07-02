@@ -6,7 +6,7 @@ Make sure to create the router and run the exttrt playbooks in the playbooks dir
 
 It can be done through jenkins job:
 
-https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-api-router-deploy/
+[New API Router Deploy](https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-api-router-deploy)
 
 ## How to run the playbooks
 
