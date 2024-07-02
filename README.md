@@ -38,9 +38,7 @@ neutron net-delete sauto_l3out-2
 https_proxy=http://proxy.esl.cisco.com:80 git clone https://github.com/noironetworks/noirotest -b new_extrtr_scripts
 ````
 
-2. Run pre setup
-
-TODO: Create a jenkins job for it
+2. Run Setups
 
 Command parameters:
 
@@ -52,13 +50,15 @@ cd noirotests
 ./nt_pre_setup.sh train director 10.30.120.194 202
 ````
 
-3. Run test setup
-
-TODO: Create a jenkins job for it
+Run setup.py
 
 ````
 python setup.py
 ````
+
+Or both of the above step will be run if this jenkins job is used:
+
+https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-noirotest-config/
 
 4. Run ml2 sanity tests 
 
@@ -127,5 +127,6 @@ These features are currently disabled and will be provided elswhere.
 6. Use VMs with smaller footprint
 7. Cleanup should not delete all networks (e.g. LB Net for octavia)
 8. ssh filter at many places, simplify
+9. Remove unused directories (mpcrud, forjenkins)
 
 
