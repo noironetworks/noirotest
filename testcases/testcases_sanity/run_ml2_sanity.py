@@ -8,6 +8,7 @@ test_conf = crudML2()
 #Initialize the Traffic Class
 test_traff = sendTraffic()
 LOG.info("#### Create Openstack Tenants for ML2 ####")
+test_conf.delete_external_networks()
 test_conf.create_ml2_tenants()
 
 ### Every Step is a Test by itself, so it will log as Test instead of Step ###

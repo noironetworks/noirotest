@@ -218,6 +218,10 @@ class crudML2(object):
     Cidrs[ml2tnt1] = ['11.11.11.0/28', '21.21.21.0/28']
     CidrsV6[ml2tnt1] = ['2001:db8:1::/64', '2001:db8:2::/64']
 
+    def delete_external_networks(self):
+        neutron.runcmd('neutron net-delete sauto_l3out-1')
+        neutron.runcmd('neutron net-delete sauto_l3out-2')
+
     def create_ml2_tenants(self):
         self.ml2tntIDs = neutron.addDelkeystoneTnt(TNT_LIST_ML2, 'create',getid=True)
         return None
