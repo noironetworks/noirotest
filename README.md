@@ -12,8 +12,6 @@ It can be done through jenkins job:
 
 1. Run the playbooks
 
-TODO: Create a jenkins job for it
-
 ````
 cd playbooks
 ansible-playbook -i ../hosts main.yaml 
