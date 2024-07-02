@@ -21,14 +21,8 @@ ansible-playbook -i ../hosts main.yaml
 
 This can also be done through jenkins job:
 
-https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-api-router-setup/
+[New Api Router Setup](https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-api-router-setup)
 
-2. Delete the existing external networks
-
-````
-neutron net-delete sauto_l3out-1
-neutron net-delete sauto_l3out-2
-````
 
 ## How to run noirotests
 
@@ -37,6 +31,8 @@ neutron net-delete sauto_l3out-2
 ````
 https_proxy=http://proxy.esl.cisco.com:80 git clone https://github.com/noironetworks/noirotest -b new_extrtr_scripts
 ````
+
+The playbook in above section will fetch the code. Skip this step if you use jenkins.
 
 2. Run Setups
 
@@ -58,7 +54,7 @@ python setup.py
 
 Or both of the above step will be run if this jenkins job is used:
 
-https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-noirotest-config/
+[New Noirotest Config](https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-noirotest-config)
 
 4. Run ml2 sanity tests 
 
@@ -68,7 +64,7 @@ source ~/overcloudrc && export PYTHONPATH=/home/noiro/noirotest && cd ~/noirotes
 
 You can also run it through jenkins job:
 
-https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-noirotest-ml2-sanity
+[ML2 Sanity Tests](https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-noirotest-ml2-sanity)
 
 
 5. Run gbp sanity tests
@@ -79,7 +75,7 @@ source ~/overcloudrc && export PYTHONPATH=/home/noiro/noirotest && cd ~/noirotes
 
 This can also be run using jenkins:
 
-https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-noirotest-gbp-sanity
+[GBP Sanity Tests](https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-noirotest-gbp-sanity)
 
 6. Run north south tests
 
@@ -89,7 +85,7 @@ source ~/overcloudrc && export PYTHONPATH=/home/noiro/noirotest && cd ~/noirotes
 
 Or you can run from jenkins:
 
-https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-noirotest-north-south
+[North South Tests](https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-noirotest-north-south)
 
 7. Run east west tests
 
@@ -99,7 +95,7 @@ source ~/overcloudrc && export PYTHONPATH=/home/noiro/noirotest && cd ~/noirotes
 
 As others this can be run from jenkins:
 
-https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-noirotest-east-west
+[East West Tests](https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-noirotest-east-west)
 
 
 ### new_cmds_2.sh has been remaned to nt_pre_setup.sh and moved here
