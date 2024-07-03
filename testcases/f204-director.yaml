@@ -13,12 +13,12 @@ heat_dp_stack_name: 'dpstack'
 heat_dp_nat_stack_name: 'dpnatstack'
 key_name: 'gbpkey' #Ensure that it is same as mentioned in heat template
 apic_system_id: 'ostack-bm-3'
-primary_L3out: 'os-bm-3_l3out-1' #Ensure to keep these names as is
-primary_L3out_net: 'os-bm-3_l3out-1_epg' #Ensure to keep these names as is
-primary_L3out_vrf: 'sauto_ostack-bm-3_l3out-1_vrf' #Ensure to keep these names as is
-secondary_L3out: 'os-bm-3_l3out-2'
-secondary_L3out_net: 'os-bm-3_l3out-2_epg'
-secondary_L3out_vrf: 'sauto_ostack-bm-3_l3out-2_vrf'
+primary_L3out: 'fab204_1'
+primary_L3out_net: 'fab204_1'
+primary_L3out_vrf: 'fab204_1_vrf'
+secondary_L3out: 'fab204_2'
+secondary_L3out_net: 'fab204_2'
+secondary_L3out_vrf: 'fab204_2_vrf'
 keystone_user: 'admin'
 keystone_ip: ""
 keystone_password: 'noir0123'
