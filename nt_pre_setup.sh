@@ -197,6 +197,9 @@ if [ "${UNDERCLOUD_TYPE}" = "${DIRECTOR}" ]; then
     sed -i "s/rest_ip:.*/rest_ip: \"$CTRLR_REST_IP\"/g" ~/noirotest/testcases/testconfig.yaml
     if [ "$1" = "${TRAIN}" -o "${RELEASE_FILE}" = "${TRAIN}" ]; then
         echo "python_interpreter: python3" >> ~/noirotest/testcases/testconfig.yaml
+        sed -i "s/az_comp_node:.*/az_comp_node: \"overcloud-compute-1\"/g" ~/noirotest/testcases/testconfig.yaml
+    else
+        sed -i "s/az_comp_node:.*/az_comp_node: \"overcloud-novacompute-0.localdomain\"/g" ~/noirotest/testcases/testconfig.yaml
     fi
     if [ "$1" = "${QUEENS}" -o "${RELEASE_FILE}" = "${QUEENS}" -o "$1" = "${PIKE}" -o "${RELEASE_FILE}" = "${PIKE}" -o "$1" = "${TRAIN}" -o "${RELEASE_FILE}" = "${TRAIN}" ]; then
         echo "containerized_services:" >> ~/noirotest/testcases/testconfig.yaml
