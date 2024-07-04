@@ -188,7 +188,7 @@ fi
 
 if [ "${UNDERCLOUD_TYPE}" = "${DIRECTOR}" ]; then
     CTRLR_IP_LINE_NO=$(egrep -n controller_user ~/noirotest/testcases/testconfig.yaml | awk -F":" '{print $1}')
-    for ip in $(ssh -o StrictHostKeyChecking=no  ${UNDERCLOUD_USER}@${UNDERCLOUD_IP} "source stackrc && openstack port list" | grep ${PUB_NET_PREFIX} | grep -v public_virtual_ip | awk -F"'" '{print $2}'); do
+    for ip in $(ssh -o StrictHostKeyChecking=no  ${UNDERCLOUD_USER}@${UNDERCLOUD_IP} "source stackrc && openstack port list" | grep ${PUB_NET_PREFIX} | grep -v public_virtual_ip |grep controller-0| awk -F"'" '{print $2}'); do
         sed -i "${CTRLR_IP_LINE_NO}i     - \"${ip}\"" ~/noirotest/testcases/testconfig.yaml
     done
     sed -i "${CTRLR_IP_LINE_NO}i controller_ip:" ~/noirotest/testcases/testconfig.yaml
