@@ -12,7 +12,7 @@ CNTRLRIP = conf['controller_ip']
 APICIP = conf['apic_ip']
 NTKNODE = conf['network_node']
 CONTAINERIZED_SERVICES = conf.get('containerized_services')
-CONTAINERIZED_CLI = conf.get('containerized_cli', 'docker')
+CONTAINERIZED_CLI = conf.get('containerized_cli', 'podman')
 
 def get_controller_ip():
     if isinstance(CNTRLRIP, list):
