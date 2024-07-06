@@ -57,6 +57,7 @@ image_prompt: '\#'
 # Enable the below flag inorder to live-debug on Failure of a Testcase
 pausetodebug: false
 director_deploy: 'True'
+containerized_cli: 'podman'
 containerized_services:
   - nova
   - aim
