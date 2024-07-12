@@ -21,7 +21,7 @@ from traff_from_allvms_to_extgw import NatTraffic
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.ERROR)
 # create a logfile handler
-hdlr = logging.FileHandler('/tmp/test_nat_functionality.log')
+hdlr = logging.FileHandler('/tmp/test_nat_functionality.log', mode='w')
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 hdlr.setFormatter(formatter)
 # Add the handler to the logger
