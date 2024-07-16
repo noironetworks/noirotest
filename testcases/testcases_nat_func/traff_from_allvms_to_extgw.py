@@ -124,7 +124,7 @@ class NatTraffic(object):
             self.ntk_node, dhcp_ns_vm, vm_pvt_ip, extgw)
         # Run for all protocols irrespective of the contract type
         results = gbppexptraff.test_run(
-            protocols=['icmp', 'tcp'], tcp_syn_only=1,jumbo=1)
+            protocols=['icmp', 'tcp'], tcp_syn_only=1,jumbo=0)
         if results == {}:
            return 2
         else:
