@@ -13,12 +13,12 @@ heat_dp_stack_name: 'dpstack'
 heat_dp_nat_stack_name: 'dpnatstack'
 key_name: 'gbpkey' #Ensure that it is same as mentioned in heat template
 apic_system_id: 'ostack-pt-1-s1'
-primary_L3out: 'os-pt-1-s1-l3out-1' #Ensure to keep these names as is
-primary_L3out_net: 'os-pt-1-s1-l3out-epg' #Ensure to keep these names as is
-primary_L3out_vrf: 'sauto_ostack-pt-1-s1_l3out-1_vrf' #Ensure to keep these names as is
-secondary_L3out: 'os-pt-1-s1-l3out-2'
-secondary_L3out_net: 'os-pt-1-s1-l3out-2-epg'
-secondary_L3out_vrf: 'sauto_ostack-pt-1_s1_l3out-2-vrf'
+primary_L3out: 'fab2021_1'
+primary_L3out_net: 'fab2021_1'
+primary_L3out_vrf: 'fab2021_1_vrf'
+secondary_L3out: 'fab2021_2'
+secondary_L3out_net: 'fab2021_2'
+secondary_L3out_vrf: 'fab2021_2_vrf'
 keystone_user: 'admin'
 keystone_ip: "1.121.111.58"
 keystone_password: 'noir0123'
@@ -68,8 +68,3 @@ containerized_services:
 containerized_cli: 'podman'
 rcfile: 'overcloudrc'
 python_interpreter: python3
-containerized_services:
-  - nova
-  - aim
-  - neutron
-rcfile: 'overcloudrc'

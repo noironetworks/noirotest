@@ -12,13 +12,13 @@ nova_az_name: 'gbp_zone'
 heat_dp_stack_name: 'dpstack'
 heat_dp_nat_stack_name: 'dpnatstack'
 key_name: 'gbpkey' #Ensure that it is same as mentioned in heat template
-apic_system_id: 'osd10-fab3'
-primary_L3out: 'sauto_fab6_l3out-1' #Ensure to keep these names as is
-primary_L3out_net: 'sauto_fab6_l3out-1_epg' #Ensure to keep these names as is
-primary_L3out_vrf: 'sauto_fab6_l3out-1_vrf' #Ensure to keep these names as is
-secondary_L3out: 'sauto_fab6_l3out-2'
-secondary_L3out_net: 'sauto_fab6_l3out-2_epg'
-secondary_L3out_vrf: 'sauto_fab6_l3out-2_vrf'
+apic_system_id: 'ostack-bm-2'
+primary_L3out: 'fab2041_1'
+primary_L3out_net: 'fab2041_1'
+primary_L3out_vrf: 'fab2041_1_vrf'
+secondary_L3out: 'fab2041_2'
+secondary_L3out_net: 'fab2041_2'
+secondary_L3out_vrf: 'fab2041_2_vrf'
 keystone_user: 'admin'
 keystone_ip: "1.121.111.60"
 keystone_password: 'noir0123'
@@ -53,7 +53,7 @@ extrtr_ip2: '1.106.2.1'
 #preexist: True #See NOTE immediate above. For now 'commented out' as its fed from command-line
 #vm_image: '"trusty-multi-if"'
 vm_image: 'ubuntu_multi_nics'
-vm_flavor: 'm1.medium'
+vm_flavor: 'm1.noirotest'
 test_parameters:
   bd_type: vxlan
   ip_version: ipv4
@@ -68,14 +68,4 @@ containerized_services:
   - aim
   - neutron
 rcfile: 'overcloudrc'
-containerized_services:
-  - nova
-  - aim
-  - neutron
-rcfile: 'overcloudrc'
 python_interpreter: python3
-containerized_services:
-  - nova
-  - aim
-  - neutron
-rcfile: 'overcloudrc'
