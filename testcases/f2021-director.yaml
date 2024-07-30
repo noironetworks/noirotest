@@ -51,7 +51,7 @@ extrtr_ip2: '1.253.1.1'
 #preexist: True #See NOTE immediate above. For now 'commented out' as its fed from command-line
 #vm_image: '"trusty-multi-if"'
 vm_image: 'ubuntu_multi_nics'
-vm_flavor: 'm1.noirotest'
+vm_flavor: 'm1.noirolite'
 test_parameters:
   bd_type: vxlan
   ip_version: ipv4
