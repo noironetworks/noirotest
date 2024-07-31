@@ -21,6 +21,15 @@ This can also be done through jenkins job:
 
 [New Api Router Setup](https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-api-router-setup)
 
+## Tempest/Rally
+
+At this stage you can also run rally/tempest using below jenkins jobs. It is recommended to run them first because noirotests may mess things up.
+
+[Run Tempest](https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-api-router-tempest)
+
+[Run Rally](https://engci-jenkins-sjc.cisco.com/jenkins/job/team_noiro_engineering/view/Tests/job/Test%20Automation/job/new-api-router-rally)
+
+In both cases tests will be running in tmux session.
 
 ## How to run noirotests
 
