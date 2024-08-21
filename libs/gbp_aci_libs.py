@@ -17,6 +17,7 @@
 import re
 import json
 import requests
+requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += '@SECLEVEL=1' 
 import sys
 from fabric.api import cd,run,env, hide, get, settings, local, lcd
 from libs.raise_exceptions import *
