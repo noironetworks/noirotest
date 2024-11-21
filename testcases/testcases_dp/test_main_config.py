@@ -340,4 +340,4 @@ class gbp_main_config(object):
                                   self.cntlr_passwd, service='aim')
            # Ntk namespace cleanup in Network-Node.. VM names are static
            # throughout the test-cycle
-           del_netns(self.network_node)
+           del_netns(self.network_node, self.cntlr_user)

@@ -48,6 +48,9 @@ extrtr_ip2: '1.251.1.1'
 #vm_image: '"trusty-multi-if"'
 vm_image: 'ubuntu_multi_nics'
 vm_flavor: 'm1.noirotest'
+image_user: 'cirros'
+image_password: 'gocubsgo'
+image_prompt: '\$'
 test_parameters:
   bd_type: vxlan
   ip_version: ipv4

@@ -61,9 +61,10 @@ class gbpExpTraffHping3(object):
         pexpect_session.expect(self.host_prompt)
 
     def ssh_to_compute_host(self):
+        UC_USER=conf.get('controller_user', 'heat-admin')
         self.host_prompt = '\$'
         if conf.get('director_deploy') and conf['director_deploy'] == 'True':
-            pexpect_session = pexpect.spawn('ssh -o StrictHostKeyChecking=no heat-admin@%s' %(self.net_node))
+            pexpect_session = pexpect.spawn('ssh -o StrictHostKeyChecking=no %s@%s' %(UC_USER,self.net_node))
             pexpect_session.expect(self.host_prompt) #Expecting passwordless access
         else:
             pexpect_session = pexpect.spawn('ssh -o StrictHostKeyChecking=no root@%s' %(self.net_node))
@@ -104,6 +105,7 @@ class gbpExpTraffHping3(object):
     def parse_ping_output(self,out,pkt_cnt):
         cnt = pkt_cnt
         output = out
+        print(out)
         check = re.search('\\b%s\\b packets transmitted, \\b(\d+)\\b packets received' %(cnt),output,re.I)
         if check != None:
            if int(cnt) - int(check.group(1)) > 1:
@@ -132,7 +134,7 @@ class gbpExpTraffHping3(object):
                     ns = self.netns_dict[src_ip]
                 else:
                     ns = self.netns
-                cmd = 'ip netns exec %s ssh %s@%s' %(ns,self.vm_user,src_ip)
+                cmd = 'ip netns exec %s ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null %s@%s' %(ns,self.vm_user,src_ip)
                 print(cmd)
                 pexpect_session.sendline(cmd)
                 ssh_newkey = 'Are you sure you want to continue connecting (yes/no)?'
@@ -195,10 +197,10 @@ class gbpExpTraffHping3(object):
 
 
     def vm_sudo(self, pexpect_session):
-        pexpect_session.sendline('sudo -s')
-        userstring = self.vm_user + ':'
-        pexpect_session.expect(userstring)
-        pexpect_session.sendline(self.vm_password)
+        pexpect_session.sendline('sudo -i')
+        #userstring = self.vm_user + ':'
+        #pexpect_session.expect(userstring)
+        #pexpect_session.sendline(self.vm_password)
         pexpect_session.expect(self.vm_prompt)
 
     def vm_test_traffic(self, pexpect_session, protocols, results, tcp_syn_only=0, port=80, no_ipv6=False):
@@ -247,7 +249,7 @@ class gbpExpTraffHping3(object):
                         pexpect_session.expect(self.vm_prompt)
                         result=pexpect_session.before.decode('utf-8')
                         print(result)
-                        if 'succeeded' in result:
+                        if 'open' in result:
                             results[dest_ep]['tcp']=1
                         else:
                             results[dest_ep]['tcp']=0
@@ -270,16 +272,17 @@ class gbpExpTraffHping3(object):
     def vm_start_http_server(self, pexpect_session, udp=False):
         if udp:
             return
-        pexpect_session.sendline('nohup python -m SimpleHTTPServer 80 &')
+        print("Starting SimpleHTTPServer on port 80")
+        pexpect_session.sendline('httpd')
         pexpect_session.expect(self.vm_prompt)
 
     def vm_stop_http_servers(self, pexpect_session):
         print("Stopping SimpleHTTPServer on port 80")
-        nc_cmd = """ps -ef | grep [S]imple | awk -F" " '{print $1}'"""
-        pexpect_session.sendline(nc_cmd)
-        pexpect_session.expect(self.vm_prompt)
-        nc_pid=pexpect_session.before.decode('utf-8')
-        kill_cmd = 'kill -9 %s' % nc_pid
+        #nc_cmd = """ps -ef | grep [S]imple | awk -F" " '{print $1}'"""
+        #pexpect_session.sendline(nc_cmd)
+        #pexpect_session.expect(self.vm_prompt)
+        #nc_pid=pexpect_session.before.decode('utf-8')
+        kill_cmd = 'killall httpd'
         pexpect_session.sendline(kill_cmd)
         pexpect_session.expect(self.vm_prompt)
 

@@ -2,6 +2,7 @@
 import netaddr
 import sys
 import re
+import pprint
 from time import sleep
 from fabric.api import cd, run, env, hide, get, settings
 from fabric.context_managers import *
@@ -216,7 +217,10 @@ class neutronCli(object):
                    _output = run(cmd)
                    if 'deprecated' in _output:
                        _output = _output.strip('neutron CLI is deprecated and will be removed in the future. Use openstack CLI instead.\r\n')
-                   return _output
+                   import re
+                   my_output =  re.sub(r'\x1b\[[0-9;]*[mG]', '', _output)
+                   new_output =  re.sub(r'\x1b\[[0-9;]', '', my_output)
+                   return new_output
                 except:
                    pass
 
@@ -554,7 +558,7 @@ class neutronCli(object):
                     break
                 num_try+=1
             if _out: #It may happen even after above 5 retries,_out is still NoneType, so check for that
-                if _out.succeeded:
+                if 'ACTIVE' in _out:
                     portMAC = re.search(r'(([0-9a-f]{2}:){5}[0-9a-f]{2})',_out,re.I).group()
                     _match = [i.strip(' ') for i in _out.split('|')]
                     portID = _match[_match.index('ACTIVE')+1]

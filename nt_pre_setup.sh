@@ -19,13 +19,10 @@ export ${HTTPS_PROXY_STRING}
 NOVACLIENT_VERSION=ocata-eol
 
 # Supported releases
-NEWTON="newton"
-OCATA="ocata"
-PIKE="pike"
 QUEENS="queens"
 TRAIN="train"
 WALLABY="wallaby"
-RELEASES="${NEWTON} ${OCATA} ${PIKE} ${QUEENS} ${TRAIN} ${WALLABY}"
+RELEASES="${QUEENS} ${TRAIN} ${WALLABY}"
 DIRECTOR="director"
 JUJU="juju"
 
@@ -75,7 +72,11 @@ echo "undercloud ip set to ${UNDERCLOUD_IP}."
 if [ "${UNDERCLOUD_TYPE}" = "${DIRECTOR}" ]; then
     RCFILE='overcloudrc'
     UNDERCLOUD_USER="stack"
-    OVERCLOUD_USER="heat-admin"
+    if [ $1 = "${WALLABY}" ]; then
+       OVERCLOUD_USER="tripleo-admin"
+    else
+       OVERCLOUD_USER="heat-admin"
+    fi
 else
     RCFILE='admin-openrc.sh'
     UNDERCLOUD_USER="noiro"
@@ -90,21 +91,25 @@ sshpass -p noir0123 ssh -o StrictHostKeyChecking=no ${UNDERCLOUD_USER}@${UNDERCL
 
 #scp -o StrictHostKeyChecking=no ${UNDERCLOUD_USER}@${UNDERCLOUD_IP}:~/${RCFILE}* .
 CTRLR_REST_IP=`egrep OS_AUTH_URL ~/${RCFILE} | awk -F'/' '{print $3}' | awk -F ':' '{print $1}'`
-CTRLR_INT_IP=`ssh -o StrictHostKeyChecking=no ${UNDERCLOUD_USER}@${UNDERCLOUD_IP} "source stackrc && nova list | grep controller-0" | awk -F'|' '{print $7}' | cut -c11- | tr -d '[:space:]'`
+if [ $1 = "${WALLABY}" ]; then
+  CTRLR_INT_IP=`ssh -o StrictHostKeyChecking=no ${UNDERCLOUD_USER}@${UNDERCLOUD_IP} "source stackrc && metalsmith list | grep controller-0" | awk -F'|' '{print $7}' | cut -c11- | tr -d '[:space:]'`
+else
+  CTRLR_INT_IP=`ssh -o StrictHostKeyChecking=no ${UNDERCLOUD_USER}@${UNDERCLOUD_IP} "source stackrc && nova list | grep controller-0" | awk -F'|' '{print $7}' | cut -c11- | tr -d '[:space:]'`
+fi
 
 if [ "${UNDERCLOUD_TYPE}" = "${DIRECTOR}" ]; then
     # Set up passwordless access to the openstack controller
     KEY=`cat ~/.ssh/id_rsa.pub`
     #echo "CTRL_IP=\`source stackrc && nova list | grep controller | awk -F'|' '{print \$7}' | cut -c11-\`" > test.sh
     echo '#!/bin/bash -x' > test.sh
-    echo "for CIP in \`source stackrc && nova list | grep controller | awk -F'|' '{print \$7}' | cut -c11-\`; do " >> test.sh
+    echo "for CIP in \`source stackrc && metalsmith list | grep controller | awk -F'|' '{print \$7}' | cut -c11-\`; do " >> test.sh
     echo -n "ssh -o StrictHostKeyChecking=no ${OVERCLOUD_USER}@\$CIP " >> test.sh
     echo "\"echo $KEY >> .ssh/authorized_keys\"" >> test.sh
     echo "scp -o StrictHostKeyChecking=no ${RCFILE} ${OVERCLOUD_USER}@\$CIP: " >> test.sh
     echo "NH_IP=\`ssh -o StrictHostKeyChecking=no ${OVERCLOUD_USER}@\${CIP} \"sudo ifconfig ext-br\" | grep 'inet ' | awk '{print \$2}'\`" >> test.sh
     echo "echo \"sudo route add -host \$CIP gateway \$NH_IP\" >> routes.sh" >> test.sh
     echo "echo conf[\\\"network_node\\\"]=\\\"\$CIP\\\" > localconf.py" >> test.sh
-    if [ "$1" = "${TRAIN}" -o "${RELEASE_FILE}" = "${TRAIN}" ]; then
+    if [ "$1" != "${QUEENS}" -o "${RELEASE_FILE}" != "${QUEENS}" ]; then
 	UNDERCLOUD_NET=`echo ${UNDERCLOUD_IP} | cut -d'.' -f1-3`".0"
         echo "ssh -o StrictHostKeyChecking=no ${OVERCLOUD_USER}@\$CIP \"sudo iptables -I INPUT 4 -s ${UNDERCLOUD_NET}/24 -p tcp -m multiport --dports 22 -m state --state NEW -m comment --comment '003 accept ssh from ctlplane subnet ${UNDERCLOUD_NET}/24 ipv4' -j ACCEPT\"" >> test.sh
         echo "ssh -o StrictHostKeyChecking=no ${OVERCLOUD_USER}@\$CIP \"sudo iptables -I INPUT 5 -s 1.250.1.0/24 -p tcp -m multiport --dports 22 -m state --state NEW -m comment --comment '003 accept ssh from ctlplane subnet 1.250.1.0/24 ipv4' -j ACCEPT\"" >> test.sh
@@ -120,8 +125,9 @@ if [ "${UNDERCLOUD_TYPE}" = "${DIRECTOR}" ]; then
     ./routes.sh
     echo conf[\"ketstone_ip\"]=\"$CTRLR_REST_IP\" >> ~/localconf.py
     echo conf[\"rest_ip\"]=\"$CTRLR_REST_IP\" >> ~/localconf.py
+    echo conf[\"controller_user\"]=\"$OVERCLOUD_USER\" >> ~/localconf.py
 fi
-
+controller_user: 'heat-admin'
 
 if [ "${UNDERCLOUD_TYPE}" = "${DIRECTOR}" ]; then
     CLOUD_NET='1.100.1.0'
@@ -178,8 +184,7 @@ if [ "${UNDERCLOUD_TYPE}" = "${DIRECTOR}" ]; then
 	ssh -o StrictHostKeyChecking=no ${UNDERCLOUD_USER}@${UNDERCLOUD_IP} "tar -xvzf openstack-ciscorpms-repo-* ./python-gbp*"
 	ssh -o StrictHostKeyChecking=no ${UNDERCLOUD_USER}@${UNDERCLOUD_IP} "scp -o StrictHostKeyChecking=no python-gbp* ${OVERCLOUD_USER}@${CTRLR_INT_IP}:~"
 	ssh -o StrictHostKeyChecking=no ${OVERCLOUD_USER}@${CTRLR_INT_IP} "sudo yum install python-gbp* -y"
-    fi
-    if [ "$1" = "${TRAIN}" -o "${RELEASE_FILE}" = "${TRAIN}" ]; then
+    else
 	ssh -o StrictHostKeyChecking=no ${UNDERCLOUD_USER}@${UNDERCLOUD_IP} "tar -xvzf openstack-ciscorpms-repo-* ./python3-gbp*"
 	ssh -o StrictHostKeyChecking=no ${UNDERCLOUD_USER}@${UNDERCLOUD_IP} "scp -o StrictHostKeyChecking=no python3-gbp* ${OVERCLOUD_USER}@${CTRLR_INT_IP}:~"
 	ssh -o StrictHostKeyChecking=no ${OVERCLOUD_USER}@${CTRLR_INT_IP} "sudo yum install python3-gbp* -y"
@@ -195,21 +200,17 @@ if [ "${UNDERCLOUD_TYPE}" = "${DIRECTOR}" ]; then
     sed -i "s/network_node:.*/network_node: \"$CTRLR_INT_IP\"/g" ~/noirotest/testcases/testconfig.yaml
     sed -i "s/keystone_ip:.*/keystone_ip: \"$KEYSTONE_IP\"/g" ~/noirotest/testcases/testconfig.yaml
     sed -i "s/rest_ip:.*/rest_ip: \"$CTRLR_REST_IP\"/g" ~/noirotest/testcases/testconfig.yaml
-    if [ "$1" = "${TRAIN}" -o "${RELEASE_FILE}" = "${TRAIN}" ]; then
+    if [ "$1" != "${QUEENS}" -o "${RELEASE_FILE}" != "${QUEENS}" ]; then
         echo "python_interpreter: python3" >> ~/noirotest/testcases/testconfig.yaml
         sed -i "s/az_comp_node:.*/az_comp_node: \"overcloud-novacompute-0.localdomain\"/g" ~/noirotest/testcases/testconfig.yaml
     else
         sed -i "s/az_comp_node:.*/az_comp_node: \"overcloud-compute-1\"/g" ~/noirotest/testcases/testconfig.yaml
     fi
-    if [ "$1" = "${QUEENS}" -o "${RELEASE_FILE}" = "${QUEENS}" -o "$1" = "${PIKE}" -o "${RELEASE_FILE}" = "${PIKE}" -o "$1" = "${TRAIN}" -o "${RELEASE_FILE}" = "${TRAIN}" ]; then
-        echo "containerized_services:" >> ~/noirotest/testcases/testconfig.yaml
-        echo "  - nova" >> ~/noirotest/testcases/testconfig.yaml
-    fi
-    if [ "$1" = "${QUEENS}" -o "${RELEASE_FILE}" = "${QUEENS}" -o "$1" = "${TRAIN}" -o "${RELEASE_FILE}" = "${TRAIN}" ]; then
-        echo "  - aim" >> ~/noirotest/testcases/testconfig.yaml
-        echo "  - neutron" >> ~/noirotest/testcases/testconfig.yaml
-        echo "rcfile: 'overcloudrc'" >> ~/noirotest/testcases/testconfig.yaml
-    fi
+    echo "containerized_services:" >> ~/noirotest/testcases/testconfig.yaml
+    echo "  - nova" >> ~/noirotest/testcases/testconfig.yaml
+    echo "  - aim" >> ~/noirotest/testcases/testconfig.yaml
+    echo "  - neutron" >> ~/noirotest/testcases/testconfig.yaml
+    echo "rcfile: 'overcloudrc'" >> ~/noirotest/testcases/testconfig.yaml
     sed -i "s/no_proxy=,/no_proxy=\$no_proxy,/g" ~/${RCFILE}
 fi
 sed -i "s/no_proxy=,/no_proxy=\$no_proxy,/g" ~/${RCFILE}

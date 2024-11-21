@@ -53,7 +53,9 @@ test_parameters:
   ip_version: ipv4
   vpc_type: vpc
 vm_image: ubuntu_multi_nics
-image_prompt: '\#'
+image_user: 'cirros'
+image_password: 'gocubsgo'
+image_prompt: '\$'
 # Enable the below flag inorder to live-debug on Failure of a Testcase
 pausetodebug: false
 director_deploy: 'True'

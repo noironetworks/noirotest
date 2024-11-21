@@ -286,7 +286,7 @@ class gbpCfgCli(object):
         print(net_name)
         cmd = "openstack network show %s -c id -f value" % net_name
         print(cmd)
-        network_id = self.exe_command(cmd)
+        network_id = self.exe_command(cmd).replace('\r\n',' ')
         print(("network_id: " + network_id))
         return 'qdhcp-' + network_id
 

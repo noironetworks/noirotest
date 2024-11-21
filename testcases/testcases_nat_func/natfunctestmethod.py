@@ -3,7 +3,9 @@
 import datetime
 import json
 import logging
+import traceback
 import sys
+import re
 
 from time import sleep
 from testcases.config import conf
@@ -88,8 +90,9 @@ PR_TCP = 'PrTcp'
 PRS_ICMP_TCP = 'PrsIcmpTcp'
 PRS_ICMP = 'PrsIcmp'
 PRS_TCP = 'PrsTcp'
+print("Ifti .................................... %s" % CTRLR_USER)
 gbpcrud = GBPCrud(RESTIP)
-gbpnova = gbpNova(RESTIP)
+gbpnova = gbpNova(RESTIP, cntrlr_uname=CTRLR_USER)
 neutron = neutronCli(get_cntrlr_ip(CNTRLRIP), username=CTRLR_USER, password=CTRLR_PSWD)
 
 class NatFuncTestMethods(object):
@@ -847,6 +850,7 @@ class NatFuncTestMethods(object):
         are disassociated from VMs
         fip:: pass specific FIP
         """
+        # breakpoint() #IFTI
         try:
            disassociatedFips = self._get_floating_ips(ret=2)
            if fip:
@@ -859,6 +863,7 @@ class NatFuncTestMethods(object):
                    neutron.fipcrud('delete', floatingip_id=fip['id'])
                print("Any Stale FIPs:: ", self._get_floating_ips(ret=1))
         except Exception:
+           traceback.print_exc()
            exc_type, exc_value, exc_traceback = sys.exc_info()
            LOG.error('Exception Type = %s, Exception Traceback = %s' %(exc_type,exc_traceback))
            return 0
@@ -910,6 +915,8 @@ class NatFuncTestMethods(object):
                           try:
                               fip = self._action_fip_to_vm(action, vmname,
                                     external_network=pool)
+                              if ( fip == 0 ):
+                                  return 0
                           except Exception:
                               exc_type, exc_value, exc_traceback = sys.exc_info()
                               LOG.error(

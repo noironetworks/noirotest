@@ -64,7 +64,10 @@ def run_openstack_cli(cmdList,cntrlrip,
                 if not results.succeeded:
                     print("Unsuccessfull cmd-run output, bailing out ==\n",results)
                     return 0
-    return results
+    my_output =  re.sub(r'\x1b\[[0-9;]*[mG]', '', results)
+    new_output =  re.sub(r'\x1b\[[0-9;]', '', my_output)
+    return(new_output)
+    #return(new_output.replace(r'\r',''))
 
 def run_remote_cli(cmdList,hostip,username,
                    password,passOnFailure=True, do_sudo=False,
@@ -213,13 +216,13 @@ def gen_test_report(test_results,suite,w_or_a):
     f.close()
 '''
 
-def del_netns(net_node_ip,netns=[]):
+def del_netns(net_node_ip,net_node_user, netns=[]):
         """
         Deletes the Network Node's Ntk NameSpace
         Associated with every VM
         """
         env.host_string = net_node_ip
-        env.user = 'heat-admin'
+        env.user = net_node_user
         env.password = 'noir0123'
         #run("neutron-netns-cleanup")
         if netns == []:

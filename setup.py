@@ -13,6 +13,10 @@ APICIP = conf['apic_ip']
 NTKNODE = conf['network_node']
 CONTAINERIZED_SERVICES = conf.get('containerized_services')
 CONTAINERIZED_CLI = conf.get('containerized_cli', 'podman')
+UC_USER=conf.get('controller_user', 'heat-admin')
+
+
+print("uc_user = %s" % UC_USER)
 
 def get_controller_ip():
     if isinstance(CNTRLRIP, list):
@@ -24,7 +28,7 @@ def main():
     controller_ip = get_controller_ip()
     setup(controller_ip,APICIP,NTKNODE)
 
-def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin',
+def setup(controller_ip,apic_ip,ntknode,cntlr_user=UC_USER,apic_user='admin',
           apic_pwd = 'noir0123', cntlr_pwd='noir0123'):
 
     env.host_string = controller_ip
@@ -49,9 +53,9 @@ def setup(controller_ip,apic_ip,ntknode,cntlr_user='heat-admin',apic_user='admin
          output = run(cmd)
          cid = output.split()[0]
          if 'podman' in CONTAINERIZED_CLI:
-             cmd = "sudo %s cp /home/heat-admin/add_ssh_filter.py %s:/home/add_ssh_filter.py" % (CONTAINERIZED_CLI, cid)
+             cmd = "sudo %s cp /home/%s/add_ssh_filter.py %s:/home/add_ssh_filter.py" % (CONTAINERIZED_CLI, UC_USER, cid)
          else:
-             cmd = "sudo %s exec -i %s /bin/bash -c 'cat > /home/add_ssh_filter.py' < /home/heat-admin/add_ssh_filter.py" % (CONTAINERIZED_CLI, cid)
+             cmd = "sudo %s exec -i %s /bin/bash -c 'cat > /home/add_ssh_filter.py' < /home/%s/add_ssh_filter.py" % (CONTAINERIZED_CLI, cid, UC_USER)
          run(cmd)
     #Step-2: Restart the below services
     for cmd in ['sudo systemctl restart openstack-nova-api.service',
