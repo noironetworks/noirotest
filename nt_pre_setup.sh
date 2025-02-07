@@ -102,7 +102,11 @@ if [ "${UNDERCLOUD_TYPE}" = "${DIRECTOR}" ]; then
     KEY=`cat ~/.ssh/id_rsa.pub`
     #echo "CTRL_IP=\`source stackrc && nova list | grep controller | awk -F'|' '{print \$7}' | cut -c11-\`" > test.sh
     echo '#!/bin/bash -x' > test.sh
-    echo "for CIP in \`source stackrc && metalsmith list | grep controller | awk -F'|' '{print \$7}' | cut -c11-\`; do " >> test.sh
+    if [ $1 = "${WALLABY}" ]; then
+       echo "for CIP in \`source stackrc && metalsmith list | grep controller | awk -F'|' '{print \$7}' | cut -c11-\`; do " >> test.sh
+    else
+       echo "for CIP in \`source stackrc && nova list | grep controller | awk -F'|' '{print \$7}' | cut -c11-\`; do " >> test.sh
+    fi
     echo -n "ssh -o StrictHostKeyChecking=no ${OVERCLOUD_USER}@\$CIP " >> test.sh
     echo "\"echo $KEY >> .ssh/authorized_keys\"" >> test.sh
     echo "scp -o StrictHostKeyChecking=no ${RCFILE} ${OVERCLOUD_USER}@\$CIP: " >> test.sh
