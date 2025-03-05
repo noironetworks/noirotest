@@ -47,7 +47,7 @@ extrtr_ip2: '1.251.1.1'
 #preexist: True #See NOTE immediate above. For now 'commented out' as its fed from command-line
 #vm_image: '"trusty-multi-if"'
 vm_image: 'ubuntu_multi_nics'
-vm_flavor: 'm1.noirotest'
+vm_flavor: 'm1.tiny'
 test_parameters:
   bd_type: vxlan
   ip_version: ipv4
@@ -55,7 +55,7 @@ test_parameters:
 vm_image: ubuntu_multi_nics
 image_user: 'cirros'
 image_password: 'gocubsgo'
-image_prompt: '\$'
+image_prompt: '\#'
 # Enable the below flag inorder to live-debug on Failure of a Testcase
 pausetodebug: false
 director_deploy: 'True'

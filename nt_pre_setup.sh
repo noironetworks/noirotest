@@ -45,7 +45,16 @@ else
     EXT2_IP='1.251.1.1'
 fi
 
+RELEASE=$1
 echo "release set to ${RELEASE}."
+
+if [[ "$RELEASES" =~ "$RELEASE" ]]; then
+    echo "Found '$RELEASE' in '$RELEASES'"
+else
+    echo Unsupported release $RELEASE
+    exit -1
+fi
+
 UNDERCLOUD_TYPE=$2
 echo "undercloud type set to ${UNDERCLOUD_TYPE}."
 UNDERCLOUD_IP=$3
