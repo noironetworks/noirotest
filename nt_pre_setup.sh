@@ -126,6 +126,7 @@ if [ "${UNDERCLOUD_TYPE}" = "${DIRECTOR}" ]; then
 	UNDERCLOUD_NET=`echo ${UNDERCLOUD_IP} | cut -d'.' -f1-3`".0"
         echo "ssh -o StrictHostKeyChecking=no ${OVERCLOUD_USER}@\$CIP \"sudo iptables -I INPUT 4 -s ${UNDERCLOUD_NET}/24 -p tcp -m multiport --dports 22 -m state --state NEW -m comment --comment '003 accept ssh from ctlplane subnet ${UNDERCLOUD_NET}/24 ipv4' -j ACCEPT\"" >> test.sh
         echo "ssh -o StrictHostKeyChecking=no ${OVERCLOUD_USER}@\$CIP \"sudo iptables -I INPUT 5 -s 1.250.1.0/24 -p tcp -m multiport --dports 22 -m state --state NEW -m comment --comment '003 accept ssh from ctlplane subnet 1.250.1.0/24 ipv4' -j ACCEPT\"" >> test.sh
+        echo "ssh -o StrictHostKeyChecking=no ${OVERCLOUD_USER}@\$CIP \"sudo nft insert rule inet filter TRIPLEO_INPUT tcp dport 22 accept\"" >> test.sh
     fi
     echo "done" >> test.sh
     
