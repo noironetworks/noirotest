@@ -109,7 +109,7 @@ class NatFuncTestMethods(object):
             "\n## Create External Networks for L3Outs:: %s & %s ##" %(EXTSEG_PRI, EXTSEG_SEC))
             try:
                 dn = 'uni/tn-common/out-%(seg)s/instP-%(pol)s' % {'seg': EXTSEG_PRI,
-                                                                  'pol': EXTSEG_SEC_NET}
+                                                                  'pol': EXTSEG_PRI_NET}
                 aimntkcfg_primary = '--apic:distinguished_names type=dict'+\
                  ' ExternalNetwork='+dn
                 aimsnat = '--apic:snat_host_pool True'
